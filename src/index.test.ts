@@ -748,6 +748,84 @@ test('processRequest-nomatch', async () => {
   expect(fetch).toHaveBeenCalledTimes(2);
 });
 
+test('processRequest-inject', async () => {
+  const context = new TestContext();
+  context.config.sessionJsInjectPath = '/somepath;/some/other/path;/teste2e;/another/path'
+  const req = new Request('https://www.example.com/teste2e');
+  const testPolicies = [
+    {
+      name: 'test-policy',
+      description: 'test-description',
+      path: '/badpath1',
+      condition: 'recaptcha.score > 0.5',
+      // 'type' isn't a part of the interface, but is added for testing.
+      actions: [{allow: {}, type: 'allow'}],
+    },
+    {
+      name: 'test-policy2',
+      description: 'test-description2',
+      path: '/badpath2',
+      condition: 'test-condition2',
+      actions: [{block: {}, type: 'block'}],
+    },
+  ];
+  vi.stubGlobal('fetch', vi.fn());
+  fetch.mockImplementationOnce(() =>
+    Promise.resolve({
+      status: 200,
+      json: () => Promise.resolve({firewallPolicies: testPolicies}),
+    }),
+  );
+  fetch.mockImplementationOnce(() =>
+    Promise.resolve({
+      status: 200,
+      text: () => Promise.resolve('<HTML>Hello World</HTML>'),
+    }),
+  );
+  const resp = await processRequest(context, req);
+  expect(await resp.text()).toEqual('<HTML><script src="test.js"/>Hello World</HTML>');
+  expect(fetch).toHaveBeenCalledTimes(2);
+});
+
+test('processRequest-noinject', async () => {
+  const context = new TestContext();
+  context.config.sessionJsInjectPath = '/somepath;/some/other/path;/another/path'
+  const req = new Request('https://www.example.com/teste2e');
+  const testPolicies = [
+    {
+      name: 'test-policy',
+      description: 'test-description',
+      path: '/badpath1',
+      condition: 'recaptcha.score > 0.5',
+      // 'type' isn't a part of the interface, but is added for testing.
+      actions: [{allow: {}, type: 'allow'}],
+    },
+    {
+      name: 'test-policy2',
+      description: 'test-description2',
+      path: '/badpath2',
+      condition: 'test-condition2',
+      actions: [{block: {}, type: 'block'}],
+    },
+  ];
+  vi.stubGlobal('fetch', vi.fn());
+  fetch.mockImplementationOnce(() =>
+    Promise.resolve({
+      status: 200,
+      json: () => Promise.resolve({firewallPolicies: testPolicies}),
+    }),
+  );
+  fetch.mockImplementationOnce(() =>
+    Promise.resolve({
+      status: 200,
+      text: () => Promise.resolve('<HTML>Hello World</HTML>'),
+    }),
+  );
+  const resp = await processRequest(context, req);
+  expect(await resp.text()).toEqual('<HTML>Hello World</HTML>');
+  expect(fetch).toHaveBeenCalledTimes(2);
+});
+
 test('processRequest-block', async () => {
   const context = new TestContext();
   const req = new Request('https://www.example.com/teste2e');

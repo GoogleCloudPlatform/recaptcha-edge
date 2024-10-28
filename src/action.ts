@@ -86,6 +86,11 @@ export function createBlockAction(): BlockAction {
   return BlockActionSchema.parse({block: {}});
 }
 
+/** Helper function to create a InjectJs */
+export function createInjectJsAction(): InjectJsAction {
+  return InjectJsActionSchema.parse({injectjs: {}});
+}
+
 /** Zod schema for a terminal action */
 export const TerminalActionSchema = AllowActionSchema.or(BlockActionSchema).or(
   ChallengePageActionSchema,

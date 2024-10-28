@@ -277,6 +277,21 @@ export async function processRequest(
     context.logException(reason);
     actions = [action.createAllowAction()];
   }
+
+  if (context.config.sessionJsInjectPath) {
+    let patterns = context.config.sessionJsInjectPath?.split(';');
+    const url = new URL(req.url);
+    for (const pattern of patterns) {
+      if(picomatch.isMatch(url.pathname, pattern)) {
+        context.log('debug', 'Request matching session JS inject pattern: ' + pattern);
+        // We don't need to check if it's already there, since policies currently
+        // can't insert this action.
+        actions.unshift(action.createInjectJsAction());
+        break;
+      }
+    }
+  }
+
   return applyActions(context, req, actions);
 
   // TODO:post return call analytics
