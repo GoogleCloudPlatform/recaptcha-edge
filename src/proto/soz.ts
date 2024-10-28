@@ -19,9 +19,29 @@
  * @suppress {missingProperties}
  */
 
-import {Buffer} from 'buffer';
 import ipaddr from 'ipaddr.js';
 import {ReCaptchaSoz} from '../generated/soz';
+
+function base64UrlEncode(bytes: Uint8Array) {
+  let base64 = '';
+  const base64Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+
+  for (let i = 0; i < bytes.length; i += 3) {
+    const byte1 = bytes[i];
+    const byte2 = i + 1 < bytes.length ? bytes[i + 1] : 0;
+    const byte3 = i + 2 < bytes.length ? bytes[i + 2] : 0;
+
+    const triplet = (byte1 << 16) | (byte2 << 8) | byte3;
+
+    for (let j = 0; j < 4; j++) {
+      if (i * 8 + j * 6 <= bytes.length * 8) {
+        base64 += base64Chars.charAt((triplet >>> 6 * (3 - j)) & 0x3F);
+      }
+    }
+  }
+
+  return base64;
+}
 
 /**
  * Creates a base64 encoded reCaptchaSoz message
@@ -45,7 +65,5 @@ export function createSoz(
     siteKey,
   };
   const bytes = ReCaptchaSoz.toBinary(message);
-  return Buffer.from(String.fromCharCode(...bytes), 'binary').toString(
-    'base64url',
-  );
+  return base64UrlEncode(bytes);
 }
