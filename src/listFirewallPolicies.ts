@@ -39,14 +39,19 @@ export type ListFirewallPoliciesResponse = z.infer<
 export async function callListFirewallPolicies(
   context: RecaptchaContext,
 ): Promise<ListFirewallPoliciesResponse> {
-  const options = context.buildListFirewallPoliciesOptions();
+  const options = {
+    method: 'GET',
+    headers: {
+      'content-type': 'application/json;charset=UTF-8',
+    },
+  };
   const endpoint = context.config.recaptchaEndpoint;
   const projectNumber = context.config.projectNumber;
   const apiKey = context.config.apiKey;
   const policiesUrl = `${endpoint}/v1/projects/${projectNumber}/firewallpolicies?key=${apiKey}&page_size=1000`;
 
   return context
-    .fetch(policiesUrl, options)
+    .fetch_list_firewall_policies(policiesUrl, options)
     .then((response) => {
       // TODO: handle errors
       return response

@@ -127,7 +127,7 @@ export async function callCreateAssessment(
   const assessmentUrl = `${endpoint}/v1/projects/${projectNumber}/assessments?key=${apiKey}`;
 
   return context
-    .fetch(assessmentUrl, options)
+    .fetch_create_assessment(assessmentUrl, options)
     .then((response) => {
       return response
         .json()

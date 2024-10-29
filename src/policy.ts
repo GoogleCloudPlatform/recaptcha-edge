@@ -204,7 +204,7 @@ export async function applyActions(
       context.config.projectNumber,
       context.config.challengePageSiteKey ?? '', // TODO: default site key?
     );
-    return context.fetch(
+    return context.fetch_challenge_page(
       new Request(CHALLENGE_PAGE_URL, {
         method: 'POST',
         headers: {
@@ -232,7 +232,7 @@ export async function applyActions(
   }
 
   // Fetch from the backend, whether redirected or not.
-  let resp = fetch(newReq);
+  let resp = context.fetch_origin(newReq);
 
   // Handle Post-Response actions.
   const once = new Set<string>();

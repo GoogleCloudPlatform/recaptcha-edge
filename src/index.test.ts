@@ -95,6 +95,7 @@ test('callCreateAssessment-ok', async () => {
       return baseEvent;
     },
     fetch: (req, options) => fetch(req, options),
+    fetch_create_assessment: (req, options) => fetch(req, options),
   };
 
   const resp = await callCreateAssessment(

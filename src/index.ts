@@ -81,6 +81,8 @@ export interface RecaptchaConfig {
 export type LogLevel = 'debug' | 'info' | 'warning' | 'error';
 /**
  * reCAPTCHA Enterprise context.
+ * This context provides an abstraction layer per-WAF, and a subclass 
+ * should be created for each platform.
  */
 export abstract class RecaptchaContext {
   config: RecaptchaConfig;
@@ -100,6 +102,38 @@ export abstract class RecaptchaContext {
 
   async fetch(req: RequestInfo, options?: RequestInit): Promise<Response> {
     return fetch(req, options);
+  }
+
+  /**
+   * Fetch from the customer's origin.
+   * Parameters and outputs are the same as the 'fetch' function. 
+   */
+  async fetch_origin(req: RequestInfo, options?: RequestInit): Promise<Response> {
+    return this.fetch(req, options);
+  }
+
+  /**
+   * Call fetch for ListFirewallPolicies.
+   * Parameters and outputs are the same as the 'fetch' function. 
+   */
+  async fetch_list_firewall_policies(req: RequestInfo, options?: RequestInit): Promise<Response> {
+    return this.fetch(req, options);
+  }
+
+  /**
+   * Call fetch for CreateAssessment
+   * Parameters and outputs are the same as the 'fetch' function. 
+   */
+  async fetch_create_assessment(req: RequestInfo, options?: RequestInit): Promise<Response> {
+    return this.fetch(req, options);
+  }
+
+  /**
+   * Call fetch for getting the ChallengePage
+   * Parameters and outputs are the same as the 'fetch' function. 
+   */
+  async fetch_challenge_page(req: RequestInfo, options?: RequestInit): Promise<Response> {
+    return this.fetch(req, options);
   }
 
   /**
@@ -137,12 +171,4 @@ export abstract class RecaptchaContext {
 
   abstract buildEvent(req: Request): any;
   abstract injectRecaptchaJs(resp: Response): Promise<Response>;
-  buildListFirewallPoliciesOptions(): RequestInit {
-    return {
-      method: 'GET',
-      headers: {
-        'content-type': 'application/json;charset=UTF-8',
-      },
-    };
-  }
 }

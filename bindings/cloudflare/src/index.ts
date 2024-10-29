@@ -100,15 +100,15 @@ export class CloudflareContext extends RecaptchaContext {
     );
   }
 
-  buildListFirewallPoliciesOptions(): RequestInit {
-    const options = {
-      ...super.buildListFirewallPoliciesOptions(),
-      cf: {
-        cacheEverything: true,
-        cacheTtlByStatus: {'200-299': 600, 404: 1, '500-599': 0},
-      },
-    };
-    return options;
+  async fetch_list_firewall_policies(req: RequestInfo, options?: RequestInit): Promise<Response> {
+    return this.fetch(req,
+      {
+        ...options,
+        cf: {
+          cacheEverything: true,
+          cacheTtlByStatus: {'200-299': 600, 404: 1, '500-599': 0},
+        },
+      });
   }
 }
 
