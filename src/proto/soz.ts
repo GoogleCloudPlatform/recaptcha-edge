@@ -60,10 +60,14 @@ export function createSoz(
 ): string {
   const message: ReCaptchaSoz = {
     host,
-    userIp: new Uint8Array(ipaddr.parse(userIp).toByteArray()),
     projectNumber: BigInt(projectNumber),
     siteKey,
   };
+  try {
+    message.userIp = new Uint8Array(ipaddr.parse(userIp).toByteArray());
+  } catch(e) {
+    // Invalid IP address. Ignore it.
+  }
   const bytes = ReCaptchaSoz.toBinary(message);
   return base64UrlEncode(bytes);
 }

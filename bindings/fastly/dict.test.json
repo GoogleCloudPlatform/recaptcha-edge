@@ -1,0 +1,11 @@
+{
+    "recaptcha_backend_name": "recaptcha",
+    "google_backend_name": "google",
+    "customer_backend_name": "customer",
+    "api_key": "abc123",
+    "project_number": "12345",
+    "action_site_key": "actionkey",
+    "session_site_key": "sessionkey",
+    "express_site_key": "expresskey",
+    "challengepage_site_key": "challengekey"
+}

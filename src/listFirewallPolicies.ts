@@ -53,7 +53,6 @@ export async function callListFirewallPolicies(
   return context
     .fetch_list_firewall_policies(policiesUrl, options)
     .then((response) => {
-      // TODO: handle errors
       return response
         .json()
         .then((json) => {
