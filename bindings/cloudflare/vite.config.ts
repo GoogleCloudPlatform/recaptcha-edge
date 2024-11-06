@@ -15,17 +15,17 @@
  */
 
 // vite.config.ts
-import {defineWorkersConfig} from '@cloudflare/vitest-pool-workers/config';
+import { defineWorkersConfig } from "@cloudflare/vitest-pool-workers/config";
 
 export default defineWorkersConfig({
   test: {
-    include: ['src/**/*.test.{ts,tsx}'],
+    include: ["src/**/*.test.{ts,tsx}"],
     poolOptions: {
       workers: {
-        wrangler: {configPath: './wrangler.test.toml'},
-        main: './src/cloudflare_worker.ts',
+        wrangler: { configPath: "./wrangler.test.toml" },
+        main: "./src/cloudflare_worker.ts",
         miniflare: {
-          kvNamespaces: ['TEST_NAMESPACE'],
+          kvNamespaces: ["TEST_NAMESPACE"],
         },
       },
     },

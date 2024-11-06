@@ -17,7 +17,7 @@
 /**
  * @fileoverview reCAPTCHA Enterprise TypeScript Library.
  */
-export {NetworkError, ParseError, RecaptchaError} from './error';
+export { NetworkError, ParseError, RecaptchaError } from "./error";
 
 export {
   AllowAction,
@@ -32,7 +32,7 @@ export {
   SetHeaderActionSchema,
   SubstituteAction,
   SubstituteActionSchema,
-} from './action';
+} from "./action";
 
 export {
   Assessment,
@@ -41,18 +41,18 @@ export {
   EventSchema,
   FirewallPolicy,
   FirewallPolicySchema,
-} from './assessment';
+} from "./assessment";
 
 export {
   callCreateAssessment,
   createPartialEventWithSiteInfo,
-} from './createAssessment';
+} from "./createAssessment";
 
 export {
   ListFirewallPoliciesResponse,
   ListFirewallPoliciesResponseSchema,
   callListFirewallPolicies,
-} from './listFirewallPolicies';
+} from "./listFirewallPolicies";
 
 export {
   applyActions,
@@ -61,7 +61,7 @@ export {
   policyConditionMatch,
   policyPathMatch,
   processRequest,
-} from './policy';
+} from "./policy";
 
 /**
  * reCAPTCHA Enterprise configuration.
@@ -78,10 +78,10 @@ export interface RecaptchaConfig {
   debug?: boolean;
 }
 
-export type LogLevel = 'debug' | 'info' | 'warning' | 'error';
+export type LogLevel = "debug" | "info" | "warning" | "error";
 /**
  * reCAPTCHA Enterprise context.
- * This context provides an abstraction layer per-WAF, and a subclass 
+ * This context provides an abstraction layer per-WAF, and a subclass
  * should be created for each platform.
  */
 export abstract class RecaptchaContext {
@@ -89,8 +89,8 @@ export abstract class RecaptchaContext {
   exceptions: any[] = [];
   log_messages: Array<[LogLevel, string[]]> = [];
   readonly environment: [string, string] = [
-    '[npm] @google-cloud/recaptcha',
-    '',
+    "[npm] @google-cloud/recaptcha",
+    "",
   ];
   abstract readonly httpGetCachingEnabled: boolean;
   abstract readonly sessionPageCookie: string;
@@ -106,33 +106,45 @@ export abstract class RecaptchaContext {
 
   /**
    * Fetch from the customer's origin.
-   * Parameters and outputs are the same as the 'fetch' function. 
+   * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_origin(req: RequestInfo, options?: RequestInit): Promise<Response> {
+  async fetch_origin(
+    req: RequestInfo,
+    options?: RequestInit,
+  ): Promise<Response> {
     return this.fetch(req, options);
   }
 
   /**
    * Call fetch for ListFirewallPolicies.
-   * Parameters and outputs are the same as the 'fetch' function. 
+   * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_list_firewall_policies(req: RequestInfo, options?: RequestInit): Promise<Response> {
+  async fetch_list_firewall_policies(
+    req: RequestInfo,
+    options?: RequestInit,
+  ): Promise<Response> {
     return this.fetch(req, options);
   }
 
   /**
    * Call fetch for CreateAssessment
-   * Parameters and outputs are the same as the 'fetch' function. 
+   * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_create_assessment(req: RequestInfo, options?: RequestInit): Promise<Response> {
+  async fetch_create_assessment(
+    req: RequestInfo,
+    options?: RequestInit,
+  ): Promise<Response> {
     return this.fetch(req, options);
   }
 
   /**
    * Call fetch for getting the ChallengePage
-   * Parameters and outputs are the same as the 'fetch' function. 
+   * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_challenge_page(req: RequestInfo, options?: RequestInit): Promise<Response> {
+  async fetch_challenge_page(
+    req: RequestInfo,
+    options?: RequestInit,
+  ): Promise<Response> {
     return this.fetch(req, options);
   }
 

@@ -18,22 +18,22 @@
  * @fileoverview Schema and types representing reCAPTCHA FirewallPolicy actions.
  */
 
-import {z} from 'zod';
+import { z } from "zod";
 
 /** Zod Schema for Allow action */
 export const AllowActionSchema = z.object({
   allow: z.object({}),
-  type: z.literal('allow').default('allow'),
+  type: z.literal("allow").default("allow"),
 });
 /** Zod Schema for Block action */
 export const BlockActionSchema = z.object({
   block: z.object({}),
-  type: z.literal('block').default('block'),
+  type: z.literal("block").default("block"),
 });
 /** Zod Schema for ChallengePage action */
 export const ChallengePageActionSchema = z.object({
   challengepage: z.object({}),
-  type: z.literal('challengepage').default('challengepage'),
+  type: z.literal("challengepage").default("challengepage"),
 });
 /** Zod Schema for SetHeader action */
 export const SetHeaderActionSchema = z.object({
@@ -41,24 +41,24 @@ export const SetHeaderActionSchema = z.object({
     key: z.string(),
     value: z.string(),
   }),
-  type: z.literal('setHeader').default('setHeader'),
+  type: z.literal("setHeader").default("setHeader"),
 });
 /** Zod Schema for Redirect action */
 export const RedirectActionSchema = z.object({
   redirect: z.object({}),
-  type: z.literal('redirect').default('redirect'),
+  type: z.literal("redirect").default("redirect"),
 });
 /** Zod Schema for Substitute action */
 export const SubstituteActionSchema = z.object({
   substitute: z.object({
     path: z.string(),
   }),
-  type: z.literal('substitute').default('substitute'),
+  type: z.literal("substitute").default("substitute"),
 });
 /** Zod Schema for InjectJs action */
 export const InjectJsActionSchema = z.object({
   injectjs: z.object({}),
-  type: z.literal('injectjs').default('injectjs'),
+  type: z.literal("injectjs").default("injectjs"),
 });
 
 /** Type representing an Allow action */
@@ -78,17 +78,17 @@ export type InjectJsAction = z.infer<typeof InjectJsActionSchema>;
 
 /** Helper function to create an AllowAction */
 export function createAllowAction(): AllowAction {
-  return AllowActionSchema.parse({allow: {}});
+  return AllowActionSchema.parse({ allow: {} });
 }
 
 /** Helper function to create a BlockAction */
 export function createBlockAction(): BlockAction {
-  return BlockActionSchema.parse({block: {}});
+  return BlockActionSchema.parse({ block: {} });
 }
 
 /** Helper function to create a InjectJs */
 export function createInjectJsAction(): InjectJsAction {
-  return InjectJsActionSchema.parse({injectjs: {}});
+  return InjectJsActionSchema.parse({ injectjs: {} });
 }
 
 /** Zod schema for a terminal action */

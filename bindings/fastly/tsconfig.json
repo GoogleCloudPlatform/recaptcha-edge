@@ -11,16 +11,11 @@
     "module": "ES2022",
     "target": "ES2022",
     "moduleResolution": "node",
-    "lib": [ "es2022" ],
+    "lib": ["es2022"],
     "rootDir": "src",
     "outDir": "./dist",
-    "skipLibCheck": true,
+    "skipLibCheck": true
   },
-  "include": [
-    "./src/**/*.js",
-    "./src/**/*.ts",
-  ],
-  "exclude": [
-    "node_modules", "**/**.test.ts", "**/**.test.ts"
-  ]
+  "include": ["./src/**/*.js", "./src/**/*.ts"],
+  "exclude": ["node_modules", "**/**.test.ts", "**/**.test.ts"]
 }

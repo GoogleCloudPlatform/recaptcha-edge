@@ -24,7 +24,7 @@ import {
   CloudflareContext,
   processRequest,
   recaptchaConfigFromEnv,
-} from './index';
+} from "./index";
 
 export default {
   async fetch(

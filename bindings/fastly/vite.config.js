@@ -15,11 +15,11 @@
  */
 
 // vite.config.ts
-import { defineConfig } from 'vite'
+import { defineConfig } from "vite";
 
 export default defineConfig({
-    test: {
-      include: ['src/*.test.ts']
-    },
-    testTimeout: 10000
-  })
+  test: {
+    include: ["src/*.test.ts"],
+  },
+  testTimeout: 10000,
+});

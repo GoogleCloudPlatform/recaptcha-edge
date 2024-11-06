@@ -18,10 +18,10 @@
  * @fileoverview Helper functions and types related to the CreateAssessment RPC.
  */
 
-import * as action from './action';
-import {Assessment, AssessmentSchema, Event, EventSchema} from './assessment';
-import * as error from './error';
-import {RecaptchaContext} from './index';
+import * as action from "./action";
+import { Assessment, AssessmentSchema, Event, EventSchema } from "./assessment";
+import * as error from "./error";
+import { RecaptchaContext } from "./index";
 
 /**
  * Adds reCAPTCHA specific values to an Event strucutre.
@@ -32,16 +32,16 @@ export function createPartialEventWithSiteInfo(
   req: Request,
 ): Event {
   const event: Event = {};
-  const actionToken = req.headers.get('X-Recaptcha-Token');
+  const actionToken = req.headers.get("X-Recaptcha-Token");
   if (context.config.actionSiteKey && actionToken) {
     event.token = actionToken;
     event.siteKey = context.config.actionSiteKey;
     event.wafTokenAssessment = true;
-    context.log('debug', 'siteKind: action');
+    context.log("debug", "siteKind: action");
   } else {
     const cookieMap = new Map<string, string>();
-    for (const cookie of req.headers.get('cookie')?.split(';') ?? []) {
-      const [key, value] = cookie.split('=');
+    for (const cookie of req.headers.get("cookie")?.split(";") ?? []) {
+      const [key, value] = cookie.split("=");
       cookieMap.set(key.trim(), value.trim());
     }
 
@@ -50,15 +50,15 @@ export function createPartialEventWithSiteInfo(
     if (context.config.debug) {
       for (const [key, value] of cookieMap.entries()) {
         if (
-          key.startsWith('recaptcha') &&
+          key.startsWith("recaptcha") &&
           key !== context.sessionPageCookie &&
           key !== context.challengePageCookie
         ) {
           context.log(
-            'info',
-            'An unused reCAPTCHA cookie in the request matches a different environment: ' +
+            "info",
+            "An unused reCAPTCHA cookie in the request matches a different environment: " +
               key +
-              '. This may signify a misconfiguration.',
+              ". This may signify a misconfiguration.",
           );
         }
       }
@@ -68,19 +68,19 @@ export function createPartialEventWithSiteInfo(
       event.token = cookieMap.get(context.sessionPageCookie);
       event.siteKey = context.config.sessionSiteKey;
       event.wafTokenAssessment = true;
-      context.log('debug', 'siteKind: session');
+      context.log("debug", "siteKind: session");
     } else if (context.config.challengePageSiteKey && challengeToken) {
       event.token = cookieMap.get(context.challengePageCookie);
       event.siteKey = context.config.challengePageSiteKey;
       event.wafTokenAssessment = true;
-      context.log('debug', 'siteKind: challenge');
+      context.log("debug", "siteKind: challenge");
     } else if (context.config.expressSiteKey) {
       event.siteKey = context.config.expressSiteKey;
       event.express = true;
-      context.log('debug', 'siteKind: express');
+      context.log("debug", "siteKind: express");
     } else {
       throw new error.RecaptchaError(
-        'No site key was found matching the incoming request token, and express is not enabled.',
+        "No site key was found matching the incoming request token, and express is not enabled.",
         action.createAllowAction(),
       );
     }
@@ -106,7 +106,7 @@ export async function callCreateAssessment(
     ...site_features,
     ...additionalParams,
   };
-  const assessment: Assessment = {event};
+  const assessment: Assessment = { event };
   if (environment) {
     assessment.assessmentEnvironment = {
       client: environment[0],
@@ -114,10 +114,10 @@ export async function callCreateAssessment(
     };
   }
   const options: RequestInit = {
-    method: 'POST',
+    method: "POST",
     body: JSON.stringify(assessment),
     headers: {
-      'content-type': 'application/json;charset=UTF-8',
+      "content-type": "application/json;charset=UTF-8",
     },
   };
 
@@ -133,7 +133,7 @@ export async function callCreateAssessment(
         .json()
         .then((json) => {
           let ret = AssessmentSchema.parse(json);
-          context.log('debug', '[rpc] createAssessment (ok)');
+          context.log("debug", "[rpc] createAssessment (ok)");
           return ret;
         })
         .catch((reason) => {
@@ -144,7 +144,7 @@ export async function callCreateAssessment(
         });
     })
     .catch((reason) => {
-      context.log('debug', '[rpc] createAssessment (fail)');
+      context.log("debug", "[rpc] createAssessment (fail)");
       throw new error.NetworkError(reason.message, action.createAllowAction());
     });
 }

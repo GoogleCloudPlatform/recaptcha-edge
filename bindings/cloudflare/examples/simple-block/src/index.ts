@@ -22,7 +22,7 @@
 import {
   CloudflareContext,
   recaptchaConfigFromEnv,
-} from '@google-cloud/recaptcha-cloudflare';
+} from "@google-cloud/recaptcha-cloudflare";
 
 export default {
   async fetch(request, env, ctx): Promise<Response> {
@@ -35,14 +35,14 @@ export default {
         block = true;
       }
     } catch (e: RecaptchaError) {
-      if (e.recommended_action.type === 'block') {
+      if (e.recommended_action.type === "block") {
         block = true;
       }
     }
     if (block) {
       // Or return a templated HTML page.
       return new Response(
-        'This request has been blocked for security reasons.',
+        "This request has been blocked for security reasons.",
       );
     } else {
       return fetch(request);

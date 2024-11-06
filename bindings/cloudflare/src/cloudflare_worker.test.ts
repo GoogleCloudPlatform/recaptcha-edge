@@ -20,8 +20,8 @@ import {
   fetchMock,
   SELF,
   waitOnExecutionContext,
-} from 'cloudflare:test';
-import {afterEach, beforeAll, expect, test} from 'vitest';
+} from "cloudflare:test";
+import { afterEach, beforeAll, expect, test } from "vitest";
 
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
@@ -34,66 +34,66 @@ beforeAll(() => {
 // Ensure we matched every mock we defined
 afterEach(() => fetchMock.assertNoPendingInterceptors());
 
-test('nomatch-ok', async () => {
+test("nomatch-ok", async () => {
   const testPolicies = [
     {
-      name: 'test-policy',
-      description: 'test-description',
-      path: '/teste2e',
-      condition: 'recaptcha.score > 0.5',
+      name: "test-policy",
+      description: "test-description",
+      path: "/teste2e",
+      condition: "recaptcha.score > 0.5",
       // 'type' isn't a part of the interface, but is added for testing.
-      actions: [{allow: {}, type: 'allow'}],
+      actions: [{ allow: {}, type: "allow" }],
     },
     {
-      name: 'test-policy2',
-      description: 'test-description2',
-      path: 'test-path2',
-      condition: 'test-condition2',
-      actions: [{block: {}, type: 'block'}],
+      name: "test-policy2",
+      description: "test-description2",
+      path: "test-path2",
+      condition: "test-condition2",
+      actions: [{ block: {}, type: "block" }],
     },
   ];
   fetchMock
-    .get('https://recaptchaenterprise.googleapis.com')
+    .get("https://recaptchaenterprise.googleapis.com")
     .intercept({
-      path: '/v1/projects/12345/firewallpolicies?key=abc123&page_size=1000',
+      path: "/v1/projects/12345/firewallpolicies?key=abc123&page_size=1000",
     })
-    .reply(200, JSON.stringify({firewallPolicies: testPolicies}));
+    .reply(200, JSON.stringify({ firewallPolicies: testPolicies }));
   fetchMock
-    .get('https://recaptchaenterprise.googleapis.com')
+    .get("https://recaptchaenterprise.googleapis.com")
     .intercept({
-      path: '/v1/projects/12345/assessments?key=abc123',
-      method: 'POST',
+      path: "/v1/projects/12345/assessments?key=abc123",
+      method: "POST",
       body: JSON.stringify({
         event: {
-          token: 'action-token',
-          siteKey: 'action-site-key',
+          token: "action-token",
+          siteKey: "action-site-key",
           wafTokenAssessment: true,
-          userAgent: 'test-user-agent',
-          userIpAddress: '1.2.3.4',
-          requestedUri: 'http://example.com/teste2e',
+          userAgent: "test-user-agent",
+          userIpAddress: "1.2.3.4",
+          requestedUri: "http://example.com/teste2e",
           headers: [
-            'cf-connecting-ip:1.2.3.4',
-            'user-agent:test-user-agent',
-            'x-recaptcha-token:action-token',
+            "cf-connecting-ip:1.2.3.4",
+            "user-agent:test-user-agent",
+            "x-recaptcha-token:action-token",
           ],
           firewallPolicyEvaluation: true,
         },
         assessmentEnvironment: {
-          client: '@google-cloud/recaptcha-cloudflare',
-          version: '1.0.0',
+          client: "@google-cloud/recaptcha-cloudflare",
+          version: "1.0.0",
         },
       }),
     })
-    .reply(200, JSON.stringify({firewallPolicyAssessment: {}}));
+    .reply(200, JSON.stringify({ firewallPolicyAssessment: {} }));
   fetchMock
-    .get('http://example.com')
-    .intercept({path: '/teste2e'})
-    .reply(200, '<HTML>Hello World</HTML>');
-  const req = new IncomingRequest('http://example.com/teste2e', {
+    .get("http://example.com")
+    .intercept({ path: "/teste2e" })
+    .reply(200, "<HTML>Hello World</HTML>");
+  const req = new IncomingRequest("http://example.com/teste2e", {
     headers: {
-      'X-Recaptcha-Token': 'action-token',
-      'CF-Connecting-IP': '1.2.3.4',
-      'user-agent': 'test-user-agent',
+      "X-Recaptcha-Token": "action-token",
+      "CF-Connecting-IP": "1.2.3.4",
+      "user-agent": "test-user-agent",
     },
   });
   // Create an empty context to pass to `worker.fetch()`
@@ -101,5 +101,5 @@ test('nomatch-ok', async () => {
   const res = await SELF.fetch(req, env, ctx);
   // Wait for all `Promise`s passed to `ctx.waitUntil()` to settle before running test assertions
   await waitOnExecutionContext(ctx);
-  expect(await res.text()).toBe('<HTML>Hello World</HTML>');
+  expect(await res.text()).toBe("<HTML>Hello World</HTML>");
 });

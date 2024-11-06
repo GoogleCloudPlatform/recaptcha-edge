@@ -18,9 +18,10 @@
  * Library specific errors.
  */
 
-import {Action} from './action';
+import { Action } from "./action";
 
-/** Error type for reCAPTCHA processing.
+/**
+ * Error type for reCAPTCHA processing.
  */
 export class RecaptchaError extends Error {
   recommendedAction?: Action;

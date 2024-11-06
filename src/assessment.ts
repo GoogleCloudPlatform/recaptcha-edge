@@ -18,8 +18,8 @@
  * @fileoverview Assessment type and subtypes.
  */
 
-import {z} from 'zod';
-import * as action from './action';
+import { z } from "zod";
+import * as action from "./action";
 
 /** Zod Schema for FirewallPolicy type. */
 export const FirewallPolicySchema = z.object({

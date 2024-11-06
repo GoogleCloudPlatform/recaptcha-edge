@@ -15,44 +15,44 @@
  */
 
 // vite.config.ts
-import {defineConfig} from 'vite'; // Import Vite's configuration helper
+import { defineConfig } from "vite"; // Import Vite's configuration helper
 
 export default defineConfig({
   // Project root directory (where index.html is located)
-  root: './',
+  root: "./",
 
   // Base public path for build output (optional, defaults to '/')
-  base: '/',
+  base: "/",
 
   // Build options
   build: {
     // Output directory for production build
-    outDir: './dist',
+    outDir: "./dist",
   },
 
   // Resolve options
   resolve: {
     alias: {
       // Example alias for easier imports
-      '@/': `${__dirname}/src/`,
+      "@/": `${__dirname}/src/`,
     },
   },
 
   // Test-specific options
   test: {
     // Test environment (e.g., 'jsdom', 'node', 'happy-dom')
-    environment: 'node',
+    environment: "node",
 
     // Include files for testing (glob patterns)
-    include: ['src/**/*.test.{ts,tsx}'],
+    include: ["src/**/*.test.{ts,tsx}"],
 
     // Exclude files from testing (glob patterns)
-    exclude: ['node_modules'],
+    exclude: ["node_modules"],
 
     // Enable coverage report generation
     coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      provider: "v8",
+      reporter: ["text", "json", "html"],
     },
   },
 });

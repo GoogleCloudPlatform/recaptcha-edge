@@ -19,12 +19,13 @@
  * @suppress {missingProperties}
  */
 
-import ipaddr from 'ipaddr.js';
-import {ReCaptchaSoz} from '../generated/soz';
+import ipaddr from "ipaddr.js";
+import { ReCaptchaSoz } from "../generated/soz";
 
 function base64UrlEncode(bytes: Uint8Array) {
-  let base64 = '';
-  const base64Chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+  let base64 = "";
+  const base64Chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
   for (let i = 0; i < bytes.length; i += 3) {
     const byte1 = bytes[i];
@@ -35,7 +36,7 @@ function base64UrlEncode(bytes: Uint8Array) {
 
     for (let j = 0; j < 4; j++) {
       if (i * 8 + j * 6 <= bytes.length * 8) {
-        base64 += base64Chars.charAt((triplet >>> 6 * (3 - j)) & 0x3F);
+        base64 += base64Chars.charAt((triplet >>> (6 * (3 - j))) & 0x3f);
       }
     }
   }
@@ -65,7 +66,7 @@ export function createSoz(
   };
   try {
     message.userIp = new Uint8Array(ipaddr.parse(userIp).toByteArray());
-  } catch(e) {
+  } catch (e) {
     // Invalid IP address. Ignore it.
   }
   const bytes = ReCaptchaSoz.toBinary(message);

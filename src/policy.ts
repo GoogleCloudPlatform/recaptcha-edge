@@ -18,26 +18,26 @@
  * @fileoverview Client functions related to FirewallPolicies.
  */
 
-import picomatch from 'picomatch';
-import * as action from './action';
-import {FirewallPolicy} from './assessment';
-import {callCreateAssessment} from './createAssessment';
-import * as error from './error';
-import {RecaptchaContext} from './index';
-import {callListFirewallPolicies} from './listFirewallPolicies';
-import {createSoz} from './proto/soz';
+import picomatch from "picomatch";
+import * as action from "./action";
+import { FirewallPolicy } from "./assessment";
+import { callCreateAssessment } from "./createAssessment";
+import * as error from "./error";
+import { RecaptchaContext } from "./index";
+import { callListFirewallPolicies } from "./listFirewallPolicies";
+import { createSoz } from "./proto/soz";
 
-type LocalAssessment = action.Action[] | 'recaptcha-required';
+type LocalAssessment = action.Action[] | "recaptcha-required";
 
 /**
  * Path to the hosted reCAPTCHA Enterprise Javascript.
  * This path may be injected into the response.
  */
-export const RECAPTCHA_JS = 'https://www.google.com/recaptcha/enterprise.js';
+export const RECAPTCHA_JS = "https://www.google.com/recaptcha/enterprise.js";
 
 /** @type {string} */
 export const CHALLENGE_PAGE_URL =
-  'https://www.google.com/recaptcha/challengepage';
+  "https://www.google.com/recaptcha/challengepage";
 
 /**
  * Checks whether a particular policy path pattern matches the incoming request.
@@ -59,24 +59,24 @@ export function policyPathMatch(policy: FirewallPolicy, req: Request): boolean {
 export function policyConditionMatch(
   policy: FirewallPolicy,
   req: Request,
-): boolean | 'unknown' {
+): boolean | "unknown" {
   // An empty condition imples 'true' and always matches.
   if (!policy?.condition?.trim()) {
     return true;
   }
   const condition = policy.condition.toLowerCase();
   // A 'true' condition always matches.
-  if (condition === 'true') {
+  if (condition === "true") {
     return true;
   }
 
   // A 'false' condition doesn't make sense, but some customers might use it
   // to temporarily disable a policy.
-  if (condition === 'false') {
+  if (condition === "false") {
     return false;
   }
   // TODO: handle non-recaptcha-namespace conditions like IP only.
-  return 'unknown';
+  return "unknown";
 }
 
 /**
@@ -94,22 +94,22 @@ export async function localPolicyAssessment(
     // TODO: some platforms might need explicit caching?
     let resp;
     try {
-      context.log_performance_debug('[rpc] callListFirewallPolicies - start');
+      context.log_performance_debug("[rpc] callListFirewallPolicies - start");
       resp = await callListFirewallPolicies(context);
-      context.log_performance_debug('[rpc] callListFirewallPolicies - end');
+      context.log_performance_debug("[rpc] callListFirewallPolicies - end");
     } catch (reason) {
       context.logException(reason);
-      return 'recaptcha-required';
+      return "recaptcha-required";
     }
     const policies = resp.firewallPolicies ?? [];
     for (const policy of policies) {
       if (policyPathMatch(policy, req)) {
         const conditionMatch = policyConditionMatch(policy, req);
-        if (conditionMatch === 'unknown') {
-          return 'recaptcha-required';
+        if (conditionMatch === "unknown") {
+          return "recaptcha-required";
         } else if (conditionMatch) {
           // TODO: handle multiple policies.
-          context.log('debug', 'local assessment condition matched');
+          context.log("debug", "local assessment condition matched");
           return policy?.actions ?? [];
         }
       }
@@ -128,11 +128,11 @@ export async function evaluatePolicyAssessment(
 ): Promise<action.Action[]> {
   let assessment;
   try {
-    context.log_performance_debug('[rpc] callCreateAssessment - start');
+    context.log_performance_debug("[rpc] callCreateAssessment - start");
     assessment = await callCreateAssessment(context, req, context.environment, {
       firewallPolicyEvaluation: true,
     });
-    context.log_performance_debug('[rpc] callCreateAssessment - end');
+    context.log_performance_debug("[rpc] callCreateAssessment - end");
   } catch (reason) {
     if (reason instanceof error.RecaptchaError) {
       if (reason.recommendedAction) {
@@ -164,52 +164,52 @@ export async function applyActions(
   // placed after terminal actions.
   filterActions: for (const action of actions) {
     switch (action.type) {
-      case 'allow':
-      case 'block':
-      case 'redirect':
-      case 'challengepage':
+      case "allow":
+      case "block":
+      case "redirect":
+      case "challengepage":
         terminalAction = action;
         break filterActions;
-      case 'setHeader':
-      case 'substitute':
+      case "setHeader":
+      case "substitute":
         reqNonterminalActions.push(action);
         continue;
-      case 'injectjs':
+      case "injectjs":
         respNonterminalActions.push(action);
         continue;
       default:
         /* v8 ignore next */
-        throw new Error('Unsupported action: ' + action);
+        throw new Error("Unsupported action: " + action);
     }
   }
-  context.log('debug', 'terminalAction: ' + terminalAction.type);
+  context.log("debug", "terminalAction: " + terminalAction.type);
 
-  if (terminalAction.type === 'block') {
-    return new Response(null, {status: 403}); // TODO: custom html
+  if (terminalAction.type === "block") {
+    return new Response(null, { status: 403 }); // TODO: custom html
   }
 
-  if (terminalAction.type === 'redirect') {
+  if (terminalAction.type === "redirect") {
     // TODO: consider caching event.
     const event = context.buildEvent(req);
     const url = new URL(req.url);
     if (!context.config.challengePageSiteKey) {
       context.log(
-        'error',
-        '[!] attempt to redirect without challenge page site key!',
+        "error",
+        "[!] attempt to redirect without challenge page site key!",
       );
     }
     const soz = createSoz(
       url.hostname,
       event.userIpAddress,
       context.config.projectNumber,
-      context.config.challengePageSiteKey ?? '', // TODO: default site key?
+      context.config.challengePageSiteKey ?? "", // TODO: default site key?
     );
     return context.fetch_challenge_page(
       new Request(CHALLENGE_PAGE_URL, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'content-type': 'application/json;charset=UTF-8',
-          'X-ReCaptcha-Soz': soz,
+          "content-type": "application/json;charset=UTF-8",
+          "X-ReCaptcha-Soz": soz,
         },
       }),
     );
@@ -217,18 +217,18 @@ export async function applyActions(
 
   // Handle Pre-Request actions.
   for (const action of reqNonterminalActions) {
-    context.log('debug', 'reqNonterminal action: ' + action.type);
-    if (action.type === 'setHeader') {
+    context.log("debug", "reqNonterminal action: " + action.type);
+    if (action.type === "setHeader") {
       newReq.headers.set(action.setHeader.key, action.setHeader.value);
       continue;
     }
-    if (action.type === 'substitute') {
+    if (action.type === "substitute") {
       const url = new URL(newReq.url);
       newReq = new Request(`${url.origin}${action.substitute.path}`, newReq);
       continue;
     }
     /* v8 ignore next 2 lines */
-    throw new Error('Unsupported pre-request action: ' + action);
+    throw new Error("Unsupported pre-request action: " + action);
   }
 
   // Fetch from the backend, whether redirected or not.
@@ -237,19 +237,19 @@ export async function applyActions(
   // Handle Post-Response actions.
   const once = new Set<string>();
   for (const action of respNonterminalActions) {
-    context.log('debug', 'respNonterminal action: ' + action.type);
+    context.log("debug", "respNonterminal action: " + action.type);
     if (once.has(action.type)) {
       continue; // TODO: should this throw an error?
     }
     switch (action.type) {
-      case 'injectjs':
+      case "injectjs":
         // Only inject JS once, even if multiple actions erroneously specify it.
         once.add(action.type);
         resp = context.injectRecaptchaJs(await resp);
         continue;
       /* v8 ignore next 2 lines */
       default:
-        throw new Error('Unsupported post-response action: ' + action);
+        throw new Error("Unsupported post-response action: " + action);
     }
   }
 
@@ -266,11 +266,11 @@ export async function processRequest(
   let actions = [];
   try {
     const localAssessment = await localPolicyAssessment(context, req);
-    if (localAssessment === 'recaptcha-required') {
-      context.log('debug', 'no local match, calling reCAPTCHA');
+    if (localAssessment === "recaptcha-required") {
+      context.log("debug", "no local match, calling reCAPTCHA");
       actions = await evaluatePolicyAssessment(context, req);
     } else {
-      context.log('debug', 'local assessment succeeded');
+      context.log("debug", "local assessment succeeded");
       actions = localAssessment;
     }
   } catch (reason) {
@@ -279,11 +279,14 @@ export async function processRequest(
   }
 
   if (context.config.sessionJsInjectPath) {
-    let patterns = context.config.sessionJsInjectPath?.split(';');
+    let patterns = context.config.sessionJsInjectPath?.split(";");
     const url = new URL(req.url);
     for (const pattern of patterns) {
-      if(picomatch.isMatch(url.pathname, pattern)) {
-        context.log('debug', 'Request matching session JS inject pattern: ' + pattern);
+      if (picomatch.isMatch(url.pathname, pattern)) {
+        context.log(
+          "debug",
+          "Request matching session JS inject pattern: " + pattern,
+        );
         // We don't need to check if it's already there, since policies currently
         // can't insert this action.
         actions.unshift(action.createInjectJsAction());

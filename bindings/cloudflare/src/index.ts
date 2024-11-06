@@ -20,18 +20,18 @@
 
 type Env = any;
 
-const RECAPTCHA_JS = 'https://www.google.com/recaptcha/enterprise.js';
+const RECAPTCHA_JS = "https://www.google.com/recaptcha/enterprise.js";
 // Firewall Policies API is currently only available in the public preview.
 const DEFAULT_RECAPTCHA_ENDPOINT =
-  'https://public-preview-recaptchaenterprise.googleapis.com';
+  "https://public-preview-recaptchaenterprise.googleapis.com";
 
 import {
   processRequest,
   RecaptchaConfig,
   RecaptchaContext,
-} from '@google-cloud/recaptcha';
-import {HTMLRewriter} from '@worker-tools/html-rewriter';
-import pkg from '../package.json';
+} from "@google-cloud/recaptcha";
+import { HTMLRewriter } from "@worker-tools/html-rewriter";
+import pkg from "../package.json";
 
 export {
   callCreateAssessment,
@@ -41,11 +41,11 @@ export {
   processRequest,
   RecaptchaConfig,
   RecaptchaError,
-} from '@google-cloud/recaptcha';
+} from "@google-cloud/recaptcha";
 
 export class CloudflareContext extends RecaptchaContext {
-  readonly sessionPageCookie = 'recaptcha-cf-t';
-  readonly challengePageCookie = 'recaptcha-cf-e';
+  readonly sessionPageCookie = "recaptcha-cf-t";
+  readonly challengePageCookie = "recaptcha-cf-e";
   readonly environment: [string, string] = [pkg.name, pkg.version];
   readonly httpGetCachingEnabled = true;
   start_time: number;
@@ -78,11 +78,11 @@ export class CloudflareContext extends RecaptchaContext {
   buildEvent(req: Request): object {
     return {
       // extracting common signals
-      userIpAddress: req.headers.get('CF-Connecting-IP'),
+      userIpAddress: req.headers.get("CF-Connecting-IP"),
       headers: Array.from(req.headers.entries()).map(([k, v]) => `${k}:${v}`),
-      ja3: (req as any)?.['cf']?.['bot_management']?.['ja3_hash'] ?? undefined,
+      ja3: (req as any)?.["cf"]?.["bot_management"]?.["ja3_hash"] ?? undefined,
       requestedUri: req.url,
-      userAgent: req.headers.get('user-agent'),
+      userAgent: req.headers.get("user-agent"),
     };
   }
 
@@ -91,24 +91,26 @@ export class CloudflareContext extends RecaptchaContext {
     const RECAPTCHA_JS_SCRIPT = `<script src="${RECAPTCHA_JS}?render=${sessionKey}&waf=session" async defer></script>`;
     return Promise.resolve(
       new HTMLRewriter()
-        .on('head', {
+        .on("head", {
           element(element: any) {
-            element.append(RECAPTCHA_JS_SCRIPT, {html: true});
+            element.append(RECAPTCHA_JS_SCRIPT, { html: true });
           },
         })
         .transform(new Response(resp.body, resp)),
     );
   }
 
-  async fetch_list_firewall_policies(req: RequestInfo, options?: RequestInit): Promise<Response> {
-    return this.fetch(req,
-      {
-        ...options,
-        cf: {
-          cacheEverything: true,
-          cacheTtlByStatus: {'200-299': 600, 404: 1, '500-599': 0},
-        },
-      });
+  async fetch_list_firewall_policies(
+    req: RequestInfo,
+    options?: RequestInit,
+  ): Promise<Response> {
+    return this.fetch(req, {
+      ...options,
+      cf: {
+        cacheEverything: true,
+        cacheTtlByStatus: { "200-299": 600, 404: 1, "500-599": 0 },
+      },
+    });
   }
 }
 

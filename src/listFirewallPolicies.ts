@@ -18,10 +18,10 @@
  * @fileoverview Helper functions and types related to the ListFirewallPolicies RPC.
  */
 
-import {z} from 'zod';
-import {FirewallPolicySchema} from './assessment';
-import * as error from './error';
-import {RecaptchaContext} from './index';
+import { z } from "zod";
+import { FirewallPolicySchema } from "./assessment";
+import * as error from "./error";
+import { RecaptchaContext } from "./index";
 
 /** Zod Schema for ListFirewallPoliciesResponse */
 export const ListFirewallPoliciesResponseSchema = z.object({
@@ -40,9 +40,9 @@ export async function callListFirewallPolicies(
   context: RecaptchaContext,
 ): Promise<ListFirewallPoliciesResponse> {
   const options = {
-    method: 'GET',
+    method: "GET",
     headers: {
-      'content-type': 'application/json;charset=UTF-8',
+      "content-type": "application/json;charset=UTF-8",
     },
   };
   const endpoint = context.config.recaptchaEndpoint;
@@ -57,7 +57,7 @@ export async function callListFirewallPolicies(
         .json()
         .then((json) => {
           let ret = ListFirewallPoliciesResponseSchema.parse(json);
-          context.log('debug', '[rpc] listFirewallPolicies (ok)');
+          context.log("debug", "[rpc] listFirewallPolicies (ok)");
           return ret;
         })
         .catch((reason) => {
@@ -65,7 +65,7 @@ export async function callListFirewallPolicies(
         });
     })
     .catch((reason) => {
-      context.log('debug', '[rpc] listFirewallPolicies (fail)');
+      context.log("debug", "[rpc] listFirewallPolicies (fail)");
       throw new error.NetworkError(reason.message);
     });
 }
