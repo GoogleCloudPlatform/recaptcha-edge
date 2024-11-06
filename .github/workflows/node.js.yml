@@ -46,13 +46,12 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v3
         with:
           name: build-artifacts
           path: downloaded-dist
-      - uses: actions/checkout@v4
-        with:
-          path: bindings/cloudflare
+      - run: echo "Current directory - $(pwd)"
       - run: npm ci
       - run: npm run build
       - run: npm test
