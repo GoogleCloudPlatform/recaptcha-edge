@@ -81,6 +81,6 @@ jobs:
           sudo dpkg -i fastly_10.15.0_linux_amd64.deb
           sudo apt-get update
           sudo apt-get install -y --fix-missing
-      - run: npm ci
+      - run: npm i
       - run: npm run build
       - run: npm test
