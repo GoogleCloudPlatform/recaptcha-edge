@@ -49,7 +49,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: build-artifacts
-          path: downloaded-dist
+          path: dist
       - run: echo "Current directory - $(pwd)"
       - run: npm ci
       - run: npm run build
