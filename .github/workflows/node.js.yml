@@ -54,3 +54,25 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
+
+  fastly:
+    runs-on: ubuntu-latest
+    needs: core-library
+    defaults:
+      run:
+        working-directory: ./bindings/fastly
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - uses: actions/download-artifact@v3
+        with:
+          name: build-artifacts
+          path: dist
+      - run: echo "Current directory - $(pwd)"
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
