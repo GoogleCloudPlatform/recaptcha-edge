@@ -51,5 +51,8 @@ jobs:
         with:
           path: bindings/cloudflare
       - run: npm ci
+        working-directory: ./bindings/cloudflare
       - run: npm run build
+        working-directory: ./bindings/cloudflare
       - run: npm test
+        working-directory: ./bindings/cloudflare
