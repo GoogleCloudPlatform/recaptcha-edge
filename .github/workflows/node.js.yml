@@ -72,7 +72,15 @@ jobs:
         with:
           name: build-artifacts
           path: dist
-      - run: echo "Current directory - $(pwd)"
+      - run: |
+          # Add the Fastly CLI repository (replace with official source if available)
+          sudo apt-add-repository ppa:fastly-eng/fastly
+
+          # Update package lists
+          sudo apt-get update
+
+          # Install the Fastly CLI package
+          sudo apt-get install fastly-cli
       - run: npm ci
       - run: npm run build
       - run: npm test
