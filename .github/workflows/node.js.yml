@@ -73,14 +73,11 @@ jobs:
           name: build-artifacts
           path: dist
       - run: |
-          # Add the Fastly CLI repository (replace with official source if available)
-          sudo apt-add-repository ppa:fastly-eng/fastly
-
-          # Update package lists
+          # Download and install latest fastly CLi version
+          wget https://github.com/fastly/cli/releases/latest/download/fastly-cli_$(uname -m).deb
+          sudo dpkg -i fastly-cli_$(uname -m).deb
           sudo apt-get update
-
-          # Install the Fastly CLI package
-          sudo apt-get install fastly-cli
+          sudo apt-get install -y --fix-missing
       - run: npm ci
       - run: npm run build
       - run: npm test
