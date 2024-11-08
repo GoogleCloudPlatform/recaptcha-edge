@@ -6,9 +6,14 @@ on:
   pull_request:
     branches: [ "main" ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   core-library:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     strategy:
       matrix:
@@ -32,6 +37,7 @@ jobs:
   
   cloudflare:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: core-library
     defaults:
       run:
@@ -54,6 +60,7 @@ jobs:
 
   fastly:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: core-library
     defaults:
       run:
