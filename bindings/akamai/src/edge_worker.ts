@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-type Env = any;
-
 import {
   AkamaiContext,
   processRequest,
-  recaptchaConfigFromEnv,
-} from './index';
+  recaptchaConfigFromEnv
+} from './index'
+
+type Env = any
 
 /**
  * The Akamai Edge Worker function.
@@ -31,11 +31,11 @@ import {
  * to handle the request.
  */
 export const edgeWorker = {
-  async fetch(
+  async fetch (
     request: Request,
-    env: Env,
+    env: Env
   ): Promise<Response> {
-    const akamctx = new AkamaiContext(env, recaptchaConfigFromEnv(env));
-    return processRequest(akamctx, request);
-  },
-};
+    const akamctx = new AkamaiContext(env, recaptchaConfigFromEnv(env))
+    return await processRequest(akamctx, request)
+  }
+}
