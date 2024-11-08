@@ -23,7 +23,7 @@ import {
 import { createResponse } from 'create-response'
 import { HtmlRewritingStream } from 'html-rewriter'
 import { httpRequest } from 'http-request'
-import { Readable } from 'stream';
+import { ReadableStream, WritableStream } from 'streams';
 import pkg from '../package.json'
 
 type Env = any
@@ -62,9 +62,10 @@ export {
 } from '@google-cloud/recaptcha'
 
 export class AkamaiContext extends RecaptchaContext {
-  static injectRecaptchaJs(inputResponse: object) {
+  static injectRecaptchaJs (inputResponse: object) {
     throw new Error('Method not implemented.')
   }
+
   readonly sessionPageCookie = 'recaptcha-akam-t'
   readonly challengePageCookie = 'recaptcha-akam-e'
   readonly environment: [string, string] = [pkg.name, pkg.version]
@@ -117,50 +118,39 @@ export class AkamaiContext extends RecaptchaContext {
     return headers
   }
 
-  // async injectRecaptchaJs (resp: Response): Promise<Response> {
-  //   const sessionKey = this.config.sessionSiteKey
-  //   const RECAPTCHA_JS_SCRIPT = `<script src="${RECAPTCHA_JS}?render=${sessionKey}&waf=session" async defer></script>`
+  async injectRecaptchaJs (resp: Response): Promise<Response> {
+    const sessionKey = this.config.sessionSiteKey
+    const RECAPTCHA_JS_SCRIPT = `<script src="${RECAPTCHA_JS}?render=${sessionKey}&waf=session" async defer></script>`
 
-  //   // (1) Create a new rewriter instance.
-  //   const rewriter = new HtmlRewritingStream()
+    const rewriter = new HtmlRewritingStream()
 
-  //   // (2) Add a handler to the rewriter: this one adds a <script> tag to the <head>.
-  //   rewriter.onElement('head', (el) => {
-  //     el.append(`${RECAPTCHA_JS_SCRIPT}`)
-  //   })
-
-  //   // (3) Use `pipeThrough()` to modify the input HTML with the rewriter.
-  //   const htmlResponse = await httpRequest(resp.url, {
-  //     method: 'POST',
-  //     headers: {}, // TODO: check the correct headers, body
-  //     body: 'field1=value1&field2=value2'
-  //   })
-
-  //   return await (Promise.resolve(
-  //     createResponse(
-  //       resp.status,
-  //       this.getSafeResponseHeaders(resp.headers),
-  //       htmlResponse.body.pipeThrough(rewriter)
-  //     )
-  //   ) as Promise<Response>)
-  // }
-
-  async injectRecaptchaJs(resp: Response): Promise<Response> {
-    const sessionKey = this.config.sessionSiteKey;
-    const RECAPTCHA_JS_SCRIPT = `<script src="${RECAPTCHA_JS}?render=${sessionKey}&waf=session" async defer></script>`;
-  
-    const rewriter = new HtmlRewritingStream();
-  
     rewriter.onElement('head', (el) => {
-      el.append(`${RECAPTCHA_JS_SCRIPT}`);
-    });
-  
-    const readableBody = resp.body ? Readable.from(resp.body as any) : Readable.from('');
+      el.append(`${RECAPTCHA_JS_SCRIPT}`)
+    })
 
-    return new Response(readableBody, {
+    // Create a new ReadableStream from the response body
+    let readableBody: ReadableStream<Uint8Array>
+    if (resp.body) {
+      const reader = resp.body.getReader()
+      readableBody = new ReadableStream({
+        async pull(controller) {
+          const { done, value } = await reader.read()
+          if (done) {
+            controller.close()
+          } else {
+            controller.enqueue(value)
+          }
+        }
+      })
+    } else {
+      // Create an empty ReadableStream if resp.body is null
+      readableBody = new ReadableStream()
+    }
+
+    return new Response(readableBody.pipeThrough(rewriter), {
       status: resp.status,
-      headers: this.getSafeResponseHeaders(resp.headers),
-    });
+      headers: this.getSafeResponseHeaders(resp.headers)
+    })
   }
 
   // Fetch the firewall lists, then cache the firewall policies:
