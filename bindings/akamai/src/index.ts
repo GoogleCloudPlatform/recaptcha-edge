@@ -24,6 +24,7 @@ import { createResponse } from 'create-response'
 import { HtmlRewritingStream } from 'html-rewriter'
 import { httpRequest } from 'http-request'
 import { ReadableStream, WritableStream } from 'streams';
+import { HTMLRewriter } from "@worker-tools/html-rewriter";
 import pkg from '../package.json'
 
 type Env = any
@@ -118,13 +119,14 @@ export class AkamaiContext extends RecaptchaContext {
     return headers
   }
 
-  async injectRecaptchaJs (resp: Response): Promise<Response> {
+  injectRecaptchaJs (resp: Response): Promise<Response> {
     const sessionKey = this.config.sessionSiteKey
     const RECAPTCHA_JS_SCRIPT = `<script src="${RECAPTCHA_JS}?render=${sessionKey}&waf=session" async defer></script>`
 
     const rewriter = new HtmlRewritingStream()
 
     rewriter.onElement('head', (el) => {
+      console.log("el")
       el.append(`${RECAPTCHA_JS_SCRIPT}`)
     })
 
@@ -147,13 +149,14 @@ export class AkamaiContext extends RecaptchaContext {
       readableBody = new ReadableStream()
     }
 
-    return new Response(readableBody.pipeThrough(rewriter), {
+    return Promise.resolve(new Response(readableBody.pipeThrough(rewriter), {
       status: resp.status,
       headers: this.getSafeResponseHeaders(resp.headers)
-    })
+    }))
   }
 
-  // Fetch the firewall lists, then cache the firewall policies:
+  // Fetch the firewall lists.
+  // TODO: Cache the firewall policies.
   // https://techdocs.akamai.com/api-definitions/docs/caching
   // https://techdocs.akamai.com/property-mgr/docs/caching-2#how-it-works
   async fetch_list_firewall_policies (
