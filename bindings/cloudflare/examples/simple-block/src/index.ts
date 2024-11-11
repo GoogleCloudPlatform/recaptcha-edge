@@ -22,6 +22,8 @@
 import {
   CloudflareContext,
   recaptchaConfigFromEnv,
+  callCreateAssessment,
+  RecaptchaError
 } from "@google-cloud/recaptcha-cloudflare";
 
 export default {
@@ -31,12 +33,14 @@ export default {
     try {
       // TODO: check validity of token.
       const assessment = await callCreateAssessment(cfctx, request);
-      if (assessment.risk_analysis.score <= 0.3) {
+      if ((assessment.riskAnalysis?.score  ?? 0) <= 0.3) {
         block = true;
       }
-    } catch (e: RecaptchaError) {
-      if (e.recommended_action.type === "block") {
-        block = true;
+    } catch (e) {
+      if (e instanceof RecaptchaError) {
+        if ((e.recommendedAction?.type ?? "block") === "block") {
+          block = true;
+        }
       }
     }
     if (block) {

@@ -5,6 +5,7 @@
     "moduleResolution": "bundler",
     "outDir": "./dist",
     "declaration": true,
+    "emitDeclarationOnly": true,
     "strict": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
@@ -13,6 +14,7 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
     "lib": ["esnext"],
     "types": [
       "@cloudflare/workers-types/experimental",
@@ -29,6 +31,6 @@
     "test",
     "examples",
     "vite.config.ts",
-    "**/**.test.ts"
+    "**/*.test.ts"
   ]
 }

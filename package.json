@@ -3,7 +3,12 @@
   "version": "1.0.0",
   "description": "recaptcha enterprise typescript library",
   "main": "dist/index.js",
-  "exports": "./dist/index.esm.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.esm.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "type": "module",
   "types": "dist/index.d.ts",
   "files": [
@@ -33,11 +38,11 @@
     "@rollup/plugin-typescript": "^11.1.6",
     "@types/node": "^20.14.10",
     "@types/picomatch": "^2.3.4",
-    "@vitest/coverage-v8": "^1.6.0",
+    "@vitest/coverage-v8": "1.5.0",
     "cross-fetch": "^4.0.0",
     "ts-protoc-gen": "^0.15.0",
     "tslib": "^2.7.0",
     "typescript": "^5.4.5",
-    "vitest": "1.6.0"
+    "vitest": "1.5.0"
   }
 }

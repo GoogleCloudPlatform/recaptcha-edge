@@ -8,18 +8,21 @@
     "deploy": "wrangler deploy",
     "dev": "wrangler dev",
     "start": "wrangler dev",
-    "test": "vitest",
+    "test": "vitest run",
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
     "@google-cloud/recaptcha-cloudflare": "^1.0.0"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.5.2",
-    "@cloudflare/workers-types": "^4.20240909.0",
-    "typescript": "^5.5.2",
-    "vitest": "2.0.5",
-    "wrangler": "^3.60.3"
+    "@cloudflare/vitest-pool-workers": "^0.4.12",
+    "@cloudflare/workers-types": "^4.20231016.0",
+    "@types/node": "^22.9.0",
+    "miniflare": "^3.20240701.0",
+    "typescript": "^5.0.4",
+    "vitest": "1.5.0",
+    "vitest-environment-miniflare": "^2.14.2",
+    "wrangler": "^3.60.0"
   },
   "workspaces": [
     "../../"

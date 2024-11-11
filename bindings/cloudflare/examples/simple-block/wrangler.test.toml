@@ -2,4 +2,4 @@
 name = "simple-block"
 main = "src/index.ts"
 compatibility_date = "2024-09-09"
-compatibility_flags = ["nodejs_compat_v2"]
+compatibility_flags = ["nodejs_compat", "nodejs_compat_v2"]
