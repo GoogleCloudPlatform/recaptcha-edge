@@ -22,24 +22,12 @@ import 'whatwg-fetch'
 type Env = any
 
 describe('injectRecaptchaJs', () => {
-  it('should inject the reCAPTCHA script into the <head>', async () => {
+  it('should inject the reCAPTCHA script into HTML <head>', async () => {
     const recaptchaConfig = recaptchaConfigFromEnv({} as Env)
+    const sessionKey = recaptchaConfig.sessionSiteKey
     const MockAkamaiInstance = new AkamaiContext({} as Env, recaptchaConfig)
     // Mock the response from httpRequest
-    const mockHtml = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>WAF DEMO PAGE</title>
-        </head>
-        <body>
-          <header>
-            <h1>WAF DEMO PAGE ONE</h1>
-          </header>
-          <p>Welcome to the page ONE.</p>
-        </body>
-      </html>
-    `;
+    const mockHtml = `<!DOCTYPE html><html><head><h1>WAF TEST</h1></head><body></body></html>`;
     (httpRequest as jest.Mock).mockResolvedValue({
       body: Readable.from(mockHtml)
     })
@@ -50,25 +38,77 @@ describe('injectRecaptchaJs', () => {
       headers: { 'Content-Type': 'text/html' }
     })
 
-    // Call the function
     const outputResponse = await MockAkamaiInstance.injectRecaptchaJs(inputResponse)
 
-    // Assertions
+    // Assertions - http
     expect(outputResponse.status).toBe(200)
     expect(outputResponse.headers.get('Content-Type')).toBe('text/html')
 
-    // Read the modified HTML from the response body
-    let modifiedHtml = ''
+    // Read the injected HTML from the response body
+    let injectedHtml = '';
     for await (const chunk of outputResponse.body as any) {
-      modifiedHtml += chunk
+      injectedHtml += chunk;
     }
 
-    // Check if the reCAPTCHA script is present in the <head>
-    // expect(modifiedHtml).toContain(`<script src="${RECAPTCHA_JS}?render=${recaptchaConfig.sessionSiteKey}&waf=session" async defer></script>`);
+    // // Check if the reCAPTCHA script is present in the HTML <head>
+    // expect(injectedHtml).toContain(
+    //   `<script src="https://www.google.com/recaptcha/enterprise.js?render=${recaptchaConfig.sessionSiteKey}&waf=session" async defer></script>`
+    // );
   })
 
-// More test cases:
-// - Test with different status codes
-// - Test with different headers
-// - Test error handling (if any)
+it('should handle different headers', async () => {
+  const recaptchaConfig = recaptchaConfigFromEnv({} as Env);
+  const MockAkamaiInstance = new AkamaiContext({} as Env, recaptchaConfig);
+  const mockHtml = `<!DOCTYPE html><html><head></head><body></body></html>`;
+
+  const inputResponse = new Response(mockHtml, {
+    status: 200,
+    headers: { 
+      'Content-Type': 'text/html',
+      'X-Custom-Header': 'test-value' // Additional header
+    },
+  });
+
+  const outputResponse = await MockAkamaiInstance.injectRecaptchaJs(inputResponse);
+
+  expect(outputResponse.headers.get('X-Custom-Header')).toBe('test-value');
+
+});
+
+it('should not inject the reCAPTCHA script if <head> tag is not within <html> tags', async () => {
+  const recaptchaConfig = recaptchaConfigFromEnv({} as Env);
+  const sessionKey = recaptchaConfig.sessionSiteKey
+  const MockAkamaiInstance = new AkamaiContext({} as Env, recaptchaConfig);
+
+  const mockHtml = `
+    <head>
+    </head>
+  `;
+
+  (httpRequest as jest.Mock).mockResolvedValue({
+    body: Readable.from(mockHtml)
+  });
+
+  const inputResponse = new Response(mockHtml, {
+    status: 200,
+    headers: { 'Content-Type': 'text/html' }
+  });
+
+  const outputResponse = await MockAkamaiInstance.injectRecaptchaJs(inputResponse);
+
+  expect(outputResponse.status).toBe(200);
+  expect(outputResponse.headers.get('Content-Type')).toBe('text/html');
+
+  // Read the modified HTML from the response body
+  let injectedHtml = '';
+  for await (const chunk of outputResponse.body as any) {
+    injectedHtml += chunk;
+  }
+
+  // Check if the reCAPTCHA script is present in the <head>
+  expect(injectedHtml).not.toContain(
+    `<script src="https://www.google.com/recaptcha/enterprise.js?render=${recaptchaConfig.sessionSiteKey}&waf=session" async defer></script>`
+  );
+});
+
 })
