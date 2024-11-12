@@ -107,6 +107,22 @@ export class AkamaiContext extends RecaptchaContext {
     }
   }
 
+  async fetch(req: Request, options?: RequestInit): Promise<Response> {
+    // Convert RequestInfo to string if it's not already
+    const url = typeof req === 'string' ? req : req.url;
+  
+    // Use httpRequest to make the request
+    const httpResponse = await httpRequest(url, options as any);
+  
+    // Convert httpResponse to Response
+    const response = createResponse(
+      httpResponse.status,
+      httpResponse.getHeaders(),
+      httpResponse.body
+    );
+    return response;
+  }  
+
   getSafeResponseHeaders (headers: any) {
     for (const [headerKey] of Object.entries(headers)) {
       if (UNSAFE_RESPONSE_HEADERS.has(headerKey)) {
@@ -117,45 +133,40 @@ export class AkamaiContext extends RecaptchaContext {
     return headers
   }
 
-  // Originally, the function returns `createResponse - pipeThrough works on a Readablestream to include the appended <script>
-  // httpRequest() is like an extensive fetch() API, returns a httpResponse Object
-  // Now the question is, how to create a sample input response (new Response()?) in the test script?
+  injectRecaptchaJs(resp: Response): Promise<Response> {
+    const sessionKey = this.config.sessionSiteKey;
+    const RECAPTCHA_JS_SCRIPT = `<script src="${RECAPTCHA_JS}?render=${sessionKey}&waf=session" async defer></script>`;
 
-  injectRecaptchaJs (resp: Response): Promise<Response> {
-    const sessionKey = this.config.sessionSiteKey
-    const RECAPTCHA_JS_SCRIPT = `<script src="${RECAPTCHA_JS}?render=${sessionKey}&waf=session" async defer></script>`
+    const rewriter = new HtmlRewritingStream();
 
-    const rewriter = new HtmlRewritingStream()
-
-    // Adds a <script> tag to the <head>
+     // Adds a <script> tag to the <head>
     rewriter.onElement('head', (el) => {
-      console.log(el)
-      el.append(`${RECAPTCHA_JS_SCRIPT}`)
-    })
+      el.append(`${RECAPTCHA_JS_SCRIPT}`);
+    });
 
-    // Create a new ReadableStream from the response body
-    let readableBody: ReadableStream<Uint8Array>
+    let readableBody: ReadableStream<Uint8Array>;
     if (resp.body) {
-      const reader = resp.body.getReader()
+      const reader = resp.body.getReader();
       readableBody = new ReadableStream({
         async pull(controller) {
-          const { done, value } = await reader.read()
+          const { done, value } = await reader.read();
           if (done) {
-            controller.close()
+            controller.close();
           } else {
-            controller.enqueue(value)
+            controller.enqueue(value);
           }
         }
-      })
+      });
     } else {
       // Create an empty ReadableStream if resp.body is null
-      readableBody = new ReadableStream()
+      console.log("Body is NULL")
+      readableBody = new ReadableStream();
     }
 
-    return Promise.resolve(new Response((readableBody.pipeThrough(rewriter) as any).readable, {
+    return Promise.resolve(new Response(readableBody.pipeThrough(rewriter) as any, {
       status: resp.status,
-      headers: this.getSafeResponseHeaders(resp.headers)
-    }))
+      headers: this.getSafeResponseHeaders(resp.headers),
+    }));
   }
 
   // Fetch the firewall lists.
@@ -171,6 +182,7 @@ export class AkamaiContext extends RecaptchaContext {
     })
   }
 }
+
 
 export function recaptchaConfigFromEnv (env: Env): RecaptchaConfig {
   return {
