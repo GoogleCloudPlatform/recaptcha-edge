@@ -1,9 +1,6 @@
 name: Integration Tests
 
 on:
-  workflow_run:
-    workflows: [Build and Test]
-    types: [completed]
   workflow_dispatch:
 
 concurrency:
@@ -11,6 +8,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  build:
+    uses: .github/workflows/build_cloudflare.yml
+
   setup:
     strategy:
       matrix:
@@ -25,9 +25,8 @@ jobs:
           cache: 'npm'
 
   cloudflare:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    needs: [setup]
+    needs: [build, setup]
     defaults:
         run:
           working-directory: ./bindings/cloudflare
@@ -35,10 +34,11 @@ jobs:
         matrix:
             node-version: [22.x]
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: cloudflare-artifacts-node${{ matrix.node-version }}
           path: bindings/cloudflare/dist/*
+          run-id: ${{ github.event.workflow_run.id }}
       - name: Deploy to Cloudflare
         env:
             CF_EMAIL: ${{ secrets.CLOUDFLARE_EMAIL }}

@@ -1,0 +1,48 @@
+name: Build and Test Cloudflare
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+  workflow_call:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core-library:
+    uses: .github/workflows/build_core.yml
+ 
+  cloudflare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: core-library
+    defaults:
+      run:
+        working-directory: ./bindings/cloudflare
+    strategy:
+      matrix:
+        node-version: [22.x]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - uses: actions/download-artifact@v3
+        with:
+          name: core-library-artifacts-node${{ matrix.node-version }}
+          path: dist
+      - run: echo "Current directory - $(pwd)"
+      - run: npm ci
+      - run: npm run build
+      - run: npm run build:worker
+      - run: npm test
+      - uses: actions/upload-artifact@v3
+        with:
+          name: cloudflare-artifacts-node${{ matrix.node-version }}
+          path: bindings/cloudflare/dist/*
