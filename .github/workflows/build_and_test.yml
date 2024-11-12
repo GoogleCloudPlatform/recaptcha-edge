@@ -33,7 +33,7 @@ jobs:
     - run: npm test
     - uses: actions/upload-artifact@v3
       with:
-        name: build-artifacts
+        name: core-library-artifacts-node${{ matrix.node-version }}
         path: dist/*
   
   cloudflare:
@@ -55,13 +55,17 @@ jobs:
           cache: 'npm'
       - uses: actions/download-artifact@v3
         with:
-          name: build-artifacts
+          name: core-library-artifacts-node${{ matrix.node-version }}
           path: dist
       - run: echo "Current directory - $(pwd)"
       - run: npm ci
       - run: npm run build
       - run: npm run build:worker
       - run: npm test
+      - uses: actions/upload-artifact@v3
+        with:
+          name: cloudflare-artifacts-node${{ matrix.node-version }}
+          path: bindings/cloudflare/dist/*
 
   fastly:
     runs-on: ubuntu-latest
@@ -82,7 +86,7 @@ jobs:
           cache: 'npm'
       - uses: actions/download-artifact@v3
         with:
-          name: build-artifacts
+          name: core-library-artifacts-node${{ matrix.node-version }}
           path: dist
       - run: |
           # Download and install latest fastly CLi version
@@ -95,5 +99,9 @@ jobs:
           sudo apt-get install -y --fix-missing
       - run: npm i
       - run: npm run build
+      - uses: actions/upload-artifact@v3
+        with:
+          name: fastly-artifacts-node${{ matrix.node-version }}
+          path: bindings/fastly/dist/*
       # TODO: fix tests
       # - run: npm test 
