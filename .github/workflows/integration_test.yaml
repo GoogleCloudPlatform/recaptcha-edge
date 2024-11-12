@@ -2,7 +2,7 @@ name: Integration Tests
 
 on:
   workflow_run:
-    workflows: [Build and Unit Tests]
+    workflows: [Build and Test]
     types: [completed]
 
 concurrency:
