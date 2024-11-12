@@ -24,7 +24,6 @@ import { createResponse } from 'create-response'
 import { HtmlRewritingStream } from 'html-rewriter'
 import { httpRequest } from 'http-request'
 import { ReadableStream, WritableStream } from 'streams';
-import { HTMLRewriter } from "@worker-tools/html-rewriter";
 import pkg from '../package.json'
 
 type Env = any
@@ -66,7 +65,6 @@ export class AkamaiContext extends RecaptchaContext {
   static injectRecaptchaJs (inputResponse: object) {
     throw new Error('Method not implemented.')
   }
-
   readonly sessionPageCookie = 'recaptcha-akam-t'
   readonly challengePageCookie = 'recaptcha-akam-e'
   readonly environment: [string, string] = [pkg.name, pkg.version]
@@ -119,14 +117,19 @@ export class AkamaiContext extends RecaptchaContext {
     return headers
   }
 
+  // Originally, the function returns `createResponse - pipeThrough works on a Readablestream to include the appended <script>
+  // httpRequest() is like an extensive fetch() API, returns a httpResponse Object
+  // Now the question is, how to create a sample input response (new Response()?) in the test script?
+
   injectRecaptchaJs (resp: Response): Promise<Response> {
     const sessionKey = this.config.sessionSiteKey
     const RECAPTCHA_JS_SCRIPT = `<script src="${RECAPTCHA_JS}?render=${sessionKey}&waf=session" async defer></script>`
 
     const rewriter = new HtmlRewritingStream()
 
+    // Adds a <script> tag to the <head>
     rewriter.onElement('head', (el) => {
-      console.log("el")
+      console.log(el)
       el.append(`${RECAPTCHA_JS_SCRIPT}`)
     })
 
@@ -149,7 +152,7 @@ export class AkamaiContext extends RecaptchaContext {
       readableBody = new ReadableStream()
     }
 
-    return Promise.resolve(new Response(readableBody.pipeThrough(rewriter), {
+    return Promise.resolve(new Response((readableBody.pipeThrough(rewriter) as any).readable, {
       status: resp.status,
       headers: this.getSafeResponseHeaders(resp.headers)
     }))
