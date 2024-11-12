@@ -18,7 +18,7 @@
 import {
   processRequest,
   RecaptchaConfig,
-  RecaptchaContext
+  RecaptchaContext,
 } from '@google-cloud/recaptcha'
 import { createResponse } from 'create-response'
 import { HtmlRewritingStream } from 'html-rewriter'
@@ -73,7 +73,6 @@ export class AkamaiContext extends RecaptchaContext {
   performance_counters: Array<[string, number]> = []
 
   constructor (
-    private readonly env: Env,
     cfg: RecaptchaConfig
   ) {
     super(cfg)
@@ -120,7 +119,7 @@ export class AkamaiContext extends RecaptchaContext {
       httpResponse.getHeaders(),
       httpResponse.body
     );
-    return response;
+    return response as any;
   }  
 
   getSafeResponseHeaders (headers: any) {
@@ -145,7 +144,7 @@ export class AkamaiContext extends RecaptchaContext {
     });
 
     let readableBody: ReadableStream<Uint8Array>;
-    if (resp.body) {
+    if (resp.body) { // Double check why it's NULL
       const reader = resp.body.getReader();
       readableBody = new ReadableStream({
         async pull(controller) {
@@ -183,17 +182,25 @@ export class AkamaiContext extends RecaptchaContext {
   }
 }
 
-
-export function recaptchaConfigFromEnv (env: Env): RecaptchaConfig {
+export function recaptchaConfigFromEnv(request: EW.IngressClientRequest): RecaptchaConfig {
+  console.log(request)
   return {
-    projectNumber: env.PMUSER_GCPPROJECTNUMBER,
-    apiKey: env.PMUSER_GCPAPIKEY,
-    actionSiteKey: env.PMUSER_RECAPTCHAACTIONSITEKEY,
-    expressSiteKey: env.PMUSER_RECAPTCHAEXPRESSSITEKEY,
-    sessionSiteKey: env.PMUSER_RECAPTCHASESSIONSITEKEY,
-    challengePageSiteKey: env.PMUSER_RECAPTCHACHALLENGESITEKEY,
-    recaptchaEndpoint: env.RECAPTCHA_ENDPOINT ?? DEFAULT_RECAPTCHA_ENDPOINT,
-    sessionJsInjectPath: env.PMUSER_RECAPTCHAJSINSTALL,
-    debug: env.DEBUG ?? false
+    projectNumber: parseInt(request.getVariable("PMUSER_GCPPROJECTNUMBER") || '0', 10),
+    apiKey: request.getVariable("PMUSER_GCPAPIKEY") || "",
+    actionSiteKey: request.getVariable("PMUSER_RECAPTCHAACTIONSITEKEY") || "",
+    expressSiteKey: request.getVariable("PMUSER_RECAPTCHAEXPRESSSITEKEY") || "",
+    sessionSiteKey: request.getVariable("PMUSER_RECAPTCHASESSIONSITEKEY") || "",
+    challengePageSiteKey: request.getVariable("PMUSER_RECAPTCHACHALLENGESITEKEY") || "",
+    recaptchaEndpoint: request.getVariable("RECAPTCHA_ENDPOINT") || request.getVariable(DEFAULT_RECAPTCHA_ENDPOINT) || "",
+    debug: request.getVariable('DEBUG') === 'true'
   }
+}
+
+export async function responseProvider(request: EW.IngressClientRequest) {
+  const recaptchaConfig = recaptchaConfigFromEnv(request);
+  const akamaiContext = new AkamaiContext(recaptchaConfig);
+
+  // Use the akamaiContext and its methods to handle the request
+  const response = await processRequest(akamaiContext, request as any);
+  return response;
 }
