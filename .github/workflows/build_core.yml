@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  core-library:
+  build-and-test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 

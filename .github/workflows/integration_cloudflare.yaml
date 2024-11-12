@@ -1,4 +1,4 @@
-name: Integration Tests
+name: Integration Test Cloudflare
 
 on:
   workflow_dispatch:

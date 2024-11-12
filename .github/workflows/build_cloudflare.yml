@@ -13,13 +13,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  core-library:
+  build-core:
     uses: ./.github/workflows/build_core.yml
  
   cloudflare:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: core-library
+    needs: build-core
     defaults:
       run:
         working-directory: ./bindings/cloudflare
