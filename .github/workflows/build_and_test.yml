@@ -59,6 +59,7 @@ jobs:
       - run: echo "Current directory - $(pwd)"
       - run: npm ci
       - run: npm run build
+      - run: npm run build:worker
       - run: npm test
 
   fastly:
