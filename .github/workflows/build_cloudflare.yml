@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   core-library:
-    uses: ./github/workflows/build_core.yml
+    uses: ./github/workflows/build_core.yml@${{ github.ref }}
  
   cloudflare:
     runs-on: ubuntu-latest

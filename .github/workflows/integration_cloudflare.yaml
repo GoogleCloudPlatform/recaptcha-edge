@@ -9,7 +9,7 @@ concurrency:
 
 jobs:
   build:
-    uses: .github/workflows/build_cloudflare.yml
+    uses: ./github/workflows/build_cloudflare.yml@${{ github.ref }}
 
   setup:
     strategy:
