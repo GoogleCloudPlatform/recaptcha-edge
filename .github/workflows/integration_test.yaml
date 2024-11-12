@@ -12,9 +12,17 @@ concurrency:
 
 jobs:
   setup:
+    strategy:
+      matrix:
+        node-version: [22.x]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
 
   cloudflare:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
@@ -29,7 +37,8 @@ jobs:
     steps:
       - uses: actions/download-artifact@v3
         with:
-          path: dist
+          name: cloudflare-artifacts-node${{ matrix.node-version }}
+          path: bindings/cloudflare/dist/*
       - name: Deploy to Cloudflare
         env:
             CF_EMAIL: ${{ secrets.CLOUDFLARE_EMAIL }}
