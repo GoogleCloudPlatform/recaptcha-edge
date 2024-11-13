@@ -11,8 +11,12 @@ jobs:
   build:
     uses: ./.github/workflows/build_cloudflare.yml
 
-  setup:
+  deploy:
     runs-on: ubuntu-latest
+    needs: [build]
+    defaults:
+        run:
+          working-directory: ./bindings/cloudflare
     steps:
       - uses: actions/checkout@v4
       - name: Use Node.js 22.x
@@ -20,17 +24,6 @@ jobs:
         with:
           node-version: 22.x
           cache: 'npm'
-
-  cloudflare:
-    runs-on: ubuntu-latest
-    needs: [build, setup]
-    defaults:
-        run:
-          working-directory: ./bindings/cloudflare
-    strategy:
-        matrix:
-            node-version: [22.x]
-    steps:
       - uses: actions/download-artifact@v4
         with:
           name: cloudflare-artifacts
