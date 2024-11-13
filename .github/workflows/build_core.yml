@@ -1,0 +1,25 @@
+name: Build and Test Core Library
+
+on:
+    workflow_dispatch:
+    workflow_call:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js 22.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22.x'
+        cache: 'npm'
+    - run: npm ci
+    - run: npm run build
+    - run: npm test
+    - uses: actions/upload-artifact@v4
+      with:
+        name: core-library-artifacts
+        path: dist/*

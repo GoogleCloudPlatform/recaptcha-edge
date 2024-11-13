@@ -1,9 +1,6 @@
-name: Integration Tests
+name: Integration Test Cloudflare
 
 on:
-  workflow_run:
-    workflows: [Build and Test]
-    types: [completed]
   workflow_dispatch:
 
 concurrency:
@@ -11,15 +8,22 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  build:
+    uses: ./.github/workflows/build_cloudflare.yml
+
   setup:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'npm'
 
   cloudflare:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    needs: [setup]
+    needs: [build, setup]
     defaults:
         run:
           working-directory: ./bindings/cloudflare
@@ -27,9 +31,10 @@ jobs:
         matrix:
             node-version: [22.x]
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
-          path: dist
+          name: cloudflare-artifacts
+          path: bindings/cloudflare/dist/*
       - name: Deploy to Cloudflare
         env:
             CF_EMAIL: ${{ secrets.CLOUDFLARE_EMAIL }}
