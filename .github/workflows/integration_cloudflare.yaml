@@ -29,11 +29,9 @@ jobs:
         with:
           name: cloudflare-artifacts
           path: bindings/cloudflare/dist
-      - run: ls -la dist
-      - run: pwd
       - name: Deploy to Cloudflare
         env:
-            CLOUDFLARE_EMAIL: ${{ secrets.CLOUDFLARE_EMAIL }}
+            CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
             CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: npm run deploy:nobuild
      #- name: Run Integration Tests
