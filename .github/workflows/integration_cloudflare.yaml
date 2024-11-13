@@ -12,16 +12,13 @@ jobs:
     uses: ./.github/workflows/build_cloudflare.yml
 
   setup:
-    strategy:
-      matrix:
-        node-version: [22.x]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Use Node.js 22.x
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 22.x
           cache: 'npm'
 
   cloudflare:
@@ -36,9 +33,8 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: cloudflare-artifacts-node${{ matrix.node-version }}
+          name: cloudflare-artifacts
           path: bindings/cloudflare/dist/*
-          run-id: ${{ github.event.workflow_run.id }}
       - name: Deploy to Cloudflare
         env:
             CF_EMAIL: ${{ secrets.CLOUDFLARE_EMAIL }}
