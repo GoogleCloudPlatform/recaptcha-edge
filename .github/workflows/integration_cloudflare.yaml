@@ -24,6 +24,7 @@ jobs:
         with:
           node-version: 22.x
           cache: 'npm'
+      - run: npm ci
       - uses: actions/download-artifact@v4
         with:
           name: cloudflare-artifacts
