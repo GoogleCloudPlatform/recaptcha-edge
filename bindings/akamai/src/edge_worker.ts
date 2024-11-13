@@ -19,7 +19,10 @@ import {
   AkamaiContext,
   processRequest,
   recaptchaConfigFromEnv
-} from './index.js'
+} from './index'
+import { HtmlRewritingStream } from "html-rewriter";
+import { httpRequest } from "http-request";
+import { createResponse } from "create-response";
 
 type Env = any
 
@@ -33,9 +36,12 @@ type Env = any
 
 export async function responseProvider(request: EW.IngressClientRequest) {
   const recaptchaConfig = recaptchaConfigFromEnv(request);
+  // convert the Akamai request to Request
   const akamaiContext = new AkamaiContext(recaptchaConfig);
 
   // Use the akamaiContext and its methods to handle the request
   const response = await processRequest(akamaiContext, request as any);
-  return response;
+
+  // convert Response back to createResponse
+  return createResponse(200, {}, response.body as any);
 }

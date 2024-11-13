@@ -6,7 +6,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "esbuild --bundle src/edge_worker.ts --platform=node --format=esm --external:create-response --external:http-request --external:html-rewriter --external:streams --outdir=dist && mv dist/edge_worker.js dist/main.js && cp src/bundle.json dist/ && cd dist && tar -czvf ../akamai.tgz *",
+        "build": "esbuild --bundle src/edge_worker.ts --platform=node --format=esm --external:create-response --external:http-request --external:html-rewriter --external:streams --external:log --outdir=dist && mv dist/edge_worker.js dist/main.js && cp src/bundle.json dist/ && cd dist && tar -czvf ../akamai.tgz *",
         "test": "jest"
     },
     "jest": {
