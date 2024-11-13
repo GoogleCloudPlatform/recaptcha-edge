@@ -23,6 +23,7 @@ import {
 import { createResponse } from 'create-response'
 import { HtmlRewritingStream } from 'html-rewriter'
 import { httpRequest } from 'http-request'
+import { logger } from 'log'
 import { ReadableStream, WritableStream } from 'streams';
 import pkg from '../package.json'
 
@@ -159,6 +160,7 @@ export class AkamaiContext extends RecaptchaContext {
     } else {
       // Create an empty ReadableStream if resp.body is null
       console.log("Body is NULL")
+      logger.log("Request body is NULL")
       readableBody = new ReadableStream();
     }
 
@@ -184,6 +186,7 @@ export class AkamaiContext extends RecaptchaContext {
 
 export function recaptchaConfigFromEnv(request: EW.IngressClientRequest): RecaptchaConfig {
   console.log(request)
+  logger.log(request.getVariable("PMUSER_RECAPTCHAACTIONSITEKEY") || "")
   return {
     projectNumber: parseInt(request.getVariable("PMUSER_GCPPROJECTNUMBER") || '0', 10),
     apiKey: request.getVariable("PMUSER_GCPAPIKEY") || "",
@@ -191,16 +194,7 @@ export function recaptchaConfigFromEnv(request: EW.IngressClientRequest): Recapt
     expressSiteKey: request.getVariable("PMUSER_RECAPTCHAEXPRESSSITEKEY") || "",
     sessionSiteKey: request.getVariable("PMUSER_RECAPTCHASESSIONSITEKEY") || "",
     challengePageSiteKey: request.getVariable("PMUSER_RECAPTCHACHALLENGESITEKEY") || "",
-    recaptchaEndpoint: request.getVariable("RECAPTCHA_ENDPOINT") || request.getVariable(DEFAULT_RECAPTCHA_ENDPOINT) || "",
+    recaptchaEndpoint: request.getVariable(DEFAULT_RECAPTCHA_ENDPOINT) || "", // || request.getVariable("RECAPTCHA_ENDPOINT")
     debug: request.getVariable('DEBUG') === 'true'
   }
-}
-
-export async function responseProvider(request: EW.IngressClientRequest) {
-  const recaptchaConfig = recaptchaConfigFromEnv(request);
-  const akamaiContext = new AkamaiContext(recaptchaConfig);
-
-  // Use the akamaiContext and its methods to handle the request
-  const response = await processRequest(akamaiContext, request as any);
-  return response;
 }
