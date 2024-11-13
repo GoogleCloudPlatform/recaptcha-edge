@@ -29,10 +29,19 @@ jobs:
         with:
           name: cloudflare-artifacts
           path: bindings/cloudflare/dist
-      - name: Deploy to Cloudflare
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: ./bindings/cloudflare
+          command: deploy dist/cloudflare_worker.js --no-bundle
+          secrets: |
+            API_KEY
+            PROJECT_NUMBER
         env:
-            CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-            CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: npm run deploy:nobuild
+          API_KEY: test
+          PROJECT_NUMBER: test2
+
+
      #- name: Run Integration Tests
      #   run: ./integration_test.sh
