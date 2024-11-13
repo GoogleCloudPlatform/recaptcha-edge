@@ -28,7 +28,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: cloudflare-artifacts
-          path: bindings/cloudflare/dist/*
+          path: bindings/cloudflare/dist
       - run: ls -la dist
       - run: pwd
       - name: Deploy to Cloudflare
