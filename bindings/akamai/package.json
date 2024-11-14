@@ -8,7 +8,7 @@
     "license": "ISC",
     "main": "dist/edge_worker.js",
     "scripts": {
-        "build": "esbuild --bundle src/edge_worker.ts --platform=node --format=esm --external:create-response --external:http-request --external:html-rewriter --external:streams --external:log --outdir=dist && mv dist/edge_worker.js dist/main.js && cp src/bundle.json dist/ && cd dist && tar -czvf ../akamai.tgz *",
+        "build": "esbuild --bundle src/edge_worker.ts --platform=node --format=esm --external:create-response --external:http-request --external:html-rewriter --external:streams --external:log --outdir=dist && mv dist/edge_worker.js dist/main.js && cp src/bundle.json dist/ && cd dist && tar -czvf akamai.tgz bundle.json main.js",
         "devclean": "rm -rf node_nodules && rm -rf dist && rm package-lock.json",
         "test": "jest"
     },
@@ -34,7 +34,6 @@
         "edgeworkers-jest-mocks": "^1.0.28",
         "esbuild": "^0.24.0",
         "esbuild-plugin-tsc": "^0.4.0",
-        "rollup-plugin-copy-assets": "^2.0.3",
         "ts-jest": "^29.2.5",
         "typescript": "^5.5.3",
         "whatwg-fetch": "^3.6.20"

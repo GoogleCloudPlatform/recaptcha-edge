@@ -4,3 +4,4 @@ bindings/**/dist/*
 bindings/**/pkg/*
 bindings/**/bin/*
 bindings/**/node_modules/*
+.DS_Store
