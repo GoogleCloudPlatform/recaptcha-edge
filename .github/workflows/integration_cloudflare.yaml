@@ -45,11 +45,11 @@ jobs:
             SESSION_JS_INSTALL_PATH
         env:
           API_KEY: test
-          PROJECT_NUMBER: test2
-          ACTION_SITE_KEY: test3
-          SESSION_SITE_KEY: test4
-          CHALLENGE_PAGE_SITE_KEY: test5
-          EXPRESS_SITE_KEY: test6
+          PROJECT_NUMBER: ${{ secrets.CLOUDFLARE_PROJECT_NUMBER }}
+          ACTION_SITE_KEY: ${{ secrets.CLOUDFLARE_ACTION_SITE_KEY }}
+          SESSION_SITE_KEY: ${{ secrets.CLOUDFLARE_SESSION_SITE_KEY }}
+          CHALLENGE_PAGE_SITE_KEY: ${{ secrets.CLOUDFLARE_CHALLENGE_PAGE_SITE_KEY }}
+          EXPRESS_SITE_KEY: ${{ secrets.CLOUDFLARE_EXPRESS_SITE_KEY }}
           SESSION_JS_INSTALL_PATH: test7
 
      #- name: Run Integration Tests
