@@ -16,7 +16,6 @@
  */
 
 import {
-  processRequest,
   RecaptchaConfig,
   RecaptchaContext,
 } from '@google-cloud/recaptcha'
@@ -24,10 +23,56 @@ import { createResponse } from 'create-response'
 import { HtmlRewritingStream } from 'html-rewriter'
 import { httpRequest } from 'http-request'
 import { logger } from 'log'
-import { ReadableStream, WritableStream } from 'streams';
+import { ReadableStream } from 'streams';
 import pkg from '../package.json'
 
 type Env = any
+
+type RequestInfo = Request | string;
+
+function headersGuard(headers: Headers | Record<string, string | readonly string[]> | string[][] | undefined): Record<string, string | string[]> {
+  if (headers === undefined) {
+    return {};
+  }
+
+  // We have Headers
+  if (headers instanceof Headers) {
+    const headerObj: Record<string, string> = {};
+    headers.forEach((value, key) => {
+      headerObj[key] = value;
+    });
+    return headerObj;
+  }
+
+  // We have string[][]
+  if(Array.isArray(headers)) {
+    const headerMap: Record<string, string | string[]> = {};
+
+    headers.forEach(([key, ...values]) => {
+      headerMap[key] = values.length === 1 ? values[0] : values;
+    });
+  
+    return headerMap;
+  }
+
+  // We have Record<string, string | readonly string[]>
+  // remove readonly attribute
+  const headerMap: Record<string, string | string[]> = {};
+  for (const key in headers) {
+    const value = headerMap[key];
+    headerMap[key] = value.length === 1 ? value[0] : value;
+  }
+
+  return headerMap;
+}
+
+function bodyGuard(body: any | null): string | ReadableStream | undefined {
+  if (body === null) { return undefined; }
+  if (typeof body === 'string' || body instanceof ReadableStream) {
+    return body as string | ReadableStream;
+  } 
+  throw "Invalid request body"
+}
 
 const RECAPTCHA_JS = 'https://www.google.com/recaptcha/enterprise.js'
 // Firewall Policies API is currently only available in the public preview.
@@ -107,20 +152,29 @@ export class AkamaiContext extends RecaptchaContext {
     }
   }
 
-  async fetch(req: Request, options?: RequestInit): Promise<Response> {
+  async fetch(req: RequestInfo, options?: RequestInit): Promise<Response> {
     // Convert RequestInfo to string if it's not already
     const url = typeof req === 'string' ? req : req.url;
-  
-    // Use httpRequest to make the request
-    const httpResponse = await httpRequest(url, options as any);
-  
-    // Convert httpResponse to Response
-    const response = createResponse(
-      httpResponse.status,
-      httpResponse.getHeaders(),
-      httpResponse.body
-    );
-    return response as any;
+    
+    return httpRequest(url, {
+        method: options?.method ?? undefined,
+        headers: headersGuard(options?.headers), 
+        body: bodyGuard(options?.body ?? null)
+        /* there is no timeout in a Fetch API request. Consider making it a member of the Contexxt */
+    }).then((resp) => { return {
+      ...resp, 
+      body: null, // TODO
+      type: 'basic', 
+      url: '', 
+      statusText: resp.status.toString(), 
+      bodyUsed: false,
+      redirected: false,
+      headers: new Headers(resp.getHeaders()),
+      arrayBuffer: () => {throw "unimplemented"},
+      blob: () => {throw "unimplemented"},
+      clone: () => {throw "unimplemented"},
+      formData: () => {throw "unimplemented"},
+    }})
   }  
 
   getSafeResponseHeaders (headers: any) {
@@ -175,7 +229,7 @@ export class AkamaiContext extends RecaptchaContext {
   // https://techdocs.akamai.com/api-definitions/docs/caching
   // https://techdocs.akamai.com/property-mgr/docs/caching-2#how-it-works
   async fetch_list_firewall_policies (
-    req: Request,
+    req: RequestInfo,
     options?: RequestInit
   ): Promise<Response> {
     return await this.fetch(req, {
@@ -184,7 +238,7 @@ export class AkamaiContext extends RecaptchaContext {
   }
 }
 
-export function recaptchaConfigFromEnv(request: EW.IngressClientRequest): RecaptchaConfig {
+export function recaptchaConfigFromRequest(request: EW.IngressClientRequest): RecaptchaConfig {
   console.log(request)
   logger.log(request.getVariable("PMUSER_RECAPTCHAACTIONSITEKEY") || "")
   return {
@@ -194,7 +248,7 @@ export function recaptchaConfigFromEnv(request: EW.IngressClientRequest): Recapt
     expressSiteKey: request.getVariable("PMUSER_RECAPTCHAEXPRESSSITEKEY") || "",
     sessionSiteKey: request.getVariable("PMUSER_RECAPTCHASESSIONSITEKEY") || "",
     challengePageSiteKey: request.getVariable("PMUSER_RECAPTCHACHALLENGESITEKEY") || "",
-    recaptchaEndpoint: request.getVariable(DEFAULT_RECAPTCHA_ENDPOINT) || "", // || request.getVariable("RECAPTCHA_ENDPOINT")
+    recaptchaEndpoint: request.getVariable(DEFAULT_RECAPTCHA_ENDPOINT) || "",
     debug: request.getVariable('DEBUG') === 'true'
   }
 }
