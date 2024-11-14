@@ -18,11 +18,10 @@
 import {
   AkamaiContext,
   processRequest,
-  recaptchaConfigFromEnv
+  recaptchaConfigFromRequest
 } from './index'
-import { HtmlRewritingStream } from "html-rewriter";
-import { httpRequest } from "http-request";
 import { createResponse } from "create-response";
+import { ReadableStream } from "streams";
 
 type Env = any
 
@@ -34,14 +33,14 @@ type Env = any
  * to handle the request.
  */
 
-export async function responseProvider(request: EW.IngressClientRequest) {
-  const recaptchaConfig = recaptchaConfigFromEnv(request);
-  // convert the Akamai request to Request
-  const akamaiContext = new AkamaiContext(recaptchaConfig);
+export async function responseProvider(inreq: EW.IngressClientRequest) {
+  const akamaiContext = new AkamaiContext(recaptchaConfigFromRequest(inreq));
 
+  let req = {...new Request(inreq.url, inreq), ...inreq};
   // Use the akamaiContext and its methods to handle the request
-  const response = await processRequest(akamaiContext, request as any);
+  const response = await processRequest(akamaiContext, req);
 
   // convert Response back to createResponse
-  return createResponse(200, {}, response.body as any);
+  // TODO: populate headers
+  return createResponse(response.status, {}, (response.body ?? '') as (ReadableStream | string));
 }

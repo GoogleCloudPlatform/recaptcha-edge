@@ -14,38 +14,12 @@
  * limitations under the License.
  */
 
-import { AkamaiContext, recaptchaConfigFromEnv } from './index'
+import { AkamaiContext, RecaptchaConfig, recaptchaConfigFromRequest } from './index'
 import { responseProvider } from './edge_worker'
 import { createResponse } from 'create-response'
 import { httpRequest, HttpResponse } from 'http-request'
 import { Readable } from 'stream'
 import 'whatwg-fetch'
-
-type Env = any
-
-describe('demonstrates unit testing edgeworker written in TypeScript', () => {
-
-  beforeEach(() => {
-      jest.clearAllMocks();
-  });
-  
-  test("onClientRequest should respond with Hello World", () => {
-      let requestMock = new Request();
-      let responseMock = new Response();
-      onClientRequest(requestMock, responseMock);
-      expect(requestMock.respondWith).toHaveBeenCalledTimes(1);
-      expect(requestMock.respondWith).toHaveBeenCalledWith(200, {}, "<html><body><h1>Hello World From Akamai EdgeWorkers</h1></body></html>");
-  });
-
-  test("onClientResponse should set X-Hello-World header to a hashed value", () => {
-      let requestMock = new Request();
-      let responseMock = new Response();
-      onClientResponse(requestMock, responseMock);
-      expect(responseMock.setHeader).toHaveBeenCalledTimes(1);
-      expect(responseMock.setHeader).toHaveBeenCalledWith('X-Hello-World','5e748421a43bbfa7eaffe4f8e0be823e');
-  });
-
-});
 
 describe('injectRecaptchaJs', () => {
   beforeEach(() => {
@@ -53,8 +27,12 @@ describe('injectRecaptchaJs', () => {
   });
 
   it('should inject the reCAPTCHA script into HTML <head>', async () => {
-    const recaptchaConfig = recaptchaConfigFromEnv({} as Env)
-    recaptchaConfig.sessionSiteKey = "123";
+    const recaptchaConfig: RecaptchaConfig = {
+      projectNumber: 123,
+      apiKey: "apikey",
+      recaptchaEndpoint: 'www.recaptchaenterprise.googleapis.com',
+      sessionSiteKey: "sessionkey"
+    };
     const MockAkamaiInstance = new AkamaiContext(recaptchaConfig)
     // Mock the response from httpRequest
     const mockHtml = `<!DOCTYPE html><html><head><h1>WAF TEST</h1></head><body></body></html>`;
@@ -104,7 +82,12 @@ describe('Akamai reCAPTCHA Integration Tests', () => {
       }
     });
 
-    const recaptchaConfig = recaptchaConfigFromEnv(request as any);
+    const recaptchaConfig: RecaptchaConfig = {
+      projectNumber: 123,
+      apiKey: "apikey",
+      recaptchaEndpoint: 'www.recaptchaenterprise.googleapis.com',
+      sessionSiteKey: "sessionkey"
+    };
     // const mockAkamaiInstance = new AkamaiContext(recaptchaConfig);
 
     // Mock httpRequest to simulate fetching firewall policies
