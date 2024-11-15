@@ -43,6 +43,7 @@ jobs:
             CHALLENGE_PAGE_SITE_KEY
             EXPRESS_SITE_KEY
             SESSION_JS_INSTALL_PATH
+            ENDPOINT
         env:
           API_KEY: test
           PROJECT_NUMBER: ${{ secrets.CLOUDFLARE_PROJECT_NUMBER }}
@@ -51,6 +52,19 @@ jobs:
           CHALLENGE_PAGE_SITE_KEY: ${{ secrets.CLOUDFLARE_CHALLENGE_PAGE_SITE_KEY }}
           EXPRESS_SITE_KEY: ${{ secrets.CLOUDFLARE_EXPRESS_SITE_KEY }}
           SESSION_JS_INSTALL_PATH: test7
-
-     #- name: Run Integration Tests
-     #   run: ./integration_test.sh
+          ENDPOINT: ${{secrets.CLOUDFLARE_ENDPOINT}}
+  test: 
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'npm'
+      - run: npm ci --prefix integration
+      - name: Run Integration Tests
+        run: |
+          cd ../integration 
+          npm test
