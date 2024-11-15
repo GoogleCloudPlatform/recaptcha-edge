@@ -1,0 +1,36 @@
+name: Integration Test Akamai
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-integrate-akamai
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/build_akamai.yml
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build]
+    defaults:
+        run:
+          working-directory: ./bindings/akamai
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'npm'
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: akamai-artifacts
+          path: bindings/akamai/dist
+      - run: npm run pack
+    # TODO: deploy
+
+     #- name: Run Integration Tests
+     #   run: ./integration_test.sh

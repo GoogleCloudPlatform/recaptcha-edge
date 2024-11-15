@@ -8,7 +8,9 @@
     "license": "ISC",
     "main": "dist/edge_worker.js",
     "scripts": {
-        "build": "esbuild --bundle src/edge_worker.ts --platform=node --format=esm --external:create-response --external:http-request --external:html-rewriter --external:streams --external:log --outdir=dist && mv dist/edge_worker.js dist/main.js && cp src/bundle.json dist/ && cd dist && tar -czvf akamai.tgz bundle.json main.js",
+        "build": "esbuild --bundle src/edge_worker.ts --platform=node --format=esm --external:create-response --external:http-request --external:html-rewriter --external:streams --external:log --outdir=dist && mv dist/edge_worker.js dist/main.js && cp src/bundle.json dist/",
+        "pack": "cd dist && tar -czvf akamai.tgz bundle.json main.js",
+        "deploy": "",
         "devclean": "rm -rf node_nodules && rm -rf dist && rm package-lock.json",
         "test": "jest"
     },
