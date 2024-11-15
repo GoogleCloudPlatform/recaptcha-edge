@@ -3,14 +3,13 @@
   "version": "1.0.0",
   "description": "Integration tests for Cloudflare Worker",
   "scripts": {
-    "test": "vitest run" 
+    "test": "vitest run"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.4.12",
+    "@cloudflare/vitest-pool-workers": "^0.4.31",
     "@cloudflare/workers-types": "^4.20231016.0",
-    "@types/node-fetch": "^2.6.12",
     "vitest": "1.5.0"
   }
 }

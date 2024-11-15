@@ -1,7 +1,7 @@
 name = "recaptcha-waf" # name of the worker for cloudflare
 main = "src/cloudflare_worker.ts"
 compatibility_date = "2024-09-09"
-compatibility_flags = ["nodejs_compat_v2" ]
+compatibility_flags = ["nodejs_compat" ]
 
 # [vars]
 # The Google API key that you created for authentication (required).
