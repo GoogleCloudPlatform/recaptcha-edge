@@ -30,6 +30,10 @@ jobs:
           name: akamai-artifacts
           path: bindings/akamai/dist
       - run: npm run pack
+      - run: wget https://github.com/akamai/cli/releases/download/v1.6.0/akamai-v1.6.0-linuxamd64
+      - run: chmod +x akamai-v1.6.0-linuxamd64
+      - run: mv akamai-v1.6.0-linuxamd64 /usr/local/bin/akamai
+      - run: akamai --version
     # TODO: deploy
 
      #- name: Run Integration Tests
