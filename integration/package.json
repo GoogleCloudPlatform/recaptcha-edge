@@ -8,6 +8,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@cloudflare/puppeteer": "^0.0.14",
     "@cloudflare/vitest-pool-workers": "^0.4.31",
     "@cloudflare/workers-types": "^4.20231016.0",
     "vitest": "1.5.0"

@@ -45,7 +45,7 @@ jobs:
             SESSION_JS_INSTALL_PATH
             ENDPOINT
         env:
-          API_KEY: test
+          API_KEY: ${{ secrets.CLOUDFLARE_API_KEY }}
           PROJECT_NUMBER: ${{ secrets.CLOUDFLARE_PROJECT_NUMBER }}
           ACTION_SITE_KEY: ${{ secrets.CLOUDFLARE_ACTION_SITE_KEY }}
           SESSION_SITE_KEY: ${{ secrets.CLOUDFLARE_SESSION_SITE_KEY }}
