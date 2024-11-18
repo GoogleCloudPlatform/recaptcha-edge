@@ -5,7 +5,8 @@ import {
   SELF,
   waitOnExecutionContext,
 } from "cloudflare:test";
-import { expect, test, describe } from 'vitest'; 
+import { expect, test, describe } from 'vitest';
+import puppeteer from "@cloudflare/puppeteer";
 import "../bindings/cloudflare/src";
 
 describe('Cloudflare Worker Integration Test', () => {

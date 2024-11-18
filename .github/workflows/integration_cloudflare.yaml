@@ -51,7 +51,7 @@ jobs:
           SESSION_SITE_KEY: ${{ secrets.CLOUDFLARE_SESSION_SITE_KEY }}
           CHALLENGE_PAGE_SITE_KEY: ${{ secrets.CLOUDFLARE_CHALLENGE_PAGE_SITE_KEY }}
           EXPRESS_SITE_KEY: ${{ secrets.CLOUDFLARE_EXPRESS_SITE_KEY }}
-          SESSION_JS_INSTALL_PATH: test7
+          SESSION_JS_INSTALL_PATH: ${{ secrets.CLOUDFLARE_SESSION_JS_INSTALL_PATH }}
           ENDPOINT: ${{secrets.CLOUDFLARE_ENDPOINT}}
   test: 
     runs-on: ubuntu-latest
@@ -66,5 +66,5 @@ jobs:
       - run: npm ci --prefix integration
       - name: Run Integration Tests
         run: |
-          cd ../integration 
+          cd ../../integration 
           npm test
