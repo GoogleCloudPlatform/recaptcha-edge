@@ -27,5 +27,6 @@ export default defineWorkersConfig({
     },
     include: ["*.test.{ts,tsx}"],
     exclude: ['node_modules', 'dist'],
+    testTimeout: 25000,
   },
 });

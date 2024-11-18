@@ -52,12 +52,14 @@ test("nomatch-ok", async () => {
       actions: [{ block: {}, type: "block" }],
     },
   ];
+  // Mock the first fetch request to get firewall policies
   fetchMock
     .get("https://recaptchaenterprise.googleapis.com")
     .intercept({
       path: "/v1/projects/12345/firewallpolicies?key=abc123&page_size=1000",
     })
     .reply(200, JSON.stringify({ firewallPolicies: testPolicies }));
+  // Mock the second fetch request to get assessment
   fetchMock
     .get("https://recaptchaenterprise.googleapis.com")
     .intercept({

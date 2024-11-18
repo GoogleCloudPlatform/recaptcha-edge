@@ -66,5 +66,5 @@ jobs:
       - run: npm ci --prefix integration
       - name: Run Integration Tests
         run: |
-          cd ../../integration 
+          cd ./integration 
           npm test
