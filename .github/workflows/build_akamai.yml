@@ -16,7 +16,7 @@ jobs:
   build-core:
     uses: ./.github/workflows/build_core.yml
  
-  cloudflare:
+  akamai:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: build-core
