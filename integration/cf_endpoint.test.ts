@@ -1,5 +1,4 @@
 import { expect, test, describe } from 'vitest';
-import "../bindings/cloudflare/src";
 
 describe('Check Different Actions', () => {
   // const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
