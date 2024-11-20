@@ -65,19 +65,17 @@ export function policyConditionMatch(
     return true;
   }
   const condition = policy.condition.toLowerCase();
-  return eval(condition)
-  // // A 'true' condition always matches.
-  // if (condition === "true") {
-  //   return true;
-  // }
-
-  // // A 'false' condition doesn't make sense, but some customers might use it
-  // // to temporarily disable a policy.
-  // if (condition === "false") {
-  //   return false;
-  // }
-  // // TODO: handle non-recaptcha-namespace conditions like IP only.
-  // return "unknown";
+  // A 'true' condition always matches.
+  if (condition === "true") {
+    return true;
+  }
+  // A 'false' condition doesn't make sense, but some customers might use it
+  // to temporarily disable a policy.
+  if (condition === "false") {
+    return false;
+  }
+  // TODO: handle non-recaptcha-namespace conditions like IP only.
+  return "unknown";
 }
 
 /**
