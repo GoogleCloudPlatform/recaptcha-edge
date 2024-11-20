@@ -29,19 +29,18 @@ jobs:
         with:
           name: akamai-artifacts
           path: bindings/akamai/dist
-      - run: npm run pack
       - run: wget https://github.com/akamai/cli/releases/download/v1.6.0/akamai-v1.6.0-linuxamd64
       - run: chmod +x akamai-v1.6.0-linuxamd64
       - run: mv akamai-v1.6.0-linuxamd64 /usr/local/bin/akamai
-      - run: sudo apt-get install -y jq # JSON output parser
       - run: printf "${{ secrets.AKAMAI_EDGERC }}" >> ~/.edgerc
-      - run: akamai install edgeworkers
-      - run: akamai ew upload --edgerc ~/.edgerc --jsonout --bundle dist/akamai.tgz ${{ secrets.AKAMAI_INTEGRATION_EW_ID }}
-      - run: akamai ew list-versions --edgerc ~/.edgerc --jsonout ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} | jq .data[-1].version
+      - run: akamai install edgeworkers # edgeworkers subcommand must be explicitly installed
       - run:  |
-         upload_out=$( akamai ew upload --edgerc ~/.edgerc --jsonout --bundle dist/akamai.tgz ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} )
          latest_version=$(akamai ew list-versions --edgerc ~/.edgerc --jsonout ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} | jq .data[-1].version)
-         activate_out=$( akamai ew activate --edgerc ~/.edgerc --jsonout ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} staging $latest_version )
+         next_version=$(awk -F. '{printf "%s.%s.%s\n", $1, $2, $3+1}' <<< "$version")
+         echo '{"edgeworker-version": "$next_version"}' >> dist/bundle.json
+         npm run pack
+         upload_out=$( akamai ew upload --edgerc ~/.edgerc --jsonout --bundle dist/akamai.tgz ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} )
+         activate_out=$( akamai ew activate --edgerc ~/.edgerc --jsonout ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} staging $next_version )
     # TODO: deploy
 
      #- name: Run Integration Tests
