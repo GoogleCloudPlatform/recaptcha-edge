@@ -33,7 +33,12 @@ jobs:
       - run: wget https://github.com/akamai/cli/releases/download/v1.6.0/akamai-v1.6.0-linuxamd64
       - run: chmod +x akamai-v1.6.0-linuxamd64
       - run: mv akamai-v1.6.0-linuxamd64 /usr/local/bin/akamai
-      - run: akamai --version
+      - run: sudo apt-get install -y jq # JSON output parser
+      - run: printf "${{ secrets.AKAMAI_EDGERC }}" >> ~/.edgerc
+      - run:  |
+         upload_out=$( akamai ew upload --edgerc ~/.edgerc --jsonout --bundle dist/akamai.tgz ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} )
+         latest_version=$(akamai ew list-versions --edgerc ~/.edgerc --jsonout ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} | jq .data[-1].version)
+         activate_out=$( akamai ew activate --edgerc ~/.edgerc --jsonout ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} staging $latest_version )
     # TODO: deploy
 
      #- name: Run Integration Tests
