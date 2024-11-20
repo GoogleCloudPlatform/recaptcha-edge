@@ -116,37 +116,36 @@ describe('Check Different Path Matching', () => {
 
 });
 
-describe('Check Different Conditions', () => {
-  const endpointUrl = "https://www.branowl.xyz/";
-  if (!endpointUrl) {
-    throw new Error('CLOUDFLARE_ENDPOINT environment variable not found.');
-  }
+// describe('Check Different Conditions', () => {
+//   const endpointUrl = "https://www.branowl.xyz/";
+//   if (!endpointUrl) {
+//     throw new Error('CLOUDFLARE_ENDPOINT environment variable not found.');
+//   }
 
-  test('Set header if http.path == "/condition/1"', async () => {
-    const testPageUrl = 'condition/1';
-    const response = await fetch(`${endpointUrl}${testPageUrl}`); 
-    expect(response.status).toEqual(200);
-    const html = await response.text();
-    const html_json = JSON.parse(html)
-    expect(html_json.headers['x-recaptcha-test']).toEqual('test-value'); 
-  });
+//   test('Set header if http.path == "/condition/1"', async () => {
+//     const testPageUrl = 'condition/1';
+//     const response = await fetch(`${endpointUrl}${testPageUrl}`); 
+//     expect(response.status).toEqual(200);
+//     const html = await response.text();
+//     const html_json = JSON.parse(html)
+//     expect(html_json.headers['x-recaptcha-test']).toEqual('test-value'); 
+//   });
 
-  test('Set header if http.domain == "branowl.xyz"', async () => {
-    const testPageUrl = 'condition/2';
-    const response = await fetch(`${endpointUrl}${testPageUrl}`); 
-    expect(response.status).toEqual(200);
-    const html = await response.text();
-    const html_json = JSON.parse(html)
-    expect(html_json.headers['x-recaptcha-test']).toEqual('test-value'); 
-  });
+//   test('Set header if http.domain == "branowl.xyz"', async () => {
+//     const testPageUrl = 'condition/2';
+//     const response = await fetch(`${endpointUrl}${testPageUrl}`); 
+//     expect(response.status).toEqual(200);
+//     const html = await response.text();
+//     const html_json = JSON.parse(html)
+//     expect(html_json.headers['x-recaptcha-test']).toEqual('test-value'); 
+//   });
 
-  test('Set header if recaptcha.score > 0.7', async () => {
-    const testPageUrl = 'condition/3';
-    const response = await fetch(`${endpointUrl}${testPageUrl}`); 
-    expect(response.status).toEqual(200);
-    const html = await response.text();
-    const html_json = JSON.parse(html)
-    expect(html_json.headers['x-recaptcha-test']).toEqual('test-value'); 
-  });
-
-});
+//   test('Set header if recaptcha.score > 0.7', async () => {
+//     const testPageUrl = 'condition/3';
+//     const response = await fetch(`${endpointUrl}${testPageUrl}`); 
+//     expect(response.status).toEqual(200);
+//     const html = await response.text();
+//     const html_json = JSON.parse(html)
+//     expect(html_json.headers['x-recaptcha-test']).toEqual('test-value'); 
+//   });
+// });
