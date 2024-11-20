@@ -37,7 +37,7 @@ jobs:
       - run: |
          latest_version=$(akamai ew list-versions --edgerc ~/.edgerc --jsonout ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} | jq .data[-1].version)
          echo latest version: $latest_version
-         next_version=$(awk -F. '{printf "%s.%s.%s\n", $1, $2, $3+1}' <<< "$version")
+         next_version=$(awk -F. '{printf "%s.%s.%s\n", $1, $2, $3+1}' <<< "$latest_version")
          echo next version: $next_version
          echo '{"edgeworker-version": "$next_version"}' >> dist/bundle.json
          npm run pack
