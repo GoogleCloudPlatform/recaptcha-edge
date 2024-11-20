@@ -35,6 +35,8 @@ jobs:
       - run: mv akamai-v1.6.0-linuxamd64 /usr/local/bin/akamai
       - run: sudo apt-get install -y jq # JSON output parser
       - run: printf "${{ secrets.AKAMAI_EDGERC }}" >> ~/.edgerc
+      - run: akamai ew upload --edgerc ~/.edgerc --jsonout --bundle dist/akamai.tgz ${{ secrets.AKAMAI_INTEGRATION_EW_ID }}
+      - run: akamai ew list-versions --edgerc ~/.edgerc --jsonout ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} | jq .data[-1].version
       - run:  |
          upload_out=$( akamai ew upload --edgerc ~/.edgerc --jsonout --bundle dist/akamai.tgz ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} )
          latest_version=$(akamai ew list-versions --edgerc ~/.edgerc --jsonout ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} | jq .data[-1].version)
