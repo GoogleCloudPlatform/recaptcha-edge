@@ -87,6 +87,7 @@ test("nomatch-ok", async () => {
       }),
     })
     .reply(200, JSON.stringify({ firewallPolicyAssessment: {} }));
+  // Mock the third fetch request to the actual website
   fetchMock
     .get("http://example.com")
     .intercept({ path: "/teste2e" })
