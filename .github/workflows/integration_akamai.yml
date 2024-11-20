@@ -36,14 +36,15 @@ jobs:
       - run: akamai install edgeworkers # edgeworkers subcommand must be explicitly installed
       - run: |
          latest_version=$(akamai ew list-versions --edgerc ~/.edgerc --jsonout ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} | jq .data[-1].version)
-         echo $latest_version
-      - run: |
-         latest_version=$(akamai ew list-versions --edgerc ~/.edgerc --jsonout ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} | jq .data[-1].version)
+         echo latest version: $latest_version
          next_version=$(awk -F. '{printf "%s.%s.%s\n", $1, $2, $3+1}' <<< "$version")
+         echo next version: $next_version
          echo '{"edgeworker-version": "$next_version"}' >> dist/bundle.json
          npm run pack
          upload_out=$( akamai ew upload --edgerc ~/.edgerc --jsonout --bundle dist/akamai.tgz ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} )
+         echo $upload_out
          activate_out=$( akamai ew activate --edgerc ~/.edgerc --jsonout ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} staging $next_version )
+         echo $activate_out
     # TODO: deploy
 
      #- name: Run Integration Tests
