@@ -12,32 +12,19 @@
         "pack": "cd dist && tar -czvf akamai.tgz bundle.json main.js",
         "deploy": "",
         "devclean": "rm -rf node_nodules && rm -rf dist && rm package-lock.json",
-        "test": "jest"
-    },
-    "jest": {
-        "testEnvironment": "node",
-        "transformIgnorePatterns": [
-            "node_modules/(?!edgeworkers-jest-mocks/__mocks__)"
-        ],
-        "moduleDirectories": [
-            "node_modules",
-            "node_modules/edgeworkers-jest-mocks/__mocks__"
-        ]
+        "test": "vitest"
     },
     "dependencies": {
         "@google-cloud/recaptcha": "^1.0.0"
     },
     "devDependencies": {
-        "@types/jest": "^29.5.14",
         "@types/node": "^22.9.0",
-        "@types/request": "^2.48.12",
-        "@types/akamai-edgeworkers": "^1.1.17",
         "@types/node-fetch": "^2.6.11",
-        "edgeworkers-jest-mocks": "^1.0.28",
+        "@types/request": "^2.48.12",
         "esbuild": "^0.24.0",
         "esbuild-plugin-tsc": "^0.4.0",
-        "ts-jest": "^29.2.5",
         "typescript": "^5.5.3",
+        "vitest": "^2.1.5",
         "whatwg-fetch": "^3.6.20"
     },
     "workspaces": [
