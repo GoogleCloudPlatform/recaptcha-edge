@@ -19,7 +19,6 @@ import {
   RecaptchaConfig,
   RecaptchaContext,
 } from '@google-cloud/recaptcha'
-import { createResponse } from 'create-response'
 import { HtmlRewritingStream } from 'html-rewriter'
 import { httpRequest } from 'http-request'
 import { logger } from 'log'
@@ -175,7 +174,7 @@ export class AkamaiContext extends RecaptchaContext {
       clone: () => {throw "unimplemented"},
       formData: () => {throw "unimplemented"},
     }})
-  }  
+  }
 
   getSafeResponseHeaders (headers: any) {
     for (const [headerKey] of Object.entries(headers)) {
