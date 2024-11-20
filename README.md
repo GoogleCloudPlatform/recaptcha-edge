@@ -1,6 +1,8 @@
 # reCAPTCHA WAF (Edge Compute) Library
 
-[![Build and Test](https://github.com/GoogleCloudPlatform/recaptcha-waf/actions/workflows/node.js.yml/badge.svg)](https://github.com/GoogleCloudPlatform/recaptcha-waf/actions/workflows/node.js.yml)
+[![Build and Test Core Library](https://github.com/GoogleCloudPlatform/recaptcha-waf/actions/workflows/build_core.yml/badge.svg)](https://github.com/GoogleCloudPlatform/recaptcha-waf/actions/workflows/build_core.yml)
+[![Build and Test Cloudflare Binding](https://github.com/GoogleCloudPlatform/recaptcha-waf/actions/workflows/build_cloudflare.yml/badge.svg)](https://github.com/GoogleCloudPlatform/recaptcha-waf/actions/workflows/build_cloudflare.yml)
+[![Build and Test Fastly Binding](https://github.com/GoogleCloudPlatform/recaptcha-waf/actions/workflows/build_fastly.yml/badge.svg)](https://github.com/GoogleCloudPlatform/recaptcha-waf/actions/workflows/build_fastly.yml)
 
 A library to access reCAPTCHA Enterprise via various edge compute platforms. The currently supported platforms are:
 
