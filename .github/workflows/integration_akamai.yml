@@ -61,7 +61,7 @@ jobs:
          while true; do
            out=$(akamai ew status --edgerc ~/.edgerc --jsonout ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} --versionId ${{ steps.get-next-version.outputs.NEXT_VERSION }})
            if [[ $(echo $out | jq -r .data[0].status) == "COMPLETE" ]]; then
-                echo "Akamai check completed successfully."
+                echo "Akamai activation completed successfully."
                 break
            fi
            if (( $(date +%s) - $start_time >= $timeout )); then
@@ -71,7 +71,7 @@ jobs:
            echo "Deployment status: $(echo $out | jq .data[0].status). Sleeping"
            sleep 10
          done
-
-
-     #- name: Run Integration Tests
-     #   run: ./integration_test.sh
+      - name: Set Properties
+        run: echo TODO
+      - name: Run Integraiton Test
+        run: echo TODO
