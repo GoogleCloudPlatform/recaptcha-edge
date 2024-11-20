@@ -34,20 +34,44 @@ jobs:
       - run: mv akamai-v1.6.0-linuxamd64 /usr/local/bin/akamai
       - run: printf "${{ secrets.AKAMAI_EDGERC }}" >> ~/.edgerc
       - run: akamai install edgeworkers # edgeworkers subcommand must be explicitly installed
-      - run: |
-         echo ::add-mask::${{ secrets.AKAMAI_EMAIL }}
+      - run: echo ::add-mask::${{ secrets.AKAMAI_EMAIL }}
+      - name: Get Next Version
+        id: get-next-version
+        run: |
          latest_version=$(akamai ew list-versions --edgerc ~/.edgerc --jsonout ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} | jq -r .data[-1].version)
          echo latest version: $latest_version
          next_version=$(awk -F. '{printf "%s.%s.%s", $1, $2, $3+1}' <<< "$latest_version")
          echo next version: $next_version
-         echo "{\"edgeworker-version\": \"$next_version\"}" > dist/bundle.json
+         echo "LATEST_VERSION=$latest_version" >> "$GITHUB_OUTPUT"
+         echo "NEXT_VERSION=$next_version" >> "$GITHUB_OUTPUT"
+      - name: Produce Bundle
+        run: |
+         echo "{\"edgeworker-version\": \"${{ steps.get-next-version.outputs.NEXT_VERSION }}\"}" > dist/bundle.json
          npm run pack
          echo package created.
          akamai ew validate dist/akamai.tgz
-         upload_out=$(akamai ew upload --edgerc ~/.edgerc --jsonout --bundle dist/akamai.tgz ${{ secrets.AKAMAI_INTEGRATION_EW_ID }})
-         echo $upload_out
-         activate_out=$(akamai ew activate --edgerc ~/.edgerc --jsonout ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} staging $next_version)
-         echo $activate_out
+      - name: Upload Bundle
+        run: akamai ew upload --edgerc ~/.edgerc --jsonout --bundle dist/akamai.tgz ${{ secrets.AKAMAI_INTEGRATION_EW_ID }}
+      - name: Activate Bundle
+        run: akamai ew activate --edgerc ~/.edgerc --jsonout ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} staging ${{ steps.get-next-version.outputs.NEXT_VERSION }}
+      - name: Wait for Activation
+        run: |
+         timeout=600
+         start_time=$(date +%s)
+         while true; do
+           out=$(akamai ew status --edgerc ~/.edgerc --jsonout ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} --versionId ${{ steps.get-next-version.outputs.NEXT_VERSION }})
+           if [[ $(echo $out | jq .data[0].status) == "COMPLETE" ]]; then
+                echo "Akamai check completed successfully."
+                break
+           fi
+           if (( $(date +%s) - $start_time >= $timeout )); then
+            echo "Akamai activation timeout out after $timeout seconds. Status: $(echo $out | jq .data[0].status), expected COMPLETE."
+            break
+           fi
+           echo "Deployment status: $(echo $out | jq .data[0].status). Sleeping"
+           sleep 10
+         done
+
 
      #- name: Run Integration Tests
      #   run: ./integration_test.sh
