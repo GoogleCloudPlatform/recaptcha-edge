@@ -39,13 +39,14 @@ jobs:
          echo latest version: $latest_version
          next_version=$(awk -F. '{printf "%s.%s.%s", $1, $2, $3+1}' <<< "$latest_version")
          echo next version: $next_version
-         echo "{\"edgeworker-version\": \"$next_version\"}" >> dist/bundle.json
+         echo "{\"edgeworker-version\": \"$next_version\"}" > dist/bundle.json
          npm run pack
-         upload_out=$( akamai ew upload --edgerc ~/.edgerc --jsonout --bundle dist/akamai.tgz ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} )
+         echo package created.
+         akamai ew validate dist/akamai.tgz
+         upload_out=$(akamai ew upload --edgerc ~/.edgerc --jsonout --bundle dist/akamai.tgz ${{ secrets.AKAMAI_INTEGRATION_EW_ID }})
          echo $upload_out
-         activate_out=$( akamai ew activate --edgerc ~/.edgerc --jsonout ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} staging $next_version )
+         activate_out=$(akamai ew activate --edgerc ~/.edgerc --jsonout ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} staging $next_version)
          echo $activate_out
-    # TODO: deploy
 
      #- name: Run Integration Tests
      #   run: ./integration_test.sh
