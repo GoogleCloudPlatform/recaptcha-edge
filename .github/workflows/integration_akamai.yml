@@ -60,7 +60,7 @@ jobs:
          start_time=$(date +%s)
          while true; do
            out=$(akamai ew status --edgerc ~/.edgerc --jsonout ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} --versionId ${{ steps.get-next-version.outputs.NEXT_VERSION }})
-           if [[ $(echo $out | jq .data[0].status) == "COMPLETE" ]]; then
+           if [[ $(echo $out | jq -r .data[0].status) == "COMPLETE" ]]; then
                 echo "Akamai check completed successfully."
                 break
            fi
