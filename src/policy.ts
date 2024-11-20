@@ -69,7 +69,6 @@ export function policyConditionMatch(
   if (condition === "true") {
     return true;
   }
-
   // A 'false' condition doesn't make sense, but some customers might use it
   // to temporarily disable a policy.
   if (condition === "false") {

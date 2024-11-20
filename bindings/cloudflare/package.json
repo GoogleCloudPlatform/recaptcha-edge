@@ -20,7 +20,7 @@
     "@worker-tools/html-rewriter": "^0.1.0-pre.19"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.4.12",
+    "@cloudflare/vitest-pool-workers": "^0.4.31",
     "@cloudflare/workers-types": "^4.20231016.0",
     "miniflare": "^3.20240701.0",
     "typescript": "^5.0.4",
