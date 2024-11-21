@@ -9,7 +9,7 @@ on:
   workflow_call:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-fastly
   cancel-in-progress: true
 
 jobs:
@@ -43,11 +43,10 @@ jobs:
           sudo dpkg -i fastly_10.15.0_linux_amd64.deb
           sudo apt-get update
           sudo apt-get install -y --fix-missing
-      - run: npm i
+      - run: npm ci
       - run: npm run build
       - uses: actions/upload-artifact@v4
         with:
           name: fastly-artifacts
           path: bindings/fastly/dist/*
-      # TODO: fix tests
-      # - run: npm test 
+      - run: npm test 
