@@ -25,10 +25,10 @@ export const ErrorSchema = z
         .object({
           code: z.number().optional(),
           message: z.string().optional(),
-          status: z.number().optional(),
+          status: z.number().or(z.string()).optional(),
         });
 
-export const RpcErrorSchema = z.object({error: errorSchema});
+export const RpcErrorSchema = z.object({error: ErrorSchema.required()});
 
 /** Zod Schema for FirewallPolicy type. */
 export const FirewallPolicySchema = z.object({

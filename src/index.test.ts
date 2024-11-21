@@ -20,7 +20,6 @@
 import { expect, test, vi } from "vitest";
 
 import {
-  ActionSchema,
   applyActions,
   callCreateAssessment,
   callListFirewallPolicies,
@@ -34,6 +33,7 @@ import {
   RecaptchaConfig,
   RecaptchaContext,
   SetHeaderAction,
+  LogLevel
 } from "./index";
 
 import { ActionSchema, createBlockAction } from "./action";
@@ -41,7 +41,7 @@ import { ActionSchema, createBlockAction } from "./action";
 class TestContext extends RecaptchaContext {
   config: RecaptchaConfig = {
     recaptchaEndpoint: "https://recaptchaenterprise.googleapis.com",
-    projectNumber: "12345",
+    projectNumber: 12345,
     apiKey: "abc123",
     actionSiteKey: "action-site-key",
     expressSiteKey: "express-site-key",
@@ -51,11 +51,13 @@ class TestContext extends RecaptchaContext {
   sessionPageCookie = "recaptcha-test-t";
   challengePageCookie = "recaptcha-test-e";
   httpGetCachingEnabled = true;
+  exceptions: any[] = [];
+  log_messages: Array<[LogLevel, string[]]> = [];
   logException = (e: any) => {
-    // Do nothing.
+    this.exceptions.push(e);
   };
   log = (level: LogLevel, msg: string) => {
-    // Do nothing.
+    this.log_messages.push([level, [msg]]);
   };
   buildEvent = (req: Request) => {
     return EventSchema.parse({
@@ -594,6 +596,27 @@ test("localPolicyAssessment-badJson", async () => {
   expect(fetch).toHaveBeenCalledTimes(1);
 });
 
+test("localPolicyAssessment-errJson", async () => {
+  const context = new TestContext();
+  const req = new Request("https://www.example.com/testlocal");
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((url) => {
+      expect(url).toEqual(
+        "https://recaptchaenterprise.googleapis.com/v1/projects/12345/firewallpolicies?key=abc123&page_size=1000",
+      );
+      return Promise.resolve({
+        status: 200,
+        json: () => Promise.resolve({error: {message: "bad", code: 400, status: "INVALID_ARGUMENT"}}),
+      });
+    }),
+  );
+  const localAssessment = await localPolicyAssessment(context, req);
+  expect(localAssessment).toEqual("recaptcha-required");
+  expect(context.exceptions[0].message).toEqual("bad");
+  expect(fetch).toHaveBeenCalledTimes(1);
+});
+
 test("evaluatePolicyAssessment-ok", async () => {
   const context = new TestContext();
   const req = new Request("https://www.example.com/testlocal");
@@ -656,6 +679,26 @@ test("evaluatePolicyAssessment-badJson", async () => {
   );
   const assessment = await evaluatePolicyAssessment(context, req);
   expect(assessment[0].type).toEqual("allow");
+  expect(fetch).toHaveBeenCalledTimes(1);
+});
+
+test("evaluatePolicyAssessment-errJson", async () => {
+  const context = new TestContext();
+  const req = new Request("https://www.example.com/testlocal");
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((url) => {
+      expect(url).toEqual(
+        "https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123",
+      );
+      return Promise.resolve({
+        status: 200,
+        json: () => Promise.resolve({error: {message: "bad", code: 400, status: "INVALID_ARGUMENT"}}),
+      });
+    }),
+  );
+  const assessment = await evaluatePolicyAssessment(context, req);
+  expect(context.exceptions[0].message).toEqual("bad");
   expect(fetch).toHaveBeenCalledTimes(1);
 });
 
