@@ -19,7 +19,7 @@
  */
 
 import * as action from "./action";
-import { Assessment, AssessmentSchema, Event, EventSchema } from "./assessment";
+import { Assessment, AssessmentSchema, Event, EventSchema, RpcErrorSchema } from "./assessment";
 import * as error from "./error";
 import { RecaptchaContext } from "./index";
 
