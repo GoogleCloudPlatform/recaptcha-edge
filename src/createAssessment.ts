@@ -132,13 +132,13 @@ export async function callCreateAssessment(
       return response
         .json()
         .then((json) => {
+          let ret = AssessmentSchema.safeParse(json);
+          if (ret.success && Object.keys(ret.data).length > 0) {
+            return ret.data;
+          }
           let err_ret = RpcErrorSchema.required().safeParse(json);
           if (err_ret.success) {
             throw err_ret.data.error;
-          }
-          let ret = AssessmentSchema.safeParse(json);
-          if (ret.success) {
-            return ret.data;
           }
           throw {message: "Response does not conform to Assesment schema: " + json};
         })
