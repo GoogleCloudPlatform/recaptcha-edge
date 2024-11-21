@@ -17,7 +17,7 @@
 /**
  * Tests for index.ts
  */
-import { expect, test, vi } from "vitest";
+import { expect, test, vi, Mock } from "vitest";
 
 import {
   applyActions,
@@ -36,18 +36,20 @@ import {
   LogLevel
 } from "./index";
 
-import { ActionSchema, createBlockAction } from "./action";
+import { Action, ActionSchema, createBlockAction } from "./action";
+
+const testConfig: RecaptchaConfig = {
+  recaptchaEndpoint: "https://recaptchaenterprise.googleapis.com",
+  projectNumber: 12345,
+  apiKey: "abc123",
+  actionSiteKey: "action-site-key",
+  expressSiteKey: "express-site-key",
+  sessionSiteKey: "session-site-key",
+  challengePageSiteKey: "challenge-page-site-key",
+};
 
 class TestContext extends RecaptchaContext {
-  config: RecaptchaConfig = {
-    recaptchaEndpoint: "https://recaptchaenterprise.googleapis.com",
-    projectNumber: 12345,
-    apiKey: "abc123",
-    actionSiteKey: "action-site-key",
-    expressSiteKey: "express-site-key",
-    sessionSiteKey: "session-site-key",
-    challengePageSiteKey: "challenge-page-site-key",
-  };
+  config = testConfig;
   sessionPageCookie = "recaptcha-test-t";
   challengePageCookie = "recaptcha-test-e";
   httpGetCachingEnabled = true;
@@ -92,7 +94,7 @@ test("callCreateAssessment-ok", async () => {
   );
 
   const testContext = {
-    ...new TestContext(),
+    ...new TestContext(testConfig),
     buildEvent: (req: Request) => {
       return baseEvent;
     },
@@ -101,7 +103,7 @@ test("callCreateAssessment-ok", async () => {
   };
 
   const resp = await callCreateAssessment(
-    testContext,
+    testContext as RecaptchaContext,
     new Request("https://www.google.com", {
       headers: {
         "X-Recaptcha-Token": "test-token",
@@ -155,7 +157,7 @@ test("callListFirewallPolicies-ok", async () => {
     ),
   );
 
-  const resp = await callListFirewallPolicies(new TestContext());
+  const resp = await callListFirewallPolicies(new TestContext(testConfig));
   expect(fetch).toHaveBeenCalledWith(
     "https://recaptchaenterprise.googleapis.com/v1/projects/12345/firewallpolicies?key=abc123&page_size=1000",
     {
@@ -183,7 +185,7 @@ test("ActionSchema-parseOk", () => {
 });
 
 test("ApplyActions-allow", async () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/doallow");
   vi.stubGlobal(
     "fetch",
@@ -200,7 +202,7 @@ test("ApplyActions-allow", async () => {
 });
 
 test("ApplyActions-block", async () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/doblock");
   vi.stubGlobal(
     "fetch",
@@ -216,7 +218,7 @@ test("ApplyActions-block", async () => {
 });
 
 test("ApplyActions-setHeader", async () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/setheader");
   vi.stubGlobal(
     "fetch",
@@ -236,7 +238,7 @@ test("ApplyActions-setHeader", async () => {
   expect(fetch).toHaveBeenCalledTimes(1);
 });
 test("ApplyActions-redirect", async () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/originalreq");
   req.headers.set("test-key", "test-value");
   vi.stubGlobal(
@@ -261,7 +263,7 @@ test("ApplyActions-redirect", async () => {
   expect(fetch).toHaveBeenCalledTimes(1);
 });
 test("ApplyActions-substitute", async () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/substitute");
   vi.stubGlobal(
     "fetch",
@@ -282,7 +284,7 @@ test("ApplyActions-substitute", async () => {
 });
 
 test("ApplyActions-injectJs", async () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/testinject");
   vi.stubGlobal(
     "fetch",
@@ -306,7 +308,7 @@ test("ApplyActions-injectJs", async () => {
 });
 
 test("ApplyActions-injectJsOnlyOnce", async () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/testinject");
   vi.stubGlobal(
     "fetch",
@@ -331,7 +333,7 @@ test("ApplyActions-injectJsOnlyOnce", async () => {
 });
 
 test("localPolicyAssessment-matchTrivialCondition", async () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/testlocal");
   const testPolicies = [
     {
@@ -366,14 +368,14 @@ test("localPolicyAssessment-matchTrivialCondition", async () => {
     }),
   );
   const localAssessment = await localPolicyAssessment(context, req);
-  expect(localAssessment as action.Action[]).toEqual([
+  expect(localAssessment as Action[]).toEqual([
     ActionSchema.parse({ block: {} }),
   ]);
   expect(fetch).toHaveBeenCalledTimes(1);
 });
 
 test("localPolicyAssessment-noMatch", async () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/testlocal");
   const testPolicies = [
     {
@@ -408,14 +410,14 @@ test("localPolicyAssessment-noMatch", async () => {
     }),
   );
   const localAssessment = await localPolicyAssessment(context, req);
-  expect(localAssessment as action.Action[]).toEqual([
+  expect(localAssessment as Action[]).toEqual([
     ActionSchema.parse({ allow: {} }),
   ]);
   expect(fetch).toHaveBeenCalledTimes(1);
 });
 
 test("localPolicyAssessment-matchNontrivialCondition", async () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/testlocal");
   const testPolicies = [
     {
@@ -560,7 +562,7 @@ test("policyConditionMatch", async () => {
 });
 
 test("localPolicyAssessment-failedRpc", async () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/testlocal");
   vi.stubGlobal(
     "fetch",
@@ -577,7 +579,7 @@ test("localPolicyAssessment-failedRpc", async () => {
 });
 
 test("localPolicyAssessment-badJson", async () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/testlocal");
   vi.stubGlobal(
     "fetch",
@@ -597,7 +599,7 @@ test("localPolicyAssessment-badJson", async () => {
 });
 
 test("localPolicyAssessment-errJson", async () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/testlocal");
   vi.stubGlobal(
     "fetch",
@@ -618,7 +620,7 @@ test("localPolicyAssessment-errJson", async () => {
 });
 
 test("evaluatePolicyAssessment-ok", async () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/testlocal");
   vi.stubGlobal(
     "fetch",
@@ -646,7 +648,7 @@ test("evaluatePolicyAssessment-ok", async () => {
 });
 
 test("evaluatePolicyAssessment-failedRpc", async () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/testlocal");
   vi.stubGlobal(
     "fetch",
@@ -663,7 +665,7 @@ test("evaluatePolicyAssessment-failedRpc", async () => {
 });
 
 test("evaluatePolicyAssessment-badJson", async () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/testlocal");
   vi.stubGlobal(
     "fetch",
@@ -683,7 +685,7 @@ test("evaluatePolicyAssessment-badJson", async () => {
 });
 
 test("evaluatePolicyAssessment-errJson", async () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/testlocal");
   vi.stubGlobal(
     "fetch",
@@ -703,7 +705,7 @@ test("evaluatePolicyAssessment-errJson", async () => {
 });
 
 test("processRequest-ok", async () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/teste2e");
   const testPolicies = [
     {
@@ -723,13 +725,13 @@ test("processRequest-ok", async () => {
     },
   ];
   vi.stubGlobal("fetch", vi.fn());
-  fetch.mockImplementationOnce(() =>
+  (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
       json: () => Promise.resolve({ firewallPolicies: testPolicies }),
     }),
   );
-  fetch.mockImplementationOnce(() =>
+  (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
       json: () =>
@@ -743,7 +745,7 @@ test("processRequest-ok", async () => {
         }),
     }),
   );
-  fetch.mockImplementationOnce(() =>
+  (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
       text: () => Promise.resolve("<HTML>Hello World</HTML>"),
@@ -755,7 +757,7 @@ test("processRequest-ok", async () => {
 });
 
 test("processRequest-nomatch", async () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/teste2e");
   const testPolicies = [
     {
@@ -775,13 +777,13 @@ test("processRequest-nomatch", async () => {
     },
   ];
   vi.stubGlobal("fetch", vi.fn());
-  fetch.mockImplementationOnce(() =>
+  (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
       json: () => Promise.resolve({ firewallPolicies: testPolicies }),
     }),
   );
-  fetch.mockImplementationOnce(() =>
+  (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
       text: () => Promise.resolve("<HTML>Hello World</HTML>"),
@@ -793,7 +795,7 @@ test("processRequest-nomatch", async () => {
 });
 
 test("processRequest-inject", async () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   context.config.sessionJsInjectPath =
     "/somepath;/some/other/path;/teste2e;/another/path";
   const req = new Request("https://www.example.com/teste2e");
@@ -815,13 +817,13 @@ test("processRequest-inject", async () => {
     },
   ];
   vi.stubGlobal("fetch", vi.fn());
-  fetch.mockImplementationOnce(() =>
+  (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
       json: () => Promise.resolve({ firewallPolicies: testPolicies }),
     }),
   );
-  fetch.mockImplementationOnce(() =>
+  (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
       text: () => Promise.resolve("<HTML>Hello World</HTML>"),
@@ -835,7 +837,7 @@ test("processRequest-inject", async () => {
 });
 
 test("processRequest-noinject", async () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   context.config.sessionJsInjectPath =
     "/somepath;/some/other/path;/another/path";
   const req = new Request("https://www.example.com/teste2e");
@@ -857,13 +859,13 @@ test("processRequest-noinject", async () => {
     },
   ];
   vi.stubGlobal("fetch", vi.fn());
-  fetch.mockImplementationOnce(() =>
+  (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
       json: () => Promise.resolve({ firewallPolicies: testPolicies }),
     }),
   );
-  fetch.mockImplementationOnce(() =>
+  (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
       text: () => Promise.resolve("<HTML>Hello World</HTML>"),
@@ -875,7 +877,7 @@ test("processRequest-noinject", async () => {
 });
 
 test("processRequest-block", async () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/teste2e");
   const testPolicies = [
     {
@@ -894,7 +896,7 @@ test("processRequest-block", async () => {
     },
   ];
   vi.stubGlobal("fetch", vi.fn());
-  fetch.mockImplementationOnce(() =>
+  (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
       json: () => Promise.resolve({ firewallPolicies: testPolicies }),
@@ -906,16 +908,16 @@ test("processRequest-block", async () => {
 });
 
 test("processRequest-raise", async () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/teste2e");
   vi.stubGlobal("fetch", vi.fn());
-  fetch.mockImplementationOnce(() => {
+  (fetch as Mock).mockImplementationOnce(() => {
     throw "garbagelist";
   });
-  fetch.mockImplementationOnce(() => {
+  (fetch as Mock).mockImplementationOnce(() => {
     throw "garbageassessment";
   });
-  fetch.mockImplementationOnce(() =>
+  (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
       text: () => Promise.resolve("<HTML>Hello World</HTML>"),
@@ -928,7 +930,7 @@ test("processRequest-raise", async () => {
 });
 
 test("insertFeaturesIntoEvent-actionToken", () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/teste2e", {
     headers: { "X-Recaptcha-Token": "action-token" },
   });
@@ -948,7 +950,7 @@ test("insertFeaturesIntoEvent-actionToken", () => {
 });
 
 test("insertFeaturesIntoEvent-sessionToken", () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/test", {
     headers: { cookie: "recaptcha-test-t=session-token" },
   });
@@ -968,7 +970,7 @@ test("insertFeaturesIntoEvent-sessionToken", () => {
 });
 
 test("insertFeaturesIntoEvent-challengeToken", () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/test", {
     headers: { cookie: "recaptcha-test-e=challenge-token" },
   });
@@ -988,7 +990,7 @@ test("insertFeaturesIntoEvent-challengeToken", () => {
 });
 
 test("insertFeaturesIntoEvent-express", () => {
-  const context = new TestContext();
+  const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/test", {});
   const site_info = createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(context.buildEvent(req));
