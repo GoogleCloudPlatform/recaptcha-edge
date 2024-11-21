@@ -15,12 +15,68 @@
  * limitations under the License.
  */
 
-type Env = any;
+import {
+  RecaptchaConfig,
+  RecaptchaContext,
+} from '@google-cloud/recaptcha'
+import { HtmlRewritingStream } from 'html-rewriter'
+import { httpRequest } from 'http-request'
+import { logger } from 'log'
+import { ReadableStream } from 'streams';
+import pkg from '../package.json'
 
-const RECAPTCHA_JS = 'https://www.google.com/recaptcha/enterprise.js';
+type Env = any
+
+type RequestInfo = Request | string;
+
+function headersGuard(headers: Headers | Record<string, string | readonly string[]> | string[][] | undefined): Record<string, string | string[]> {
+  if (headers === undefined) {
+    return {};
+  }
+
+  // We have Headers
+  if (headers instanceof Headers) {
+    const headerObj: Record<string, string> = {};
+    headers.forEach((value, key) => {
+      headerObj[key] = value;
+    });
+    return headerObj;
+  }
+
+  // We have string[][]
+  if(Array.isArray(headers)) {
+    const headerMap: Record<string, string | string[]> = {};
+
+    headers.forEach(([key, ...values]) => {
+      headerMap[key] = values.length === 1 ? values[0] : values;
+    });
+  
+    return headerMap;
+  }
+
+  // We have Record<string, string | readonly string[]>
+  // remove readonly attribute
+  const headerMap: Record<string, string | string[]> = {};
+  for (const key in headers) {
+    const value = headerMap[key];
+    headerMap[key] = value.length === 1 ? value[0] : value;
+  }
+
+  return headerMap;
+}
+
+function bodyGuard(body: any | null): string | ReadableStream | undefined {
+  if (body === null) { return undefined; }
+  if (typeof body === 'string' || body instanceof ReadableStream) {
+    return body as string | ReadableStream;
+  } 
+  throw "Invalid request body"
+}
+
+const RECAPTCHA_JS = 'https://www.google.com/recaptcha/enterprise.js'
 // Firewall Policies API is currently only available in the public preview.
 const DEFAULT_RECAPTCHA_ENDPOINT =
-  'https://public-preview-recaptchaenterprise.googleapis.com';
+  'https://public-preview-recaptchaenterprise.googleapis.com'
 
 // Some headers aren't safe to forward from the origin response through an
 // EdgeWorker on to the client For more information see the tech doc on
@@ -37,18 +93,8 @@ const UNSAFE_RESPONSE_HEADERS = new Set([
   'proxy-authorization',
   'te',
   'trailers',
-  'upgrade',
-]);
-
-import {
-  processRequest,
-  RecaptchaConfig,
-  RecaptchaContext,
-} from '@google-cloud/recaptcha';
-import {createResponse} from 'create-response';
-import {HtmlRewritingStream} from 'html-rewriter';
-import {httpRequest} from 'http-request';
-import pkg from '../package.json';
+  'upgrade'
+])
 
 export {
   callCreateAssessment,
@@ -57,23 +103,25 @@ export {
   ParseError,
   processRequest,
   RecaptchaConfig,
-  RecaptchaError,
-} from '@google-cloud/recaptcha';
+  RecaptchaError
+} from '@google-cloud/recaptcha'
 
 export class AkamaiContext extends RecaptchaContext {
-  readonly sessionPageCookie = 'recaptcha-akam-t';
-  readonly challengePageCookie = 'recaptcha-akam-e';
-  readonly environment: [string, string] = [pkg.name, pkg.version];
-  readonly httpGetCachingEnabled = true;
-  start_time: number;
-  performance_counters: Array<[string, number]> = [];
+  static injectRecaptchaJs (inputResponse: object) {
+    throw new Error('Method not implemented.')
+  }
+  readonly sessionPageCookie = 'recaptcha-akam-t'
+  readonly challengePageCookie = 'recaptcha-akam-e'
+  readonly environment: [string, string] = [pkg.name, pkg.version]
+  readonly httpGetCachingEnabled = true
+  start_time: number
+  performance_counters: Array<[string, number]> = []
 
-  constructor(
-    private env: Env,
-    cfg: RecaptchaConfig,
+  constructor (
+    cfg: RecaptchaConfig
   ) {
-    super(cfg);
-    this.start_time = performance.now();
+    super(cfg)
+    this.start_time = performance.now()
   }
 
   /**
@@ -82,90 +130,124 @@ export class AkamaiContext extends RecaptchaContext {
    * This method should conditionally log performance only if the
    * config.debug flag is set to true.
    */
-  log_performance_debug(event: string) {
+  log_performance_debug (event: string) {
     if (this.config.debug) {
       this.performance_counters.push([
         event,
-        performance.now() - this.start_time,
-      ]);
+        performance.now() - this.start_time
+      ])
     }
   }
 
-  buildEvent(req: Request): object {
+  buildEvent (req: Request): object {
     return {
       // extracting common signals
       userIpAddress: req.headers.get('True-Client-IP'),
       headers: Array.from(req.headers.entries()).map(([k, v]) => `${k}:${v}`),
       ja3:
-        (req as any)?.['akamai']?.['bot_management']?.['ja3_hash'] ?? undefined,
+        (req as any)?.akamai?.bot_management?.ja3_hash ?? undefined,
       requestedUri: req.url,
-      userAgent: req.headers.get('user-agent'),
-    };
+      userAgent: req.headers.get('user-agent')
+    }
   }
 
-  getSafeResponseHeaders(headers: any) {
+  async fetch(req: RequestInfo, options?: RequestInit): Promise<Response> {
+    // Convert RequestInfo to string if it's not already
+    const url = typeof req === 'string' ? req : req.url;
+    
+    return httpRequest(url, {
+        method: options?.method ?? undefined,
+        headers: headersGuard(options?.headers), 
+        body: bodyGuard(options?.body ?? null)
+        /* there is no timeout in a Fetch API request. Consider making it a member of the Contexxt */
+    }).then((resp) => { return {
+      ...resp, 
+      body: null, // TODO
+      type: 'basic', 
+      url: '', 
+      statusText: resp.status.toString(), 
+      bodyUsed: false,
+      redirected: false,
+      headers: new Headers(resp.getHeaders()),
+      arrayBuffer: () => {throw "unimplemented"},
+      blob: () => {throw "unimplemented"},
+      clone: () => {throw "unimplemented"},
+      formData: () => {throw "unimplemented"},
+    }})
+  }
+
+  getSafeResponseHeaders (headers: any) {
     for (const [headerKey] of Object.entries(headers)) {
       if (UNSAFE_RESPONSE_HEADERS.has(headerKey)) {
         headers.delete(headerKey)
       }
     }
 
-    return headers;
+    return headers
   }
 
-  async injectRecaptchaJs(resp: Response): Promise<Response> {
+  injectRecaptchaJs(resp: Response): Promise<Response> {
     const sessionKey = this.config.sessionSiteKey;
     const RECAPTCHA_JS_SCRIPT = `<script src="${RECAPTCHA_JS}?render=${sessionKey}&waf=session" async defer></script>`;
 
-    // (1) Create a new rewriter instance.
     const rewriter = new HtmlRewritingStream();
 
-    // (2) Add a handler to the rewriter: this one adds a <script> tag to the <head>.
+     // Adds a <script> tag to the <head>
     rewriter.onElement('head', (el) => {
       el.append(`${RECAPTCHA_JS_SCRIPT}`);
     });
 
-    // (3) Use `pipeThrough()` to modify the input HTML with the rewriter.
-    const htmlResponse = await httpRequest(resp.url, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" }, // TODO: get the correct headers, body
-      body: "field1=value1&field2=value2"
-    });
-    return Promise.resolve(
-      createResponse(
-      resp.status,
-      this.getSafeResponseHeaders(resp.headers),
-      htmlResponse.body.pipeThrough(rewriter),
-      ), 
-    ) as Promise<Response>;
+    let readableBody: ReadableStream<Uint8Array>;
+    if (resp.body) { // Double check why it's NULL
+      const reader = resp.body.getReader();
+      readableBody = new ReadableStream({
+        async pull(controller) {
+          const { done, value } = await reader.read();
+          if (done) {
+            controller.close();
+          } else {
+            controller.enqueue(value);
+          }
+        }
+      });
+    } else {
+      // Create an empty ReadableStream if resp.body is null
+      console.log("Body is NULL")
+      logger.log("Request body is NULL")
+      readableBody = new ReadableStream();
+    }
+
+    return Promise.resolve(new Response(readableBody.pipeThrough(rewriter) as any, {
+      status: resp.status,
+      headers: this.getSafeResponseHeaders(resp.headers),
+    }));
   }
 
-  // Fetch the firewall lists, then cache the firewall policies:
+  // Fetch the firewall lists.
+  // TODO: Cache the firewall policies.
   // https://techdocs.akamai.com/api-definitions/docs/caching
-  async fetch_list_firewall_policies(
-    req: Request,
-    options?: RequestInit,
+  // https://techdocs.akamai.com/property-mgr/docs/caching-2#how-it-works
+  async fetch_list_firewall_policies (
+    req: RequestInfo,
+    options?: RequestInit
   ): Promise<Response> {
-    return this.fetch(req, {
-      ...options,
-      // akamai: {
-      //   cacheEverything: true,
-      //   cacheTtlByStatus: {'200-299': 600, 404: 1, '500-599': 0},
-      // },
-    });
+    return await this.fetch(req, {
+      ...options
+    })
   }
 }
 
-export function recaptchaConfigFromEnv(env: Env): RecaptchaConfig {
+export function recaptchaConfigFromRequest(request: EW.IngressClientRequest): RecaptchaConfig {
+  console.log(request)
+  logger.log(request.getVariable("PMUSER_RECAPTCHAACTIONSITEKEY") || "")
   return {
-    projectNumber: env.PMUSER_GCPPROJECTNUMBER,
-    apiKey: env.PMUSER_GCPAPIKEY,
-    actionSiteKey: env.PMUSER_RECAPTCHAACTIONSITEKEY,
-    expressSiteKey: env.PMUSER_RECAPTCHAEXPRESSSITEKEY,
-    sessionSiteKey: env.PMUSER_RECAPTCHASESSIONSITEKEY,
-    challengePageSiteKey: env.PMUSER_RECAPTCHACHALLENGESITEKEY,
-    recaptchaEndpoint: env.RECAPTCHA_ENDPOINT ?? DEFAULT_RECAPTCHA_ENDPOINT,
-    sessionJsInjectPath: env.PMUSER_RECAPTCHAJSINSTALL,
-    debug: env.DEBUG ?? false,
-  };
+    projectNumber: parseInt(request.getVariable("PMUSER_GCPPROJECTNUMBER") || '0', 10),
+    apiKey: request.getVariable("PMUSER_GCPAPIKEY") || "",
+    actionSiteKey: request.getVariable("PMUSER_RECAPTCHAACTIONSITEKEY") || "",
+    expressSiteKey: request.getVariable("PMUSER_RECAPTCHAEXPRESSSITEKEY") || "",
+    sessionSiteKey: request.getVariable("PMUSER_RECAPTCHASESSIONSITEKEY") || "",
+    challengePageSiteKey: request.getVariable("PMUSER_RECAPTCHACHALLENGESITEKEY") || "",
+    recaptchaEndpoint: request.getVariable(DEFAULT_RECAPTCHA_ENDPOINT) || "",
+    debug: request.getVariable('DEBUG') === 'true'
+  }
 }
