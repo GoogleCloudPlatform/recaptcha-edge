@@ -22,7 +22,7 @@ export default defineWorkersConfig({
     environment: 'node',
     poolOptions: {
       workers: {
-        wrangler: { configPath: "../bindings/cloudflare/wrangler.test.toml" },
+        wrangler: { configPath: "../bindings/cloudflare/wrangler.test.toml" }, // TODO: what to use if not cloudflare
       },
     },
     include: ["*.test.{ts,tsx}"],

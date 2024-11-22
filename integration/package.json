@@ -1,7 +1,7 @@
 {
   "name": "@google-cloud/recaptcha-waf-integration-tests",
   "version": "1.0.0",
-  "description": "Integration tests for Cloudflare Worker",
+  "description": "Integration tests for 3P Waf",
   "scripts": {
     "test": "vitest run"
   },
