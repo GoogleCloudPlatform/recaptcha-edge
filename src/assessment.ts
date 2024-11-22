@@ -21,6 +21,15 @@
 import { z } from "zod";
 import * as action from "./action";
 
+export const ErrorSchema = z
+        .object({
+          code: z.number().optional(),
+          message: z.string().optional(),
+          status: z.number().or(z.string()).optional(),
+        });
+
+export const RpcErrorSchema = z.object({error: ErrorSchema.required()});
+
 /** Zod Schema for FirewallPolicy type. */
 export const FirewallPolicySchema = z.object({
   name: z.string().optional(),
@@ -82,13 +91,7 @@ export const AssessmentSchema = z.object({
     .optional(),
   firewallPolicyAssessment: z
     .object({
-      error: z
-        .object({
-          code: z.number().optional(),
-          message: z.string().optional(),
-          status: z.number().optional(),
-        })
-        .optional(),
+      error: ErrorSchema.optional(),
       firewallPolicy: FirewallPolicySchema.optional(),
     })
     .optional(),

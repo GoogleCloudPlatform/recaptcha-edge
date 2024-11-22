@@ -19,7 +19,7 @@
  */
 
 import { z } from "zod";
-import { FirewallPolicySchema } from "./assessment";
+import { FirewallPolicySchema, RpcErrorSchema } from "./assessment";
 import * as error from "./error";
 import { RecaptchaContext } from "./index";
 
@@ -56,9 +56,16 @@ export async function callListFirewallPolicies(
       return response
         .json()
         .then((json) => {
-          let ret = ListFirewallPoliciesResponseSchema.parse(json);
-          context.log("debug", "[rpc] listFirewallPolicies (ok)");
-          return ret;
+          let ret = ListFirewallPoliciesResponseSchema.safeParse(json);
+          if (ret.success && Object.keys(ret.data).length > 0) {
+            context.log("debug", "[rpc] listFirewallPolicies (ok)");
+            return ret.data;
+          }
+          let err_ret = RpcErrorSchema.required().safeParse(json);
+          if (err_ret.success) {
+            throw err_ret.data.error;
+          }
+          throw {message: "Response does not conform to ListFirewallPolicies schema: " + json};
         })
         .catch((reason) => {
           throw new error.ParseError(reason.message);

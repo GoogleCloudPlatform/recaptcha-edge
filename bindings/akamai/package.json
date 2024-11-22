@@ -18,20 +18,11 @@
         "@google-cloud/recaptcha": "^1.0.0"
     },
     "devDependencies": {
-        "@babel/preset-env": "^7.26.0",
-        "@babel/preset-typescript": "^7.26.0",
-        "@jest/globals": "^29.7.0",
-        "@types/akamai-edgeworkers": "^1.1.17",
-        "@types/jest": "^29.5.14",
         "@types/node": "^22.9.0",
         "@types/node-fetch": "^2.6.11",
         "@types/request": "^2.48.12",
-        "babel-jest": "^29.7.0",
-        "edgeworkers-jest-mocks": "^1.0.28",
         "esbuild": "^0.24.0",
         "esbuild-plugin-tsc": "^0.4.0",
-        "jest": "^29.7.0",
-        "ts-jest": "^29.2.5",
         "typescript": "^5.5.3",
         "vitest": "^2.1.5",
         "whatwg-fetch": "^3.6.20"
