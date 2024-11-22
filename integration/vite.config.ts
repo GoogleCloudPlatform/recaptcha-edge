@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
-// vite.config.ts
-import { defineConfig } from "vite";
+import { defineWorkersConfig } from "@cloudflare/vitest-pool-workers/config";;
 
-export default defineConfig({
+export default defineWorkersConfig({
   test: {
-    include: ["src/*.test.ts"],
+    globals: true,
+    environment: 'node',
+    poolOptions: {
+      workers: {
+        wrangler: { configPath: "../bindings/cloudflare/wrangler.test.toml" },
+      },
+    },
+    include: ["*.test.{ts,tsx}"],
+    exclude: ['node_modules', 'dist'],
     testTimeout: 25000,
-    hookTimeout: 25000
-  }
+  },
 });

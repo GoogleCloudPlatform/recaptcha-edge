@@ -1,6 +1,7 @@
 # reCAPTCHA WAF (Edge Compute) Library
 
 [![Build and Test Core Library](https://github.com/GoogleCloudPlatform/recaptcha-waf/actions/workflows/build_core.yml/badge.svg)](https://github.com/GoogleCloudPlatform/recaptcha-waf/actions/workflows/build_core.yml)
+[![Build and Test Akamai Binding](https://github.com/GoogleCloudPlatform/recaptcha-waf/actions/workflows/build_akamai.yml/badge.svg)](https://github.com/GoogleCloudPlatform/recaptcha-waf/actions/workflows/build_akamai.yml)
 [![Build and Test Cloudflare Binding](https://github.com/GoogleCloudPlatform/recaptcha-waf/actions/workflows/build_cloudflare.yml/badge.svg)](https://github.com/GoogleCloudPlatform/recaptcha-waf/actions/workflows/build_cloudflare.yml)
 [![Build and Test Fastly Binding](https://github.com/GoogleCloudPlatform/recaptcha-waf/actions/workflows/build_fastly.yml/badge.svg)](https://github.com/GoogleCloudPlatform/recaptcha-waf/actions/workflows/build_fastly.yml)
 
