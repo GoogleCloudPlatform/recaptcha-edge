@@ -171,9 +171,11 @@ export async function applyActions(
         break filterActions;
       case "setHeader":
       case "substitute":
+        context.log("debug", "nonTerminalAction: " + action.type);
         reqNonterminalActions.push(action);
         continue;
       case "injectjs":
+        context.log("debug", "nonTerminalAction: " + action.type);
         respNonterminalActions.push(action);
         continue;
       default:

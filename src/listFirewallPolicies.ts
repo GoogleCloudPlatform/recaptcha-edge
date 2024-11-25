@@ -73,6 +73,9 @@ export async function callListFirewallPolicies(
     })
     .catch((reason) => {
       context.log("debug", "[rpc] listFirewallPolicies (fail)");
+      if (reason instanceof error.RecaptchaError) {
+        throw reason;
+      }
       throw new error.NetworkError(reason.message);
     });
 }
