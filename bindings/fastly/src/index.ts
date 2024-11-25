@@ -16,6 +16,7 @@
 
 /// <reference types="@fastly/js-compute" />
 import { ConfigStore } from "fastly:config-store";
+import { Dictionary } from "fastly:dictionary";
 
 const RECAPTCHA_JS = "https://www.google.com/recaptcha/enterprise.js";
 // Firewall Policies API is currently only available in the public preview.
@@ -27,6 +28,7 @@ import {
   RecaptchaConfig,
   RecaptchaContext,
   LogLevel,
+  InitError,
 } from "@google-cloud/recaptcha";
 import { HTMLRewriter } from "@worker-tools/html-rewriter";
 import pkg from "../package.json";
@@ -148,7 +150,17 @@ export class FastlyContext extends RecaptchaContext {
 }
 
 export function recaptchaConfigFromConfigStore(name: string): RecaptchaConfig {
-  let cfg = new ConfigStore(name);
+  let cfg: Dictionary | ConfigStore;
+  try {
+    cfg = new ConfigStore(name);
+  } catch (e) {
+    try {    
+      // Backup. Try dictionary.
+      cfg = new Dictionary(name);
+    } catch (e) {
+      throw new InitError("Failed to open Fastly config store: \"" + name + "\". " + JSON.stringify(e));
+    }
+  } 
   return {
     projectNumber: Number(cfg.get("project_number")),
     apiKey: cfg.get("api_key") ?? "",
@@ -173,10 +185,15 @@ export function recaptchaConfigFromConfigStore(name: string): RecaptchaConfig {
 addEventListener("fetch", (event) => event.respondWith(handleRequest(event)));
 
 async function handleRequest(event: FetchEvent) {
-  console.log("handling fetch request");
-  const fastly_ctx = new FastlyContext(
-    event,
-    recaptchaConfigFromConfigStore("recaptcha"),
-  );
-  return processRequest(fastly_ctx, event.request);
+  try {
+    let config = recaptchaConfigFromConfigStore("recaptcha");
+    const fastly_ctx = new FastlyContext(
+      event,
+      config
+    );
+    return processRequest(fastly_ctx, event.request);
+  } catch(e)  {
+    // Default just fetch from origin...
+    return fetch(event.request, { backend: "origin" });
+  }
 }
