@@ -151,6 +151,9 @@ export async function callCreateAssessment(
     })
     .catch((reason) => {
       context.log("debug", "[rpc] createAssessment (fail)");
+      if (reason instanceof error.RecaptchaError) {
+        throw reason;
+      }
       throw new error.NetworkError(reason.message, action.createAllowAction());
     });
 }

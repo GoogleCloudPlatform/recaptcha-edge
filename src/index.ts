@@ -17,7 +17,7 @@
 /**
  * @fileoverview reCAPTCHA Enterprise TypeScript Library.
  */
-export { NetworkError, ParseError, RecaptchaError } from "./error";
+export { InitError, NetworkError, ParseError, RecaptchaError } from "./error";
 
 export {
   AllowAction,

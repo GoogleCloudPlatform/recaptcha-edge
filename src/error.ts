@@ -18,7 +18,7 @@
  * Library specific errors.
  */
 
-import { Action } from "./action";
+import { Action, createAllowAction } from "./action";
 
 /**
  * Error type for reCAPTCHA processing.
@@ -29,6 +29,21 @@ export class RecaptchaError extends Error {
   constructor(message: string, recommendedAction?: Action) {
     super(message);
     this.recommendedAction = recommendedAction;
+  }
+
+  toJSON(): object {
+    return {
+      name: this.name,
+      message: this.message,
+      recommendedAction: this.recommendedAction
+    }
+  }
+}
+
+/** An Error that occurs during initialization. */
+export class InitError extends RecaptchaError {
+  constructor(message: string, recommendedAction?: Action) {
+    super(message, recommendedAction ?? createAllowAction());
   }
 }
 
