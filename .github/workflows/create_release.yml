@@ -36,7 +36,8 @@ jobs:
            echo "Input Version: ${{ inputs.tags }}, Library: $LIB_VERSION, Cloudflare: $CF_VERSION, Fastly: $FASTLY_VERSION"
            exit 1
          fi
-         echo "VERSION=$LIB_VERSION >> "$GITHUB_OUTPUT"
+         echo "using version: $LIB_VERSION"
+         echo "VERSION=$LIB_VERSION" >> "$GITHUB_OUTPUT"
         id: version
       - uses: actions/download-artifact@v4
         with:
