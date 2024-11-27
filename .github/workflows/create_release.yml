@@ -15,8 +15,10 @@ jobs:
   build-core:
     uses: ./.github/workflows/build_core.yml
   build-cloudflare:
+    needs: build-core
     uses: ./.github/workflows/build_cloudflare.yml
   build-fastly:
+    needs: build-core
     uses: ./.github/workflows/build_fastly.yml
   package:
     runs-on: ubuntu-latest
