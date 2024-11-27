@@ -102,37 +102,6 @@ export class CloudflareContext extends RecaptchaContext {
     );
   }
 
-  // async injectRecaptchaJs(resp: Response): Promise<Response> {
-  //   const sessionKey = this.config.sessionSiteKey; 
-  
-  //   // Check if the response is HTML
-  //   const contentType = resp.headers.get('content-type');
-  //   if (!contentType || !contentType.includes('text/html')) {
-  //     return resp; // If not HTML, don't transform
-  //   }
-  
-  //   // Construct the reCAPTCHA script URL
-  //   const recaptchaJsUrl = new URL(RECAPTCHA_JS); // Use URL constructor
-  //   recaptchaJsUrl.searchParams.set('render', sessionKey);
-  //   recaptchaJsUrl.searchParams.set('waf', 'session');
-  
-  //   const RECAPTCHA_JS_SCRIPT = `<script src="${recaptchaJsUrl.toString()}" async defer></script>`;
-  
-  //   // Error handling
-  //   try {
-  //     return await new HTMLRewriter()
-  //       .on("head", {
-  //         element(element: any) {
-  //           element.append(RECAPTCHA_JS_SCRIPT, { html: true });
-  //         },
-  //       })
-  //       .transform(resp); // Directly transform the original response
-  //   } catch (error) {
-  //     console.error('Error injecting reCAPTCHA JS:', error);
-  //     return new Response('Error processing request', { status: 500 });
-  //   }
-  // }
-
   async fetch_list_firewall_policies(
     req: RequestInfo,
     options?: RequestInit,

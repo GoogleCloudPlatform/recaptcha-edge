@@ -20,31 +20,6 @@
 
 
 import { expect, test, describe } from 'vitest';
-// import puppeteer from 'puppeteer';
-
-// async function runPuppeteer() {
-//   // Launch a Chromium browser instance
-//   const browser = await puppeteer.launch({
-//     headless: false,
-//   });
-
-//   const page = await browser.newPage();
-
-//   // Navigate to a website
-//   await page.goto("https://www.branowl.xyz/");
-
-//   // Take a screenshot of the page
-//   // await page.screenshot({ path: 'screenshot.png' });
-
-//   // Get the page title
-//   const title = await page.title();
-//   console.log(`Page title: ${title}`);
-
-//   await browser.close();
-// }
-
-// runPuppeteer();
-
 
 describe('Check Different Actions', () => {
   // const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
@@ -58,8 +33,7 @@ describe('Check Different Actions', () => {
     expect(response.status).toEqual(200); 
   
     const data = await response.json(); 
-    // console.log(data)
-    // expect(data.headers).toHaveProperty('cf-connecting-ip'); 
+    expect(data.headers).toHaveProperty('cf-connecting-ip'); 
   });
 
   test('Access the allow page', async () => {
