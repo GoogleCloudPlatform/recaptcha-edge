@@ -18,11 +18,10 @@ import { defineWorkersConfig } from "@cloudflare/vitest-pool-workers/config";;
 
 export default defineWorkersConfig({
   test: {
-    globals: true,
     environment: 'node',
     poolOptions: {
       workers: {
-        wrangler: { configPath: "../bindings/cloudflare/wrangler.test.toml" }, // TODO: what to use if not cloudflare
+        wrangler: { configPath: "./wrangler.test.toml" }, // TODO: what to use if not cloudflare
       },
     },
     include: ["*.test.{ts,tsx}"],
