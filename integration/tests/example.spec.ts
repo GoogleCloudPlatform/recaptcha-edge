@@ -26,23 +26,20 @@ test('should fetch the CF endpoint correctly', async ({ page }) => {
   await expect(page).toHaveURL("https://www.branowl.xyz/action/allow"); 
 });
 
-test('should get session cookie after JS injection', async ({ page }) => {
+test('should get session token as a cookie', async ({ page }) => {
   let cookies : Cookie[] = [];
   const browser = await chromium.launch({ headless: true});
   const context = await browser.newContext();
   
-  // const sessionKey = '6LcG0V0qAAAAABKRl9x2_Rf2MMKdwg55Kcps11el';
   const endpointUrl = "https://www.branowl.xyz"; 
 
   try {
     const page = await context.newPage();
     // Perform JS injection automatically.
     await page.goto(`${endpointUrl}/token/session`);
-
     await page.waitForTimeout(5000); // important
     // Get cookies from the current context
     cookies = await context.cookies();
-    console.log('Cookies after landing on session page:', cookies);
 
   } catch (err) {
     await browser.close();
@@ -50,15 +47,38 @@ test('should get session cookie after JS injection', async ({ page }) => {
   }
 
   // // Extract the token from the cookie
-  const token = cookies.find(cookie => cookie.name === 'recaptcha-fastly-t')?.value;
-  console.log('Token:', token); 
-
+  const sessionToken = cookies.find(cookie => cookie.name === 'recaptcha-fastly-t')?.value; // TODO: the cookie name should be more generic
   // // Assert that the token is not empty
-  expect(token).toBeTruthy();
+  expect(sessionToken).toBeTruthy();
   
   page.on('console', (msg) => {
     console.log(msg);
   });
+});
 
-  // createAssessment API call with condition match
+test('should generate an action token after execute() by clicking the button', async ({ page }) => {
+  const endpointUrl = "https://www.branowl.xyz"; 
+
+  // Go to the page with the reCAPTCHA
+  await page.goto(`${endpointUrl}/token/action`);
+
+  // Intercept the request triggered by the button click
+  const responsePromise = page.waitForResponse(response => 
+    response.url().includes('/token/action') && 
+    response.request().method() === 'GET' &&
+    !!response.request().headers()['x-recaptcha-token'] // Check if the header exists and is truthy
+  );
+
+  // Click the "Execute Button"
+  await page.click('#execute-button');
+
+  // Wait for the response and extract the token from the header
+  const response = await responsePromise;
+  const actionToken = response.request().headers()['x-recaptcha-token'];
+
+  // Assert that the token is not empty
+  expect(actionToken).toBeTruthy();
+  console.log('Action Token:', actionToken);
+
+  // TODO: CreateAsessment by visit condition matching pages
 });
