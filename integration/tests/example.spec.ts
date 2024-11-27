@@ -1,25 +1,6 @@
 import { test, expect, Cookie } from '@playwright/test';
 import { chromium, firefox, webkit } from 'playwright';
 
-test('has title', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
-
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/Playwright/);
-});
-
-test('get started link', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
-
-  // Click the get started link.
-  await page.getByRole('link', { name: 'Get started' }).click();
-
-  // Expects page to have a heading with the name of Installation.
-  await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();
-});
-
-// The end of default test examples.
-
 test('should fetch the CF endpoint correctly', async ({ page }) => {
   const response = await page.goto("https://www.branowl.xyz/action/allow");
   expect(response?.status()).toBe(200); 
@@ -66,7 +47,7 @@ test('should generate an action token after execute() by clicking the button', a
   const responsePromise = page.waitForResponse(response => 
     response.url().includes('/token/action') && 
     response.request().method() === 'GET' &&
-    !!response.request().headers()['x-recaptcha-token'] // Check if the header exists and is truthy
+    !!response.request().headers()['x-recaptcha-token'] // Check if the header exists
   );
 
   // Click the "Execute Button"
@@ -84,9 +65,6 @@ test('should generate an action token after execute() by clicking the button', a
 });
 
 test('should get session token after visiting the intended injectJS path', async ({ page }) => {
-  let cookies : Cookie[] = [];
-  const browser = await chromium.launch({ headless: true});
-  const context = await browser.newContext();
   const endpointUrl = "https://www.branowl.xyz/hello.html"; 
 
   await page.goto(`${endpointUrl}`);
