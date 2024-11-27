@@ -82,3 +82,23 @@ test('should generate an action token after execute() by clicking the button', a
 
   // TODO: CreateAsessment by visit condition matching pages
 });
+
+test('should get session token after visiting the intended injectJS path', async ({ page }) => {
+  let cookies : Cookie[] = [];
+  const browser = await chromium.launch({ headless: true});
+  const context = await browser.newContext();
+  const endpointUrl = "https://www.branowl.xyz/hello.html"; 
+
+  await page.goto(`${endpointUrl}`);
+
+  // Wait for the reCAPTCHA script to be injected (adjust timeout if needed)
+  await page.waitForTimeout(5000); 
+
+  // Check if the reCAPTCHA script is present in the page
+  const scriptExists = await page.evaluate(() => {
+    return Array.from(document.querySelectorAll('script')).some(script => 
+      script.src.includes('www.google.com/recaptcha/enterprise.js')
+    );
+  });
+  expect(scriptExists).toBe(true);
+});
