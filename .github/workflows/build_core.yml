@@ -19,10 +19,11 @@ jobs:
       id: cached-dist
       with:
         path: dist
-        key: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-core
+        key: ${{ github.run_id }}
     
     - name: Use Node.js 22.x
       uses: actions/setup-node@v4
+      if: steps.cached-dist.outputs.cache-hit != 'true'
       with:
         node-version: '22.x'
         cache: 'npm'
