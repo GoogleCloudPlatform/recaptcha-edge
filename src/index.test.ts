@@ -929,7 +929,7 @@ test("processRequest-raise", async () => {
   expect(fetch).toHaveBeenCalledTimes(3);
 });
 
-test("insertFeaturesIntoEvent-actionToken", () => {
+test("createPartialEventWithSiteInfo-actionToken", () => {
   const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/teste2e", {
     headers: { "X-Recaptcha-Token": "action-token" },
@@ -949,7 +949,7 @@ test("insertFeaturesIntoEvent-actionToken", () => {
   });
 });
 
-test("insertFeaturesIntoEvent-sessionToken", () => {
+test("createPartialEventWithSiteInfo-sessionToken", () => {
   const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/test", {
     headers: { cookie: "recaptcha-test-t=session-token" },
@@ -969,7 +969,48 @@ test("insertFeaturesIntoEvent-sessionToken", () => {
   });
 });
 
-test("insertFeaturesIntoEvent-challengeToken", () => {
+test("createPartialEventWithSiteInfo-strictSessionToken", () => {
+  const context = new TestContext(testConfig);
+  context.config.strict_cookie = true;
+  const req = new Request("https://www.example.com/test", {
+    headers: { cookie: "recaptcha-example-t=session-token" },
+  });
+  const site_info = createPartialEventWithSiteInfo(context, req);
+  const site_features = EventSchema.parse(context.buildEvent(req));
+  const event = {
+    ...site_info,
+    ...site_features,
+  };
+  expect(event).toEqual({
+    siteKey: "express-site-key",
+    express: true,
+    userAgent: "test-user-agent",
+    userIpAddress: "1.2.3.4",
+  });
+});
+
+test("createPartialEventWithSiteInfo-nonStrictSessionToken", () => {
+  const context = new TestContext(testConfig);
+  context.config.strict_cookie = false;
+  const req = new Request("https://www.example.com/test", {
+    headers: { cookie: "recaptcha-example-t=session-token" },
+  });
+  const site_info = createPartialEventWithSiteInfo(context, req);
+  const site_features = EventSchema.parse(context.buildEvent(req));
+  const event = {
+    ...site_info,
+    ...site_features,
+  };
+  expect(event).toEqual({
+    token: "session-token",
+    siteKey: "session-site-key",
+    userAgent: "test-user-agent",
+    wafTokenAssessment: true,
+    userIpAddress: "1.2.3.4",
+  });
+});
+
+test("createPartialEventWithSiteInfo-challengeToken", () => {
   const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/test", {
     headers: { cookie: "recaptcha-test-e=challenge-token" },
@@ -989,7 +1030,28 @@ test("insertFeaturesIntoEvent-challengeToken", () => {
   });
 });
 
-test("insertFeaturesIntoEvent-express", () => {
+test("createPartialEventWithSiteInfo-nonStrictChallengeToken", () => {
+  const context = new TestContext(testConfig);
+  context.config.strict_cookie = false;
+  const req = new Request("https://www.example.com/test", {
+    headers: { cookie: "recaptcha-example-e=challenge-token" },
+  });
+  const site_info = createPartialEventWithSiteInfo(context, req);
+  const site_features = EventSchema.parse(context.buildEvent(req));
+  const event = {
+    ...site_info,
+    ...site_features,
+  };
+  expect(event).toEqual({
+    token: "challenge-token",
+    siteKey: "challenge-page-site-key",
+    userAgent: "test-user-agent",
+    wafTokenAssessment: true,
+    userIpAddress: "1.2.3.4",
+  });
+});
+
+test("createPartialEventWithSiteInfo-express", () => {
   const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/test", {});
   const site_info = createPartialEventWithSiteInfo(context, req);

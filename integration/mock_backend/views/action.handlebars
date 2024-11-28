@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>reCAPTCHA WAF Action Token</title>
+    <script src="https://www.google.com/recaptcha/enterprise.js?render={{siteKey}}"></script>
+    <script>
+    function onSuccess(action_token) {
+      const xhr = new XMLHttpRequest();
+      let url = document.getElementById("destpath").value;
+      xhr.open('GET', url, false);
+      // Attach the action-token to the predefined request header
+      xhr.setRequestHeader("X-Recaptcha-Token", action_token);
+      xhr.send(null);
+    }
+
+    function onError(reason) {
+      alert('Response promise rejected: ' + reason);
+    }
+
+    grecaptcha.enterprise.ready(function () {
+      document.getElementById("execute-button").onclick = () => {
+        grecaptcha.enterprise.execute('{{siteKey}}', {
+        }).then(onSuccess, onError);
+      };
+    });
+  </script>
+  </head>
+  <body>
+      <form>
+          <label for="destpath">Destination Path:</label><br>
+          <input type="text" id="destpath" name="destpath"><br>
+          <button type="button" id="execute-button">Execute Button</button>
+      </form>
+  </body>
+</html>

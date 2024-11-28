@@ -22,6 +22,7 @@ import * as action from "./action";
 import { Assessment, AssessmentSchema, Event, EventSchema, RpcErrorSchema } from "./assessment";
 import * as error from "./error";
 import { RecaptchaContext } from "./index";
+import picomatch from "picomatch";
 
 /**
  * Adds reCAPTCHA specific values to an Event strucutre.
@@ -40,13 +41,30 @@ export function createPartialEventWithSiteInfo(
     context.log("debug", "siteKind: action");
   } else {
     const cookieMap = new Map<string, string>();
+    var sessionToken: string | undefined;
+    var challengeToken: string | undefined;
     for (const cookie of req.headers.get("cookie")?.split(";") ?? []) {
       const [key, value] = cookie.split("=");
       cookieMap.set(key.trim(), value.trim());
+
+      // Non-strict cookie parsing will match any 'recaptcha-*-t' token.
+      // This is useful for using an existing key in a different WAF than registered
+      // specifically for testing.
+      if (!context.config.strict_cookie) {
+        if (picomatch.isMatch(key.trim(), "recaptcha-*-t")) {
+          sessionToken = value.trim();
+        } else if (picomatch.isMatch(key.trim(), "recaptcha-*-e")) {
+          challengeToken = value.trim();
+        }
+      }
     }
 
-    const sessionToken = cookieMap.get(context.sessionPageCookie);
-    const challengeToken = cookieMap.get(context.challengePageCookie);
+    if (!sessionToken) {
+      sessionToken = cookieMap.get(context.sessionPageCookie);
+    }
+    if (!challengeToken) {
+      challengeToken = cookieMap.get(context.challengePageCookie);
+    }
     if (context.config.debug) {
       for (const [key, value] of cookieMap.entries()) {
         if (
@@ -65,12 +83,12 @@ export function createPartialEventWithSiteInfo(
     }
 
     if (context.config.sessionSiteKey && sessionToken) {
-      event.token = cookieMap.get(context.sessionPageCookie);
+      event.token = sessionToken;
       event.siteKey = context.config.sessionSiteKey;
       event.wafTokenAssessment = true;
       context.log("debug", "siteKind: session");
     } else if (context.config.challengePageSiteKey && challengeToken) {
-      event.token = cookieMap.get(context.challengePageCookie);
+      event.token = challengeToken;
       event.siteKey = context.config.challengePageSiteKey;
       event.wafTokenAssessment = true;
       context.log("debug", "siteKind: challenge");
@@ -151,6 +169,9 @@ export async function callCreateAssessment(
     })
     .catch((reason) => {
       context.log("debug", "[rpc] createAssessment (fail)");
+      if (reason instanceof error.RecaptchaError) {
+        throw reason;
+      }
       throw new error.NetworkError(reason.message, action.createAllowAction());
     });
 }
