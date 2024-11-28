@@ -1,6 +1,11 @@
 import { test, expect, Cookie } from '@playwright/test';
 import { chromium, firefox, webkit } from 'playwright';
 
+test.beforeEach(async ({ context }) => {
+  // Create a new page with an empty context for each test
+  const page = await context.newPage(); 
+});
+
 test('should fetch the CF endpoint correctly', async ({ page }) => {
   const response = await page.goto("https://www.branowl.xyz/action/allow");
   expect(response?.status()).toBe(200); 
