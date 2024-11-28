@@ -36,10 +36,14 @@ test('should get session token as a cookie', async ({ page }) => {
   const sessionToken = cookies.find(cookie => cookie.name === 'recaptcha-fastly-t')?.value; // TODO: the cookie name should be more generic
   // // Assert that the token is not empty
   expect(sessionToken).toBeTruthy();
-  
-  page.on('console', (msg) => {
-    console.log(msg);
-  });
+
+  // call CreateAsessment by visit condition matching pages
+  const condition1Response = await page.goto(`${endpointUrl}/condition/1`);
+
+  // Assert that the x-recaptcha-test header is set correctly
+  const headers = condition1Response?.headers();
+  // Match the expected value from the firewall rule
+  expect(headers?.['x-recaptcha-test']).toBe('condition-match'); 
 });
 
 test('should generate an action token after execute() by clicking the button', async ({ page }) => {
@@ -64,9 +68,16 @@ test('should generate an action token after execute() by clicking the button', a
 
   // Assert that the token is not empty
   expect(actionToken).toBeTruthy();
-  console.log('Action Token:', actionToken);
+  // console.log('Action Token:', actionToken);
 
-  // TODO: CreateAsessment by visit condition matching pages
+  // call CreateAsessment by visit condition matching pages
+  const condition1Response = await page.goto(`${endpointUrl}/condition/1`);
+
+  // Assert that the x-recaptcha-test header is set correctly
+  const headers = condition1Response?.headers();
+  // Match the expected value from the firewall rule
+  expect(headers?.['x-recaptcha-test']).toBe('condition-match'); 
+
 });
 
 test('should get session token after visiting the intended injectJS path', async ({ page }) => {
