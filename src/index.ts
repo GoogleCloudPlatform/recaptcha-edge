@@ -76,6 +76,7 @@ export interface RecaptchaConfig {
   sessionJsInjectPath?: string;
   recaptchaEndpoint: string;
   debug?: boolean;
+  strict_cookie?: boolean;
 }
 
 export type LogLevel = "debug" | "info" | "warning" | "error";
