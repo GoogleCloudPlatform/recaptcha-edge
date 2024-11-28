@@ -11,10 +11,11 @@
   ],
   "scripts": {
     "build": "rollup -c",
+    "pack": "mkdir pkg && tar -czvf pkg/recaptcha_library.tar.gz dist/*",
     "prepublishOnly": "npm run build",
     "test": "vitest",
     "devbuild": "npm install && npm run genproto && npm run build && mkdir -p dist/generated && cp -r src/generated/ dist/generated/",
-    "devclean": "rm -rf dist && rm -rf node_modules && rm -rf coverage && rm package-lock.json",
+    "devclean": "rm -rf dist && rm -rf pkg && rm -rf node_modules && rm -rf coverage && rm package-lock.json",
     "coverage": "vitest run --coverage",
     "genproto": "mkdir -p src/generated && npx protoc --ts_out src/generated --proto_path src/proto src/proto/soz.proto src/proto/status.proto src/proto/recaptchaenterprise.proto",
     "genclean": "rm -rf src/generated"

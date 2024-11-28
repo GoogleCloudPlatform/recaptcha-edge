@@ -1,11 +1,9 @@
-name: Create Release
+name: Attach Release Artifacts
 
-on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: The version of the release, in the format of '1.2.3'. Must match all package.json versions.
-        required: true
+on: 
+  push:
+    tags:
+    - "v*.*.*"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-release
@@ -24,21 +22,28 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [build-core, build-cloudflare, build-fastly]
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Get Version
         run: |
+         TAG_VERSION=$(echo "${{ github.ref }}" | cut -c 2-)
          LIB_VERSION=$(cat package.json | jq -r .version)
          CF_VERSION=$(cat bindings/cloudflare/package.json | jq -r .version)
          FASTLY_VERSION=$(cat bindings/fastly/package.json | jq -r .version)
-         if [ "$LIB_VERSION" != "${{ inputs.version }}" ] || [ "$LIB_VERSION" != "$CF_VERSION" ] || [ "$LIB_VERSION" != "$FASTLY_VERSION" ]; then
+         if [ "$LIB_VERSION" != "$TAG_VERSION" ] || [ "$LIB_VERSION" != "$CF_VERSION" ] || [ "$LIB_VERSION" != "$FASTLY_VERSION" ]; then
            echo "Error: package.json versions do not match."
-           echo "Input Version: ${{ inputs.version }}, Library: $LIB_VERSION, Cloudflare: $CF_VERSION, Fastly: $FASTLY_VERSION"
+           echo "Tag Version: $TAG_VERSION, Library: $LIB_VERSION, Cloudflare: $CF_VERSION, Fastly: $FASTLY_VERSION"
            exit 1
          fi
          echo "using version: $LIB_VERSION"
          echo "VERSION=$LIB_VERSION" >> "$GITHUB_OUTPUT"
         id: version
+      - uses: actions/download-artifact@v4
+        with:
+          name: library-package
+          path: pkg
       - uses: actions/download-artifact@v4
         with:
           name: cloudflare-package
@@ -47,4 +52,9 @@ jobs:
         with:
           name: fastly-package
           path: bindings/fastly/pkg
-      # TODO: package and upload release
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            "pkg/recaptcha_library.tar.gz"
+            "bindings/cloudflare/pkg/cloudflare_client.tar.gz"
+            "bindings/fastly/pkg/fastly_client.tar.gz"

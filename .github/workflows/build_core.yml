@@ -38,3 +38,10 @@ jobs:
       with:
         name: core-library-artifacts
         path: dist/*
+    - run: npm run pack
+      if: steps.cached-dist.outputs.cache-hit != 'true'
+    - uses: actions/upload-artifact@v4
+      if: steps.cached-dist.outputs.cache-hit != 'true'
+      with:
+        name: library-package
+        path: pkg/recaptcha_library.tar.gz
