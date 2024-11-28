@@ -28,7 +28,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Get Version
         run: |
-         TAG_VERSION=$(echo "${{ github.ref }}" | cut -c 2-)
+         TAG_VERSION=$(echo "${{ github.ref }}" | cut -c 12-)
          LIB_VERSION=$(cat package.json | jq -r .version)
          CF_VERSION=$(cat bindings/cloudflare/package.json | jq -r .version)
          FASTLY_VERSION=$(cat bindings/fastly/package.json | jq -r .version)
