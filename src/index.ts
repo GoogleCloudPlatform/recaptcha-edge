@@ -17,7 +17,7 @@
 /**
  * @fileoverview reCAPTCHA Enterprise TypeScript Library.
  */
-export { NetworkError, ParseError, RecaptchaError } from "./error";
+export { InitError, NetworkError, ParseError, RecaptchaError } from "./error";
 
 export {
   AllowAction,
@@ -76,6 +76,7 @@ export interface RecaptchaConfig {
   sessionJsInjectPath?: string;
   recaptchaEndpoint: string;
   debug?: boolean;
+  strict_cookie?: boolean;
 }
 
 export type LogLevel = "debug" | "info" | "warning" | "error";
