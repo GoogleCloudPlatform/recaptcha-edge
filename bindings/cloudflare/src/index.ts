@@ -30,7 +30,6 @@ import {
   RecaptchaConfig,
   RecaptchaContext,
 } from "@google-cloud/recaptcha";
-import { HTMLRewriter } from "@worker-tools/html-rewriter";
 import pkg from "../package.json";
 
 export {
@@ -88,7 +87,10 @@ export class CloudflareContext extends RecaptchaContext {
 
   injectRecaptchaJs(resp: Response): Promise<Response> {
     const sessionKey = this.config.sessionSiteKey;
-    const RECAPTCHA_JS_SCRIPT = `<script src="${RECAPTCHA_JS}?render=${sessionKey}&waf=session" async defer></script>`;
+    const recaptchaJsUrl = new URL(RECAPTCHA_JS); 
+    recaptchaJsUrl.searchParams.set('render', sessionKey);
+    recaptchaJsUrl.searchParams.set('waf', 'session');
+    const RECAPTCHA_JS_SCRIPT = `<script src="${recaptchaJsUrl.toString()}" async defer></script>`;
     return Promise.resolve(
       new HTMLRewriter()
         .on("head", {

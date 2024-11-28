@@ -1,7 +1,11 @@
-name = "recaptcha-waf" # name of the worker for cloudflare
-main = "src/cloudflare_worker.ts"
+# Top-level configuration
+name = "browser-rendering"
+main = "cf_endpoint.test.ts"
 compatibility_date = "2024-09-09"
-compatibility_flags = [ "nodejs_compat"]
+workers_dev = true
+compatibility_flags = ["nodejs_compat"]
+
+browser = { binding = "MYBROWSER" }
 
 [vars]
 PROJECT_NUMBER = "12345"
