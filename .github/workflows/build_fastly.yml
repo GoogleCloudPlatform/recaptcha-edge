@@ -44,13 +44,15 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --fix-missing
       - run: npm ci
-      - run: npm run build
+      - run: npm run build 
+      - run: npm test 
       - run: npm run pack
-      - run: mv pkg/package.tar.gz pkg/fastly-package.tar.gz
+      - run: mv pkg/package.tar.gz pkg/fastly_client.tar.gz
       - uses: actions/upload-artifact@v4
         with:
-          name: fastly-artifacts
-          path: |
-           bindings/fastly/dist/*
-           bindings/fastly/pkg/fastly-package.tar.gz
-      - run: npm test 
+          name: fastly-dist
+          path: bindings/fastly/dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+             name: fastly-package
+             path: bindings/fastly/pkg/fastly_client.tar.gz

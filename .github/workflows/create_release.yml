@@ -41,14 +41,10 @@ jobs:
         id: version
       - uses: actions/download-artifact@v4
         with:
-          name: core-library-artifacts
-          path: dist
+          name: cloudflare-package
+          path: bindings/cloudflare/pkg
       - uses: actions/download-artifact@v4
         with:
-          name: cloudflare-artifacts
-          path: bindings/cloudflare/dist
-      - uses: actions/download-artifact@v4
-        with:
-          name: fastly-artifacts
-          path: bindings/fastly/dist
+          name: fastly-package
+          path: bindings/fastly/pkg
       # TODO: package and upload release

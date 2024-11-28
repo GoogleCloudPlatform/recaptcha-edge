@@ -38,8 +38,13 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm run build:worker
+      - run: npm run pack
       - run: npm test
       - uses: actions/upload-artifact@v4
         with:
-          name: cloudflare-artifacts
+          name: cloudflare-dist
           path: bindings/cloudflare/dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+            name: cloudflare-package
+            path: bindings/cloudflare/pkg/cloudflare_client.tar.gz
