@@ -11,6 +11,7 @@
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.4.31",
     "@cloudflare/workers-types": "^4.20231016.0",
+    "@playwright/test": "^1.49.0",
     "@types/node": "^22.10.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.2",
