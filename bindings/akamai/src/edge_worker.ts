@@ -39,7 +39,6 @@ export async function responseProvider(inreq: EW.IngressClientRequest) {
   let req = {...new Request(inreq.url, inreq), ...inreq};
   // Use the akamaiContext and its methods to handle the request
   const response = await processRequest(akamaiContext, req);
-
   // convert Response back to createResponse
   // TODO: populate headers
   return createResponse(response.status, {}, (response.body ?? '') as (ReadableStream | string));
