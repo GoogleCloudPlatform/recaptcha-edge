@@ -14,9 +14,72 @@
  * limitations under the License.
  */
 
-import { afterEach, beforeAll, expect, test, vi } from "vitest";
-vi.mock('http-request');
-import {responseProvider} from './edge_worker'
+import { afterAll, afterEach, beforeAll, expect, test, vi } from "vitest";
+import {responseProvider} from './edge_worker';
+
+
+// Helper to convert a string to a Akamai Request/Response body.
+function stringToStream(str: string): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder();
+  const encodedString = encoder.encode(str);
+
+  return new ReadableStream({
+    start(controller) {
+      controller.enqueue(encodedString);
+      controller.close();
+    },
+  });
+}
+
+async function readStream(stream: ReadableStream): Promise<string> {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let result = await reader.read();
+  let out = "";
+  while (!result.done) {
+    out += decoder.decode(new Uint8Array(result.value).buffer);
+    result = await reader.read();
+  }
+  return out;
+}
+
+// Akamai IngressClientRequests conform to this structure.
+const MockRequest = {
+  url: "http://www.example.com",
+  host: "example.com",
+  method: "GET",
+  path: "/",
+  scheme: "http",
+  query: "",
+  userLocation: undefined,
+  device: undefined,
+  cpCode: 12345,
+  clientIp: "192.168.0.1",
+  wasTerminated: () => false,
+  cacheKey: {
+    excludeQueryString: () => { throw "unimplemented" },
+    includeQueryString: () => { throw "unimplemented" },
+    includeQueryArgument: () => { throw "unimplemented" },
+    includeCookie: () => { throw "unimplemented" },
+    includeHeader: () => { throw "unimplemented" },
+    includeVariable: () => { throw "unimplemented" },
+  },
+  route: () => { throw "unimplemented" },
+  getVariable: () => { return "" },
+  setVariable: () => { return "" },
+  respondWith: () => {throw "unimplemented" },
+  getHeader: () => { throw "unimplemented" },
+  getHeaders: () => { throw "unimplemented" },
+  setHeader: () => { throw "unimplemented" },
+  addHeader: () => { throw "unimplemented" },
+  removeHeader: () => { throw "unimplemented" },
+};
+
+// Create a mock for httpRequest function. Needs to be 'hoisted' due to the way
+// vi.mock works. See: https://vitest.dev/api/vi.html#vi-hoisted
+const { mockHttpRequest } = vi.hoisted(() => {
+  return { mockHttpRequest: vi.fn() }
+})
 
 beforeAll(() => {
   vi.mock('log', () => {
@@ -29,12 +92,14 @@ beforeAll(() => {
   vi.mock('streams', () => { return {}});
   vi.mock('html-rewriter', () => { return {}});
   vi.mock('http-request', () => { return {
-    httpRequest: () => { throw "unimplemented "}
+    httpRequest: mockHttpRequest
   }});
-  vi.mock('create-response', () => { return {}});
+  vi.mock('create-response', () => { 
+    return { 
+      createResponse: (status: number, headers: any, body: any) => { return Promise.resolve({status, headers, body}); }
+    }
+  });
 });
-// Ensure we matched every mock we defined
-afterEach(() => {});
 
 test("nomatch-ok", async () => {
   const testPolicies = [
@@ -55,39 +120,65 @@ test("nomatch-ok", async () => {
     },
   ];
 
-  vi.mock('http-request', () => { return {
-    httpRequest: () => { return Promise.resolve(new Response("<html>body</html>")); }
-  }});
+  mockHttpRequest.mockImplementationOnce(() => { 
+    const encoder = new TextEncoder();
+    return Promise.resolve(
+      {
+        body: JSON.stringify({ firewallPolicies: testPolicies }),
+        json: () => Promise.resolve({ firewallPolicies: testPolicies }),
+        ok: true,
+        status: 200,
+        getHeader: () => undefined,
+        getHeaders: () => [],
+      });
+    }
+  ).mockImplementationOnce(() => { 
+    const encoder = new TextEncoder();
+    return Promise.resolve(
+      {
+        body: stringToStream("<HTML>HELLO WORLD!</HTML>"),
+        ok: true,
+        status: 200,
+        getHeader: () => undefined,
+        getHeaders: () => [],
+      });
+    }
+  );
 
-  let mock_req = vi.mocked({
-    url: "http://www.example.com",
-    host: "example.com",
-    method: "GET",
-    path: "/",
-    scheme: "http",
-    query: "",
-    userLocation: undefined,
-    device: undefined,
-    cpCode: 12345,
-    clientIp: "192.168.0.1",
-    wasTerminated: () => false,
-    cacheKey: {
-      excludeQueryString: () => { throw "unimplemented" },
-      includeQueryString: () => { throw "unimplemented" },
-      includeQueryArgument: () => { throw "unimplemented" },
-      includeCookie: () => { throw "unimplemented" },
-      includeHeader: () => { throw "unimplemented" },
-      includeVariable: () => { throw "unimplemented" },
+  let resp = await responseProvider(vi.mocked(MockRequest));
+  expect(await readStream(resp.body as ReadableStream)).toEqual("<HTML>HELLO WORLD!</HTML>");
+});
+
+test("localmatch-ok", async () => {
+  const testPolicies = [
+    {
+      name: "test-policy",
+      description: "test-description",
+      path: "/block",
+      // 'type' isn't a part of the interface, but is added for testing.
+      actions: [{ block: {}, type: "block" }],
     },
-    route: () => { throw "unimplemented" },
-    getVariable: () => { return "" },
-    setVariable: () => { return "" },
-    respondWith: () => {throw "unimplemented" },
-    getHeader: () => { throw "unimplemented" },
-    getHeaders: () => { throw "unimplemented" },
-    setHeader: () => { throw "unimplemented" },
-    addHeader: () => { throw "unimplemented" },
-    removeHeader: () => { throw "unimplemented" },
+  ];
+
+  mockHttpRequest.mockImplementationOnce(() => { 
+    const encoder = new TextEncoder();
+    return Promise.resolve(
+      {
+        body: JSON.stringify({ firewallPolicies: testPolicies }),
+        json: () => Promise.resolve({ firewallPolicies: testPolicies }),
+        ok: true,
+        status: 200,
+        getHeader: () => undefined,
+        getHeaders: () => [],
+      });
+    }
+  );
+
+  let req = vi.mocked({
+    ...MockRequest,
+    url: "http://www.example.com/block",
+    path: "/block",
   });
-  responseProvider(mock_req);
+  let resp = await responseProvider(req);
+  expect(resp.status).toEqual(403);
 });

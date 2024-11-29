@@ -58,8 +58,8 @@ function headersGuard(headers: Headers | Record<string, string | readonly string
   // remove readonly attribute
   const headerMap: Record<string, string | string[]> = {};
   for (const key in headers) {
-    const value = headerMap[key];
-    headerMap[key] = value.length === 1 ? value[0] : value;
+    const value = headers[key];
+    headerMap[key] = value.length === 1 ? value[0] : [...value];
   }
 
   return headerMap;
@@ -154,26 +154,24 @@ export class AkamaiContext extends RecaptchaContext {
   async fetch(req: RequestInfo, options?: RequestInit): Promise<Response> {
     // Convert RequestInfo to string if it's not already
     const url = typeof req === 'string' ? req : req.url;
-    
     return httpRequest(url, {
         method: options?.method ?? undefined,
         headers: headersGuard(options?.headers), 
         body: bodyGuard(options?.body ?? null)
-        /* there is no timeout in a Fetch API request. Consider making it a member of the Contexxt */
-    }).then((resp) => { return {
-      ...resp, 
-      body: null, // TODO
-      type: 'basic', 
-      url: '', 
-      statusText: resp.status.toString(), 
-      bodyUsed: false,
-      redirected: false,
-      headers: new Headers(resp.getHeaders()),
-      arrayBuffer: () => {throw "unimplemented"},
-      blob: () => {throw "unimplemented"},
-      clone: () => {throw "unimplemented"},
-      formData: () => {throw "unimplemented"},
-    }})
+        /* there is no timeout in a Fetch API request. Consider making it a member of the Context */
+    }).then((resp: any) => {
+      return Promise.resolve({
+        ...resp, 
+        type: 'basic',
+        statusText: resp.status.toString(), 
+        bodyUsed: false,
+        redirected: false,
+        headers: new Headers(resp.getHeaders()),
+        arrayBuffer: () => {throw "unimplemented"},
+        blob: () => {throw "unimplemented"},
+        clone: () => {throw "unimplemented"},
+        formData: () => {throw "unimplemented"},
+    })})
   }
 
   getSafeResponseHeaders (headers: any) {
@@ -212,7 +210,6 @@ export class AkamaiContext extends RecaptchaContext {
       });
     } else {
       // Create an empty ReadableStream if resp.body is null
-      console.log("Body is NULL")
       logger.log("Request body is NULL")
       readableBody = new ReadableStream();
     }
@@ -231,14 +228,13 @@ export class AkamaiContext extends RecaptchaContext {
     req: RequestInfo,
     options?: RequestInit
   ): Promise<Response> {
-    return await this.fetch(req, {
+    return this.fetch(req, {
       ...options
     })
   }
 }
 
 export function recaptchaConfigFromRequest(request: EW.IngressClientRequest): RecaptchaConfig {
-  console.log(request)
   logger.log(request.getVariable("PMUSER_RECAPTCHAACTIONSITEKEY") || "")
   return {
     projectNumber: parseInt(request.getVariable("PMUSER_GCPPROJECTNUMBER") || '0', 10),
