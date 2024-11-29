@@ -6,6 +6,7 @@ bindings/**/bin/*
 bindings/**/node_modules/*
 .DS_Store
 node_modules
+coverage/
 /test-results/
 /playwright-report/
 /blob-report/
