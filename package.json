@@ -1,18 +1,19 @@
 {
   "name": "@google-cloud/recaptcha",
-  "repository": "github:GoogleCloudPlatform/recaptcha-waf",
-  "homepage": "https://github.com/GoogleCloudPlatform/recaptcha-waf#readme",
   "version": "1.0.0",
   "description": "A reCAPTCHA Enterprise Typescript library for Edge Compute Platforms.",
-  "author": "reCAPTCHA Team <no-reply@google.com>",
+  "keywords": ["recaptcha", "waf", "edge compute", "bot", "security"],
+  "repository": "github:GoogleCloudPlatform/recaptcha-waf",
+  "homepage": "https://github.com/GoogleCloudPlatform/recaptcha-waf#readme",
   "license": "Apache-2.0",
-  "main": "dist/index.esm.js",
-  "exports": "./dist/index.esm.js",
-  "type": "module",
-  "types": "dist/index.d.ts",
+  "author": "reCAPTCHA Team <no-reply@google.com>",
   "files": [
     "dist"
   ],
+  "type": "module",
+  "exports": "./dist/index.esm.js",
+  "main": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "rollup -c",
     "pack": "mkdir pkg && tar -czvf pkg/recaptcha_library.tar.gz dist/*",
