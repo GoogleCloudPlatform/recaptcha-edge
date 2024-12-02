@@ -13,7 +13,7 @@
       "type": "git",
       "url": "https://github.com/GoogleCloudPlatform/recaptcha-waf.git",
       "directory": "bindings/akamai" 
-    }
+    },
     "scripts": {
         "build": "esbuild --bundle src/edge_worker.ts --platform=node --format=esm --external:create-response --external:http-request --external:html-rewriter --external:streams --external:log --outdir=dist && mv dist/edge_worker.js dist/main.js && cp src/bundle.json dist/",
         "pack": "cd dist && tar -czvf akamai.tgz bundle.json main.js",
