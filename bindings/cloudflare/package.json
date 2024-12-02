@@ -14,7 +14,7 @@
     "type": "git",
     "url": "https://github.com/GoogleCloudPlatform/recaptcha-waf.git",
     "directory": "bindings/cloudflare" 
-  }
+  },
   "scripts": {
     "build": "esbuild --bundle src/index.ts --platform=node --outdir=dist",
     "build:worker": "wrangler deploy --dry-run --outdir=dist",
