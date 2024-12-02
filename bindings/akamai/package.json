@@ -1,7 +1,7 @@
 {
     "name": "@google-cloud/recaptcha-akamai",
     "version": "1.0.0",
-    "description": "A reCAPTCHA Enterprise Typescript Libarary for Akamai Edge Workers."
+    "description": "A reCAPTCHA Enterprise Typescript Libarary for Akamai Edge Workers.",
     "keywords": ["recaptcha", "waf", "akamai", "bot", "security"],
     "homepage": "https://github.com/GoogleCloudPlatform/recaptcha-waf/tree/main/bindings/akamai#readme",
     "license": "Apache-2.0",
