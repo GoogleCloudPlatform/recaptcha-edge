@@ -1,12 +1,19 @@
 {
     "name": "@google-cloud/recaptcha-akamai",
     "version": "1.0.0",
-    "description": "",
+    "description": "A reCAPTCHA Enterprise Typescript Libarary for Akamai Edge Workers.",
+    "keywords": ["recaptcha", "waf", "akamai", "bot", "security"],
+    "homepage": "https://github.com/GoogleCloudPlatform/recaptcha-waf/tree/main/bindings/akamai#readme",
+    "license": "Apache-2.0",
+    "author": "reCAPTCHA Team <no-reply@google.com>",
     "private": true,
     "type": "module",
-    "author": "",
-    "license": "ISC",
     "main": "dist/edge_worker.js",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/GoogleCloudPlatform/recaptcha-waf.git",
+      "directory": "bindings/akamai" 
+    },
     "scripts": {
         "build": "esbuild --bundle src/edge_worker.ts --platform=node --format=esm --external:create-response --external:http-request --external:html-rewriter --external:streams --external:log --outdir=dist && mv dist/edge_worker.js dist/main.js && cp src/bundle.json dist/",
         "pack": "cd dist && tar -czvf akamai.tgz bundle.json main.js",
