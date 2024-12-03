@@ -96,3 +96,50 @@ test('should get session token after visiting the intended injectJS path', async
   });
   expect(scriptExists).toBe(true);
 });
+
+// To be verified: Express Key with Condition
+test('should access express allow page with condition set', async ({ page }) => {
+  const response = await page.goto("https://www.branowl.xyz/express/allow");
+  expect(response?.status()).toBe(200); 
+});
+
+test('should deny express block page with condition set', async ({ page }) => {
+  const response = await page.goto("https://www.branowl.xyz/express/block");
+  expect(response?.status()).toBe(500); 
+});
+
+// TODO: Merge the CF_end_to_end tests with Express only?
+
+test('should get challenge token as a cookie', async ({ page }) => {
+  let cookies : Cookie[] = [];
+  const browser = await chromium.launch({ headless: true});
+  const context = await browser.newContext();
+  
+  const endpointUrl = "https://www.branowl.xyz"; 
+
+  try {
+    const page = await context.newPage();
+    // Perform JS injection automatically.
+    await page.goto(`${endpointUrl}/action/redirect`);
+    await page.waitForTimeout(5000); // important
+    // Get cookies from the current context
+    cookies = await context.cookies();
+
+  } catch (err) {
+    await browser.close();
+    throw new Error(err.message);
+  }
+
+  // // Extract the token from the cookie
+  const challengeToken = cookies.find(cookie => cookie.name === 'recaptcha-fastly-e')?.value;
+  // // Assert that the token is not empty
+  expect(challengeToken).toBeTruthy();
+
+  // call CreateAsessment by visit condition matching pages
+  const condition1Response = await page.goto(`${endpointUrl}/condition/1`);
+
+  // Assert that the x-recaptcha-test header is set correctly
+  const headers = condition1Response?.headers();
+  // Match the expected value from the firewall rule
+  // expect(headers?.['x-recaptcha-test']).toBe('condition-match'); 
+});
