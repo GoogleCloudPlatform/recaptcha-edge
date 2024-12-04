@@ -1,60 +1,25 @@
-/**
- * Copyright 2024 Google LLC
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/**
- * @fileoverview pre-written Cloudflare end-to-end integration test.
- */
-
-
 import { expect, test, describe } from 'vitest';
 
-// Without browser session management, the key used in these testing will be Express.
-
 describe('Check Different Actions', () => {
-  // const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
-  const endpointUrl = "https://www.branowl.xyz/";
+  const endpointUrl = process.env.FASTLY_ENDPOINT as string;
   if (!endpointUrl) {
     throw new Error('CLOUDFLARE_ENDPOINT environment variable not found.');
   }
 
-  test('should fetch the CF endpoint correctly', async () => {
+  test('should fetch the Fastly endpoint correctly', async () => {
     const response = await fetch(endpointUrl); 
     expect(response.status).toEqual(200); 
-  
-    const data = await response.json(); 
-    expect(data.headers).toHaveProperty('cf-connecting-ip'); 
   });
 
   test('Access the allow page', async () => {
     const testPageUrl = 'action/allow';
-    const response = await fetch(`${endpointUrl}${testPageUrl}`, {
-      headers: {
-        "X-Recaptcha_Token": "default_action_value",
-      },
-    })
+    const response = await fetch(`${endpointUrl}${testPageUrl}`); 
     expect(response.status).toEqual(200);
   });
 
   test('Access the block page', async () => {
     const testPageUrl = 'action/block';
-    const response = await fetch(`${endpointUrl}${testPageUrl}`, {
-      headers: {
-        "X-Recaptcha_Token": "default_action_value",
-      },
-    })
+    const response = await fetch(`${endpointUrl}${testPageUrl}`); 
     expect(response.status).toEqual(403);
   });
 
@@ -90,10 +55,9 @@ describe('Check Different Actions', () => {
 });
 
 describe('Check Different Path Matching', () => {
-  // const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
-  const endpointUrl = "https://www.branowl.xyz/";
+  const endpointUrl = process.env.FASTLY_ENDPOINT as string;
   if (!endpointUrl) {
-    throw new Error('CLOUDFLARE_ENDPOINT environment variable not found.');
+    throw new Error('Fastly environment variable not found.');
   }
 
   test('Set header if the page url follows /page/wild*', async () => {
