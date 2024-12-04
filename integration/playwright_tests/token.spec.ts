@@ -7,9 +7,10 @@ test.beforeEach(async ({ context }) => {
 });
 
 test('should fetch the CF endpoint correctly', async ({ page }) => {
-  const response = await page.goto("https://www.branowl.xyz/action/allow");
+  const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
+  const response = await page.goto(`${endpointUrl}/action/allow`);
   expect(response?.status()).toBe(200); 
-  await expect(page).toHaveURL("https://www.branowl.xyz/action/allow"); 
+  await expect(page).toHaveURL(`${endpointUrl}/action/allow`); 
 });
 
 test('should get session token as a cookie', async ({ page }) => {
@@ -17,7 +18,7 @@ test('should get session token as a cookie', async ({ page }) => {
   const browser = await chromium.launch({ headless: true});
   const context = await browser.newContext();
   
-  const endpointUrl = "https://www.branowl.xyz"; 
+  const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
 
   try {
     const page = await context.newPage();
@@ -47,7 +48,7 @@ test('should get session token as a cookie', async ({ page }) => {
 });
 
 test('should generate an action token after execute() by clicking the button', async ({ page }) => {
-  const endpointUrl = "https://www.branowl.xyz"; 
+  const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
 
   // Go to the page with the reCAPTCHA
   await page.goto(`${endpointUrl}/token/action`);
@@ -80,7 +81,7 @@ test('should generate an action token after execute() by clicking the button', a
 });
 
 test('should get session token after visiting the intended injectJS path', async ({ page }) => {
-  const endpointUrl = "https://www.branowl.xyz/hello.html"; 
+  const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
 
   await page.goto(`${endpointUrl}`);
 
@@ -98,12 +99,14 @@ test('should get session token after visiting the intended injectJS path', async
 
 // To be verified: Express Key with Condition
 test('should access express allow page with condition set', async ({ page }) => {
-  const response = await page.goto("https://www.branowl.xyz/express/allow");
+  const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
+  const response = await page.goto(`${endpointUrl}/express/allow`);
   expect(response?.status()).toBe(200); 
 });
 
 test('should deny express block page with condition set', async ({ page }) => {
-  const response = await page.goto("https://www.branowl.xyz/express/block");
+  const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
+  const response = await page.goto(`${endpointUrl}/express/block`);
   expect(response?.status()).toBe(500); 
 });
 
@@ -114,7 +117,7 @@ test('should get challenge token as a cookie', async ({ page }) => {
   const browser = await chromium.launch({ headless: true});
   const context = await browser.newContext();
   
-  const endpointUrl = "https://www.branowl.xyz"; 
+  const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
 
   try {
     const page = await context.newPage();

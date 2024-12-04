@@ -23,6 +23,7 @@ jobs:
     - name: Run Playwright tests
       run: npx playwright test
       env:
+        CLOUDFLARE_ENDPOINT: ${{ secrets.CLOUDFLARE_ENDPOINT }}
         CLOUDFLARE_SESSION_SITE_KEY: ${{ secrets.CLOUDFLARE_SESSION_SITE_KEY }}
         CLOUDFLARE_SESSION_JS_INSTALL_PATH: ${{ secrets.CLOUDFLARE_SESSION_JS_INSTALL_PATH }}
         CLOUDFLARE_ACTION_SITE_KEY: ${{ secrets.CLOUDFLARE_ACTION_SITE_KEY }}
