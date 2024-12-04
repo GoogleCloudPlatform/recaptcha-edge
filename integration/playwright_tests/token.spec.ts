@@ -43,7 +43,7 @@ test('should get session token as a cookie', async ({ page }) => {
   // Assert that the x-recaptcha-test header is set correctly
   const headers = condition1Response?.headers();
   // Match the expected value from the firewall rule
-  // expect(headers?.['x-recaptcha-test']).toBe('condition-match'); 
+  expect(headers?.['x-recaptcha-test']).toBe('condition-match'); 
 });
 
 test('should generate an action token after execute() by clicking the button', async ({ page }) => {
@@ -76,8 +76,7 @@ test('should generate an action token after execute() by clicking the button', a
   // Assert that the x-recaptcha-test header is set correctly
   const headers = condition1Response?.headers();
   // Match the expected value from the firewall rule
-  // expect(headers?.['x-recaptcha-test']).toBe('condition-match'); 
-
+  expect(headers?.['x-recaptcha-test']).toBe('condition-match'); 
 });
 
 test('should get session token after visiting the intended injectJS path', async ({ page }) => {
@@ -141,5 +140,5 @@ test('should get challenge token as a cookie', async ({ page }) => {
   // Assert that the x-recaptcha-test header is set correctly
   const headers = condition1Response?.headers();
   // Match the expected value from the firewall rule
-  // expect(headers?.['x-recaptcha-test']).toBe('condition-match'); 
+  expect(headers?.['x-recaptcha-test']).toBe('condition-match'); 
 });
