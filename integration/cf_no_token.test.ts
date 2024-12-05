@@ -15,13 +15,11 @@
  */
 
 /**
- * @fileoverview pre-written Cloudflare end-to-end integration test.
+ * @fileoverview pre-written Cloudflare end-to-end integration test without tokens.
  */
 
 
 import { expect, test, describe } from 'vitest';
-
-// Without browser session management, the key used in these testing will be Express.
 
 describe('Check Different Actions', () => {
   const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
@@ -83,9 +81,6 @@ describe('Check Different Actions', () => {
     const html_json = JSON.parse(html)
     expect(html_json.headers['x-recaptcha-test']).toEqual('test-value'); 
   });
-
-  // TODO: JS injection
-
 });
 
 describe('Check Different Path Matching', () => {

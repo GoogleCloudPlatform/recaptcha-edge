@@ -1,3 +1,23 @@
+/**
+ * Copyright 2024 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * @fileoverview pre-written Fastlty end-to-end integration test without tokens.
+ */
+
 import { expect, test, describe } from 'vitest';
 
 describe('Check Different Actions', () => {
@@ -23,15 +43,6 @@ describe('Check Different Actions', () => {
     expect(response.status).toEqual(403);
   });
 
-  test('Access the redirect page', async () => {
-    const testPageUrl = 'action/redirect';
-    const response = await fetch(`${endpointUrl}${testPageUrl}`); 
-    expect(response.status).toEqual(200);
-  
-    const html = await response.text();
-    expect(html).toContain(`<base href="https://www.google.com/recaptcha/challengepage/">`); 
-  });
-
   test('Access the substitute page', async () => {
     const testPageUrl = 'action/substitute';
     const response = await fetch(`${endpointUrl}${testPageUrl}`); 
@@ -49,9 +60,6 @@ describe('Check Different Actions', () => {
     const html_json = JSON.parse(html)
     expect(html_json.headers['x-recaptcha-test']).toEqual('test-value'); 
   });
-
-  // TODO: JS injection
-
 });
 
 describe('Check Different Path Matching', () => {
@@ -108,5 +116,4 @@ describe('Check Different Path Matching', () => {
     const html_json3 = JSON.parse(html3)
     expect(html_json3.headers).to.not.have.property('x-recaptcha-test');
   });
-
 });

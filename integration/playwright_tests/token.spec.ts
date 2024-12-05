@@ -1,3 +1,23 @@
+/**
+ * Copyright 2024 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * @fileoverview Integration tes for tokens with Playwright browser session.
+ */
+
 import { test, expect, Cookie } from '@playwright/test';
 import { chromium, firefox, webkit } from 'playwright';
 
@@ -33,9 +53,9 @@ test('should get session token as a cookie', async ({ page }) => {
     throw new Error(err.message);
   }
 
-  // // Extract the token from the cookie
+  // Extract the token from the cookie
   const sessionToken = cookies.find(cookie => cookie.name === 'recaptcha-fastly-t')?.value; // TODO: the cookie name should be more generic
-  // // Assert that the token is not empty
+  // Assert that the token is not empty
   expect(sessionToken).toBeTruthy();
 
   // call CreateAsessment by visit condition matching pages
@@ -59,8 +79,6 @@ test('should generate an action token after execute() by clicking the button', a
     response.request().method() === 'GET' &&
     !!response.request().headers()['x-recaptcha-token'] // Check if the header exists
   );
-
-  // Click the "Execute Button"
   await page.click('#execute-button');
 
   // Wait for the response and extract the token from the header
@@ -69,7 +87,6 @@ test('should generate an action token after execute() by clicking the button', a
 
   // Assert that the token is not empty
   expect(actionToken).toBeTruthy();
-  // console.log('Action Token:', actionToken);
 
   // call CreateAsessment by visit condition matching pages
   const condition1Response = await page.goto(`${endpointUrl}/condition/1`);
@@ -110,8 +127,6 @@ test('should deny express block page with condition set', async ({ page }) => {
   expect(response?.status()).toBe(500); 
 });
 
-// TODO: Merge the CF_end_to_end tests with Express only?
-
 test('should get challenge token as a cookie', async ({ page }) => {
   let cookies : Cookie[] = [];
   const browser = await chromium.launch({ headless: true});
@@ -132,9 +147,8 @@ test('should get challenge token as a cookie', async ({ page }) => {
     throw new Error(err.message);
   }
 
-  // // Extract the token from the cookie
+  // Extract the token from the cookie
   const challengeToken = cookies.find(cookie => cookie.name === 'recaptcha-fastly-e')?.value;
-  // // Assert that the token is not empty
   expect(challengeToken).toBeTruthy();
 
   // call CreateAsessment by visit condition matching pages
