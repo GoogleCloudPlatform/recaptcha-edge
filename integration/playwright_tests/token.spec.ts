@@ -62,7 +62,7 @@ test('should get session token as a cookie', async ({ page }) => {
   const condition1Response = await page.goto(`${endpointUrl}/condition/1`);
 
   // Assert that the x-recaptcha-test header is set correctly
-  const headers = condition1Response?.headers();
+  const headers = condition1Response?.allHeaders();
   // Match the expected value from the firewall rule
   expect(headers?.['x-recaptcha-test']).toBe('condition-match'); 
 });
@@ -92,7 +92,7 @@ test('should generate an action token after execute() by clicking the button', a
   const condition1Response = await page.goto(`${endpointUrl}/condition/1`);
 
   // Assert that the x-recaptcha-test header is set correctly
-  const headers = condition1Response?.headers();
+  const headers = condition1Response?.allHeaders();
   // Match the expected value from the firewall rule
   expect(headers?.['x-recaptcha-test']).toBe('condition-match'); 
 });
@@ -100,7 +100,7 @@ test('should generate an action token after execute() by clicking the button', a
 test('should get session token after visiting the intended injectJS path', async ({ page }) => {
   const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
 
-  await page.goto(`${endpointUrl}`);
+  await page.goto(`${endpointUrl}/hello.html`);
 
   // Wait for the reCAPTCHA script to be injected (adjust timeout if needed)
   await page.waitForTimeout(5000); 
@@ -155,7 +155,7 @@ test('should get challenge token as a cookie', async ({ page }) => {
   const condition1Response = await page.goto(`${endpointUrl}/condition/1`);
 
   // Assert that the x-recaptcha-test header is set correctly
-  const headers = condition1Response?.headers();
+  const headers = condition1Response?.allHeaders();
   // Match the expected value from the firewall rule
   expect(headers?.['x-recaptcha-test']).toBe('condition-match'); 
 });
