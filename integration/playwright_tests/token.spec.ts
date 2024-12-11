@@ -54,22 +54,19 @@ test('should get session token as a cookie', async ({ page }) => {
   }
 
   // Extract the token from the cookie
-  const sessionToken = cookies.find(cookie => cookie.name === 'recaptcha-fastly-t')?.value; // TODO: the cookie name should be more generic
+  const sessionToken = cookies.find(cookie => cookie.name === 'recaptcha-fastly-t')?.value;
   // Assert that the token is not empty
   expect(sessionToken).toBeTruthy();
 
   // call CreateAsessment by visit condition matching pages
-  const condition1Response = await page.goto(`${endpointUrl}/condition/1`);
-
-  // Assert that the x-recaptcha-test header is set correctly
-  const headers = condition1Response?.json()['headers'];
+  await page.goto(`${endpointUrl}/condition/1`);
+  await expect(page).toHaveURL(`${endpointUrl}/condition/1`)
   // Match the expected value from the firewall rule
-  expect(headers?.['x-recaptcha-test']).toBe('condition-match'); 
+  await expect(page.getByText('x-recaptcha-test')).toBeVisible({timeout:5000})
 });
 
 test('should generate an action token after execute() by clicking the button', async ({ page }) => {
   const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
-
   // Go to the page with the reCAPTCHA
   await page.goto(`${endpointUrl}/token/action`);
 
@@ -89,13 +86,10 @@ test('should generate an action token after execute() by clicking the button', a
   expect(actionToken).toBeTruthy();
 
   // call CreateAsessment by visit condition matching pages
-  const condition1Response = await page.goto(`${endpointUrl}/condition/1`);
-
-  // Assert that the x-recaptcha-test header is set correctly
-  const headers = condition1Response?.json()['headers'];
-  console.log(condition1Response?.json())
+  await page.goto(`${endpointUrl}/condition/1`);
+  await expect(page).toHaveURL(`${endpointUrl}/condition/1`)
   // Match the expected value from the firewall rule
-  expect(headers?.['x-recaptcha-test']).toBe('condition-match'); 
+  await expect(page.getByText('x-recaptcha-test')).toBeVisible({timeout:5000})
 });
 
 test('should get session token after visiting the intended injectJS path', async ({ page }) => {

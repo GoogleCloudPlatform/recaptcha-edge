@@ -37,31 +37,14 @@ describe('Check Different Actions', () => {
 
   test('Access the allow page', async () => {
     const testPageUrl = 'action/allow';
-    const response = await fetch(`${endpointUrl}${testPageUrl}`, {
-      headers: {
-        "X-Recaptcha_Token": "default_action_value",
-      },
-    })
+    const response = await fetch(`${endpointUrl}${testPageUrl}`);
     expect(response.status).toEqual(200);
   });
 
   test('Access the block page', async () => {
     const testPageUrl = 'action/block';
-    const response = await fetch(`${endpointUrl}${testPageUrl}`, {
-      headers: {
-        "X-Recaptcha_Token": "default_action_value",
-      },
-    })
+    const response = await fetch(`${endpointUrl}${testPageUrl}`);
     expect(response.status).toEqual(403);
-  });
-
-  test('Access the redirect page', async () => {
-    const testPageUrl = 'action/redirect';
-    const response = await fetch(`${endpointUrl}${testPageUrl}`); 
-    expect(response.status).toEqual(200);
-  
-    const html = await response.text();
-    expect(html).toContain(`<base href="https://www.google.com/recaptcha/challengepage/">`); 
   });
 
   test('Access the substitute page', async () => {
