@@ -19,7 +19,6 @@
  */
 
 import { test, expect, Cookie } from '@playwright/test';
-import { chromium, firefox, webkit } from 'playwright';
 
 test.beforeEach(async ({ context }) => {
   // Create a new page with an empty context for each test.
@@ -33,9 +32,8 @@ test('should fetch the CF endpoint correctly', async ({ page }) => {
   await expect(page).toHaveURL(`${endpointUrl}/action/allow`); 
 });
 
-test('should get session token as a cookie', async ({ page }) => {
+test('should get session token as a cookie', async ({ browser, page }) => {
   let cookies : Cookie[] = [];
-  const browser = await chromium.launch({ headless: true});
   const context = await browser.newContext();
   
   const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
@@ -108,9 +106,8 @@ test('should get session token after visiting the intended injectJS path', async
   expect(scriptExists).toBe(true);
 });
 
-test('should get challenge token as a cookie', async ({ page }) => {
+test('should get challenge token as a cookie', async ({ browser, page }) => {
   let cookies : Cookie[] = [];
-  const browser = await chromium.launch({ headless: true});
   const context = await browser.newContext();
   
   const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
@@ -119,7 +116,7 @@ test('should get challenge token as a cookie', async ({ page }) => {
     const page = await context.newPage();
     // Perform JS injection automatically.
     await page.goto(`${endpointUrl}/action/redirect`);
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(10000);
     // Get cookies from the selected domain.
     cookies = await context.cookies([endpointUrl]);
   } catch (err) {
