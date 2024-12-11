@@ -20,9 +20,8 @@
 
 import { test, expect, Cookie } from '@playwright/test';
 
-test.beforeEach(async ({ context }) => {
-  // Create a new page with an empty context for each test.
-  await context.newPage(); 
+test.beforeEach( async ({ context }) => {
+  await context.newPage();
 });
 
 test('should fetch the CF endpoint correctly', async ({ page }) => {
@@ -34,17 +33,15 @@ test('should fetch the CF endpoint correctly', async ({ page }) => {
 
 test('should get session token as a cookie', async ({ browser, page }) => {
   let cookies : Cookie[] = [];
-  const context = await browser.newContext();
   
   const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
 
   try {
-    const page = await context.newPage();
     // Perform JS injection automatically.
     await page.goto(`${endpointUrl}/token/session`);
     await page.waitForTimeout(5000);
     // Get cookies from the current context.
-    cookies = await context.cookies();
+    cookies = await page.context().cookies();
   } catch (err) {
     await browser.close();
     throw new Error(err.message);
@@ -82,7 +79,7 @@ test('should generate an action token after execute() by clicking the button', a
   // Assert that the token is not empty.
   expect(actionToken).toBeTruthy();
 
-  // call CreateAsessment by visit condition matching pages.
+  // Call CreateAsessment by visit condition matching pages.
   await page.goto(`${endpointUrl}/condition/1`);
   await expect(page).toHaveURL(`${endpointUrl}/condition/1`)
   // Match the expected value from the firewall rule.
@@ -108,16 +105,14 @@ test('should get session token after visiting the intended injectJS path', async
 
 test('should get challenge token as a cookie', async ({ browser, page }) => {
   let cookies : Cookie[] = [];
-  const context = await browser.newContext();
   const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
 
   try {
-    const page = await context.newPage();
     // Perform JS injection automatically.
     await page.goto(`${endpointUrl}/action/redirect`);
-    await page.waitForTimeout(20000);
-    // Get cookies from the selected domain.
-    cookies = await context.cookies([endpointUrl]);
+    await page.waitForTimeout(7000);
+    // Get cookies from the selecteds domain.
+    cookies = await page.context().cookies([endpointUrl]);
   } catch (err) {
     await browser.close();
     throw new Error(err.message);
