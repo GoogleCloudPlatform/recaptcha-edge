@@ -41,8 +41,8 @@ export function createPartialEventWithSiteInfo(
     context.log("debug", "siteKind: action");
   } else {
     const cookieMap = new Map<string, string>();
-    var sessionToken: string | undefined;
     var challengeToken: string | undefined;
+    var sessionToken: string | undefined;
     for (const cookie of req.headers.get("cookie")?.split(";") ?? []) {
       const [key, value] = cookie.split("=");
       cookieMap.set(key.trim(), value.trim());
@@ -59,18 +59,18 @@ export function createPartialEventWithSiteInfo(
       }
     }
 
-    if (!sessionToken) {
-      sessionToken = cookieMap.get(context.sessionPageCookie);
-    }
     if (!challengeToken) {
       challengeToken = cookieMap.get(context.challengePageCookie);
+    }
+    if (!sessionToken) {
+      sessionToken = cookieMap.get(context.sessionPageCookie);
     }
     if (context.config.debug) {
       for (const [key, value] of cookieMap.entries()) {
         if (
           key.startsWith("recaptcha") &&
-          key !== context.sessionPageCookie &&
-          key !== context.challengePageCookie
+          key !== context.challengePageCookie &&
+          key !== context.sessionPageCookie
         ) {
           context.log(
             "info",
@@ -82,16 +82,16 @@ export function createPartialEventWithSiteInfo(
       }
     }
 
-    if (context.config.sessionSiteKey && sessionToken) {
-      event.token = sessionToken;
-      event.siteKey = context.config.sessionSiteKey;
-      event.wafTokenAssessment = true;
-      context.log("debug", "siteKind: session");
-    } else if (context.config.challengePageSiteKey && challengeToken) {
+     if (context.config.challengePageSiteKey && challengeToken) {
       event.token = challengeToken;
       event.siteKey = context.config.challengePageSiteKey;
       event.wafTokenAssessment = true;
       context.log("debug", "siteKind: challenge");
+    } else if (context.config.sessionSiteKey && sessionToken) {
+      event.token = sessionToken;
+      event.siteKey = context.config.sessionSiteKey;
+      event.wafTokenAssessment = true;
+      context.log("debug", "siteKind: session");
     } else if (context.config.expressSiteKey) {
       event.siteKey = context.config.expressSiteKey;
       event.express = true;
