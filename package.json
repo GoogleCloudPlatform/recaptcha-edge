@@ -1,14 +1,19 @@
 {
   "name": "@google-cloud/recaptcha",
   "version": "1.0.0",
-  "description": "recaptcha enterprise typescript library",
-  "main": "dist/index.js",
-  "exports": "./dist/index.esm.js",
-  "type": "module",
-  "types": "dist/index.d.ts",
+  "description": "A reCAPTCHA Enterprise Typescript library for Edge Compute Platforms.",
+  "keywords": ["recaptcha", "waf", "edge compute", "bot", "security"],
+  "repository": "github:GoogleCloudPlatform/recaptcha-waf",
+  "homepage": "https://github.com/GoogleCloudPlatform/recaptcha-waf#readme",
+  "license": "Apache-2.0",
+  "author": "reCAPTCHA Team <no-reply@google.com>",
   "files": [
     "dist"
   ],
+  "type": "module",
+  "exports": "./dist/index.esm.js",
+  "main": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "rollup -c",
     "pack": "mkdir pkg && tar -czvf pkg/recaptcha_library.tar.gz dist/*",
@@ -20,8 +25,6 @@
     "genproto": "mkdir -p src/generated && npx protoc --ts_out src/generated --proto_path src/proto src/proto/soz.proto src/proto/status.proto src/proto/recaptchaenterprise.proto",
     "genclean": "rm -rf src/generated"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "@babel/runtime": "^7.26.0",
     "@protobuf-ts/plugin": "^2.9.4",

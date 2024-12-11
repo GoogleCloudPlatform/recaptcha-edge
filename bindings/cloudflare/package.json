@@ -1,10 +1,20 @@
 {
   "name": "@google-cloud/recaptcha-cloudflare",
   "version": "1.0.0",
+  "description": "A reCAPTCHA Enterprise Typescript Libarary for Cloudflare Workers.",
+  "keywords": ["recaptcha", "waf", "cloudflare", "bot", "security"],
+  "homepage": "https://github.com/GoogleCloudPlatform/recaptcha-waf/tree/main/bindings/cloudflare#readme",
+  "license": "Apache-2.0",
+  "author": "reCAPTCHA Team <no-reply@google.com>",
   "private": true,
   "type": "module",
-  "main": "dist/cloudflare_worker.js",
   "exports": "./dist/index.esm.js",
+  "main": "dist/cloudflare_worker.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GoogleCloudPlatform/recaptcha-waf.git",
+    "directory": "bindings/cloudflare" 
+  },
   "scripts": {
     "build": "esbuild --bundle src/index.ts --platform=node --outdir=dist",
     "build:worker": "wrangler deploy --dry-run --outdir=dist",

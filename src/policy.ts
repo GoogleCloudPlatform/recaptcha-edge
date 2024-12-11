@@ -156,7 +156,7 @@ export async function applyActions(
   let terminalAction: action.Action = action.createAllowAction();
   const reqNonterminalActions: action.RequestNonTerminalAction[] = [];
   const respNonterminalActions: action.ResponseNonTerminalAction[] = [];
-  let newReq = new Request(req);
+  let newReq = new Request(req.url, req);
 
   // Actions are assumed to be in order of processing. Non-terminal actions must
   // be processed before terminal actions, and will be ignored if erroniously
