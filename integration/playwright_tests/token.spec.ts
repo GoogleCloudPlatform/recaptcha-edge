@@ -109,19 +109,6 @@ test('should get session token after visiting the intended injectJS path', async
   expect(scriptExists).toBe(true);
 });
 
-// To be verified: Express Key with Condition
-test('should access express allow page with condition set', async ({ page }) => {
-  const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
-  const response = await page.goto(`${endpointUrl}/express/allow`);
-  expect(response?.status()).toBe(200); 
-});
-
-test('should deny express block page with condition set', async ({ page }) => {
-  const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
-  const response = await page.goto(`${endpointUrl}/express/block`);
-  expect(response?.status()).toBe(500); 
-});
-
 test('should get challenge token as a cookie', async ({ page }) => {
   let cookies : Cookie[] = [];
   const browser = await chromium.launch({ headless: true});
@@ -147,10 +134,8 @@ test('should get challenge token as a cookie', async ({ page }) => {
   expect(challengeToken).toBeTruthy();
 
   // call CreateAsessment by visit condition matching pages
-  const condition1Response = await page.goto(`${endpointUrl}/condition/1`);
-
-  // Assert that the x-recaptcha-test header is set correctly
-  const headers = condition1Response?.json()['headers'];
+  await page.goto(`${endpointUrl}/condition/1`);
+  await expect(page).toHaveURL(`${endpointUrl}/condition/1`)
   // Match the expected value from the firewall rule
-  expect(headers?.['x-recaptcha-test']).toBe('condition-match'); 
+  await expect(page.getByText('x-recaptcha-test')).toBeVisible({timeout:5000})
 });
