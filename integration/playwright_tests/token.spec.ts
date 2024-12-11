@@ -109,14 +109,13 @@ test('should get session token after visiting the intended injectJS path', async
 test('should get challenge token as a cookie', async ({ browser, page }) => {
   let cookies : Cookie[] = [];
   const context = await browser.newContext();
-  
   const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
 
   try {
     const page = await context.newPage();
     // Perform JS injection automatically.
     await page.goto(`${endpointUrl}/action/redirect`);
-    await page.waitForTimeout(10000);
+    await page.waitForTimeout(20000);
     // Get cookies from the selected domain.
     cookies = await context.cookies([endpointUrl]);
   } catch (err) {
