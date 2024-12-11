@@ -121,7 +121,7 @@ test('should get challenge token as a cookie', async ({ page }) => {
     await page.goto(`${endpointUrl}/action/redirect`);
     await page.waitForTimeout(5000);
     // Get cookies from the selected domain.
-    cookies = await context.cookies(endpointUrl);
+    cookies = await context.cookies([endpointUrl]);
   } catch (err) {
     await browser.close();
     throw new Error(err.message);
