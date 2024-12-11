@@ -93,6 +93,7 @@ test('should generate an action token after execute() by clicking the button', a
 
   // Assert that the x-recaptcha-test header is set correctly
   const headers = condition1Response?.json()['headers'];
+  console.log(condition1Response?.json())
   // Match the expected value from the firewall rule
   expect(headers?.['x-recaptcha-test']).toBe('condition-match'); 
 });
