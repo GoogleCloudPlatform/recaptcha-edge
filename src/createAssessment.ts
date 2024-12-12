@@ -38,6 +38,7 @@ export function createPartialEventWithSiteInfo(
     event.token = actionToken;
     event.siteKey = context.config.actionSiteKey;
     event.wafTokenAssessment = true;
+    context.debug_trace.site_key_used = 'action';
     context.log("debug", "siteKind: action");
   } else {
     const cookieMap = new Map<string, string>();
@@ -86,17 +87,21 @@ export function createPartialEventWithSiteInfo(
       event.token = challengeToken;
       event.siteKey = context.config.challengePageSiteKey;
       event.wafTokenAssessment = true;
+      context.debug_trace.site_key_used = 'challenge';
       context.log("debug", "siteKind: challenge");
     } else if (context.config.sessionSiteKey && sessionToken) {
       event.token = sessionToken;
       event.siteKey = context.config.sessionSiteKey;
       event.wafTokenAssessment = true;
+      context.debug_trace.site_key_used = 'session';
       context.log("debug", "siteKind: session");
     } else if (context.config.expressSiteKey) {
       event.siteKey = context.config.expressSiteKey;
       event.express = true;
+      context.debug_trace.site_key_used = 'express';
       context.log("debug", "siteKind: express");
     } else {
+      context.debug_trace.site_key_used = 'none';
       throw new error.RecaptchaError(
         "No site key was found matching the incoming request token, and express is not enabled.",
         action.createAllowAction(),
@@ -152,6 +157,7 @@ export async function callCreateAssessment(
         .then((json) => {
           let ret = AssessmentSchema.safeParse(json);
           if (ret.success && Object.keys(ret.data).length > 0) {
+            context.debug_trace.create_assessment = 'ok';
             return ret.data;
           }
           let err_ret = RpcErrorSchema.required().safeParse(json);
@@ -169,6 +175,7 @@ export async function callCreateAssessment(
     })
     .catch((reason) => {
       context.log("debug", "[rpc] createAssessment (fail)");
+      context.debug_trace.create_assessment = 'err';
       if (reason instanceof error.RecaptchaError) {
         throw reason;
       }

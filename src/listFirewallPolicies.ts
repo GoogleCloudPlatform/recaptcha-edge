@@ -58,6 +58,8 @@ export async function callListFirewallPolicies(
         .then((json) => {
           let ret = ListFirewallPoliciesResponseSchema.safeParse(json);
           if (ret.success && Object.keys(ret.data).length > 0) {
+            context.debug_trace.list_firewall_policies = 'ok';
+            context.debug_trace.policy_count = ret.data.firewallPolicies.length;
             context.log("debug", "[rpc] listFirewallPolicies (ok)");
             return ret.data;
           }
@@ -72,6 +74,7 @@ export async function callListFirewallPolicies(
         });
     })
     .catch((reason) => {
+      context.debug_trace.list_firewall_policies = 'err';
       context.log("debug", "[rpc] listFirewallPolicies (fail)");
       if (reason instanceof error.RecaptchaError) {
         throw reason;
