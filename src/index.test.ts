@@ -33,7 +33,8 @@ import {
   RecaptchaConfig,
   RecaptchaContext,
   SetHeaderAction,
-  LogLevel
+  LogLevel,
+  DebugTrace
 } from "./index";
 
 import { Action, ActionSchema, createBlockAction } from "./action";
@@ -1066,4 +1067,12 @@ test("createPartialEventWithSiteInfo-express", () => {
     express: true,
     userIpAddress: "1.2.3.4",
   });
+});
+
+test("DebugTrace-format", () => {
+  const context = new TestContext(testConfig);
+  let trace = new DebugTrace(context);
+  trace.list_firewall_policies = "ok";
+  trace.policy_count = 10;
+  expect(trace.formatAsHeaderValue()).toEqual("list_firewall_policies=ok;policy_count=10;site_keys_present=asce");
 });
