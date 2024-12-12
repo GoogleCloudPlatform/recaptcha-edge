@@ -113,16 +113,17 @@ export class DebugTrace {
 	 * @returns a string in the format k1=v1;k2=v2
 	 */
 	formatAsHeaderValue(): string {
-    const parts: string[] = [];
-    for (const key of Object.keys(this)) { // Iterate over property names
-      const value = this[key as keyof this]; // Access value using key and type assertion
+		const parts: string[] = [];
+		for (const key of Object.keys(this)) {
+			// Iterate over property names
+			const value = this[key as keyof this]; // Access value using key and type assertion
 
-      if (value) {
-        parts.push(`${key}=${value}`);
-      }
-      }
+			if (value) {
+				parts.push(`${key}=${value}`);
+			}
+		}
 
-      return parts.join(";");
+		return parts.join(";");
 	}
 }
 
