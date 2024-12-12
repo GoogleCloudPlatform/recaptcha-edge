@@ -79,6 +79,54 @@ export interface RecaptchaConfig {
   strict_cookie?: boolean;
 }
 
+export class DebugTrace {
+	exception_count?: number;
+	list_firewall_policies?: "ok" | "err";
+	create_assessment?: "ok" | "err";
+	policy_count?: number;
+	policy_match?: boolean;
+	inject_js_match?: boolean;
+	site_key_used?: "action" | "session" | "challenge" | "express" | "none";
+	site_keys_present?: string;
+	version?: string;
+
+	constructor(context: RecaptchaContext) {
+		this.site_keys_present = "";
+		if (!!context.config.actionSiteKey?.trim()) {
+			this.site_keys_present += "a";
+		}
+		if (!!context.config.sessionSiteKey?.trim()) {
+			this.site_keys_present += "s";
+		}
+		if (!!context.config.challengePageSiteKey?.trim()) {
+			this.site_keys_present += "c";
+		}
+		if (!!context.config.expressSiteKey?.trim()) {
+			this.site_keys_present += "e";
+		}
+		this.version = context.environment[1];
+	}
+
+	/**
+	 * Creates a Header value from an object, used for debug data.
+	 * @param data an Object with string,number,boolean values.
+	 * @returns a string in the format k1=v1;k2=v2
+	 */
+	formatAsHeaderValue(): string {
+		const parts: string[] = [];
+		for (const key of Object.keys(this)) {
+			// Iterate over property names
+			const value = this[key as keyof this]; // Access value using key and type assertion
+
+			if (value) {
+				parts.push(`${key}=${value}`);
+			}
+		}
+
+		return parts.join(";");
+	}
+}
+
 export type LogLevel = "debug" | "info" | "warning" | "error";
 /**
  * reCAPTCHA Enterprise context.
@@ -89,6 +137,7 @@ export abstract class RecaptchaContext {
   config: RecaptchaConfig;
   exceptions: any[] = [];
   log_messages: Array<[LogLevel, string[]]> = [];
+  debug_trace: DebugTrace;
   readonly environment: [string, string] = [
     "[npm] @google-cloud/recaptcha",
     "",
@@ -99,6 +148,7 @@ export abstract class RecaptchaContext {
 
   constructor(config: RecaptchaConfig) {
     this.config = config;
+    this.debug_trace = new DebugTrace(this);
   }
 
   async fetch(req: RequestInfo, options?: RequestInit): Promise<Response> {
