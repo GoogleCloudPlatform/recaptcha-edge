@@ -89,6 +89,7 @@ export class DebugTrace {
 	site_key_used?: "action" | "session" | "challenge" | "express" | "none";
 	site_keys_present?: string;
 	version?: string;
+	empty_config?: string;
 
 	constructor(context: RecaptchaContext) {
 		this.site_keys_present = "";
@@ -103,6 +104,22 @@ export class DebugTrace {
 		}
 		if (!!context.config.expressSiteKey?.trim()) {
 			this.site_keys_present += "e";
+		}
+		let empty = [];
+		if (!context.config.apiKey.trim()) {
+			empty.push("apikey");
+		}
+		if (!context.config.projectNumber) {
+			empty.push("project");
+		}
+		if (!context.config.recaptchaEndpoint) {
+			empty.push("endpoint");
+		}
+		if (!this.site_keys_present) {
+			empty.push("sitekeys");
+		}
+		if (empty.length > 0) {
+			this.empty_config = empty.join(",");
 		}
 		this.version = context.environment[1];
 	}

@@ -1078,9 +1078,11 @@ test("createPartialEventWithSiteInfo-express", () => {
 
 test("DebugTrace-format", () => {
   const context = new TestContext(testConfig);
+  context.config.apiKey = "";
+  context.config.recaptchaEndpoint = "";
   let trace = new DebugTrace(context);
   trace.list_firewall_policies = "ok";
   trace.policy_count = 10;
   trace.site_key_used = "session";
-  expect(trace.formatAsHeaderValue()).toEqual("list_firewall_policies=ok;policy_count=10;site_key_used=session;site_keys_present=asce");
+  expect(trace.formatAsHeaderValue()).toEqual("list_firewall_policies=ok;policy_count=10;site_key_used=session;site_keys_present=asce;empty_config=apikey,endpoint");
 });
