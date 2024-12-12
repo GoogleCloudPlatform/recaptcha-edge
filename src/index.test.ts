@@ -948,6 +948,7 @@ test("createPartialEventWithSiteInfo-actionToken", () => {
     wafTokenAssessment: true,
     userIpAddress: "1.2.3.4",
   });
+  expect(context.debug_trace.site_key_used).toEqual("action");
 });
 
 test("createPartialEventWithSiteInfo-sessionToken", () => {
@@ -968,6 +969,7 @@ test("createPartialEventWithSiteInfo-sessionToken", () => {
     wafTokenAssessment: true,
     userIpAddress: "1.2.3.4",
   });
+  expect(context.debug_trace.site_key_used).toEqual("session");
 });
 
 test("createPartialEventWithSiteInfo-strictSessionToken", () => {
@@ -988,6 +990,7 @@ test("createPartialEventWithSiteInfo-strictSessionToken", () => {
     userAgent: "test-user-agent",
     userIpAddress: "1.2.3.4",
   });
+  expect(context.debug_trace.site_key_used).toEqual("express");
 });
 
 test("createPartialEventWithSiteInfo-nonStrictSessionToken", () => {
@@ -1009,6 +1012,7 @@ test("createPartialEventWithSiteInfo-nonStrictSessionToken", () => {
     wafTokenAssessment: true,
     userIpAddress: "1.2.3.4",
   });
+  expect(context.debug_trace.site_key_used).toEqual("session");
 });
 
 test("createPartialEventWithSiteInfo-challengeToken", () => {
@@ -1029,6 +1033,7 @@ test("createPartialEventWithSiteInfo-challengeToken", () => {
     wafTokenAssessment: true,
     userIpAddress: "1.2.3.4",
   });
+  expect(context.debug_trace.site_key_used).toEqual("challenge");
 });
 
 test("createPartialEventWithSiteInfo-nonStrictChallengeToken", () => {
@@ -1050,6 +1055,7 @@ test("createPartialEventWithSiteInfo-nonStrictChallengeToken", () => {
     wafTokenAssessment: true,
     userIpAddress: "1.2.3.4",
   });
+  expect(context.debug_trace.site_key_used).toEqual("challenge");
 });
 
 test("createPartialEventWithSiteInfo-express", () => {
@@ -1067,6 +1073,7 @@ test("createPartialEventWithSiteInfo-express", () => {
     express: true,
     userIpAddress: "1.2.3.4",
   });
+  expect(context.debug_trace.site_key_used).toEqual("express");
 });
 
 test("DebugTrace-format", () => {
@@ -1074,5 +1081,6 @@ test("DebugTrace-format", () => {
   let trace = new DebugTrace(context);
   trace.list_firewall_policies = "ok";
   trace.policy_count = 10;
-  expect(trace.formatAsHeaderValue()).toEqual("list_firewall_policies=ok;policy_count=10;site_keys_present=asce");
+  trace.site_key_used = "session";
+  expect(trace.formatAsHeaderValue()).toEqual("list_firewall_policies=ok;policy_count=10;site_key_used=session;site_keys_present=asce");
 });
