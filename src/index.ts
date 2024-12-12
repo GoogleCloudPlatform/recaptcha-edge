@@ -107,13 +107,16 @@ export class DebugTrace {
 		}
     let empty = [];
     if (!context.config.apiKey.trim()) {
-      empty.push("key");
+      empty.push("apikey");
     }
     if (!context.config.projectNumber) {
       empty.push("project");
     }
     if (!context.config.recaptchaEndpoint) {
       empty.push("endpoint");
+    }
+    if (!this.site_keys_present) {
+      empty.push("sitekeys");
     }
     if(empty.length > 0) {
       this.empty_config = empty.join(",");
