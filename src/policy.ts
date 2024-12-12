@@ -257,12 +257,6 @@ export async function applyActions(
   return resp;
 }
 
-interface DebugData {
-  [key: string]: string | number | boolean;
-}
-
-
-
 /**
  * Process reCAPTCHA request.
  */

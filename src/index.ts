@@ -80,32 +80,32 @@ export interface RecaptchaConfig {
 }
 
 export class DebugTrace {
-  exception_count?: number;
+	exception_count?: number;
 	list_firewall_policies?: "ok" | "err";
 	create_assessment?: "ok" | "err";
 	policy_count?: number;
 	policy_match?: boolean;
-  inject_js_match?: boolean;
+	inject_js_match?: boolean;
 	site_key_used?: "action" | "session" | "challenge" | "express" | "none";
-  site_keys_present?: string;
-  version?: string;
+	site_keys_present?: string;
+	version?: string;
 
-  constructor(context: RecaptchaContext) {
-    this.site_keys_present = "";
-    if(!!context.config.actionSiteKey?.trim()) {
-      this.site_keys_present += "a";
-    }
-    if(!!context.config.sessionSiteKey?.trim()) {
-      this.site_keys_present += "s";
-    }
-    if(!!context.config.challengePageSiteKey?.trim()) {
-      this.site_keys_present += "c";
-    }
-    if(!!context.config.expressSiteKey?.trim()) {
-      this.site_keys_present += "e";
-    }
-    this.version = context.environment[1];
-  }
+	constructor(context: RecaptchaContext) {
+		this.site_keys_present = "";
+		if (!!context.config.actionSiteKey?.trim()) {
+			this.site_keys_present += "a";
+		}
+		if (!!context.config.sessionSiteKey?.trim()) {
+			this.site_keys_present += "s";
+		}
+		if (!!context.config.challengePageSiteKey?.trim()) {
+			this.site_keys_present += "c";
+		}
+		if (!!context.config.expressSiteKey?.trim()) {
+			this.site_keys_present += "e";
+		}
+		this.version = context.environment[1];
+	}
 
 	/**
 	 * Creates a Header value from an object, used for debug data.
