@@ -244,6 +244,6 @@ export function recaptchaConfigFromRequest(request: EW.IngressClientRequest): Re
     sessionSiteKey: request.getVariable("PMUSER_RECAPTCHASESSIONSITEKEY") || "",
     challengePageSiteKey: request.getVariable("PMUSER_RECAPTCHACHALLENGESITEKEY") || "",
     recaptchaEndpoint: request.getVariable(DEFAULT_RECAPTCHA_ENDPOINT) || "",
-    debug: request.getVariable('DEBUG') === 'true'
+    debug: request.getVariable('PMUSER_DEBUG') === 'true'
   }
 }
