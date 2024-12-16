@@ -21,6 +21,10 @@
 
 import { expect, test } from '@playwright/test';
 
+test.beforeEach( async ({ context }) => {
+  await context.newPage();
+});
+
 test.describe('Check Different Actions', () => {
   const endpointUrl = process.env.ENDPOINT as string;
   if (!endpointUrl) {
@@ -39,19 +43,19 @@ test.describe('Check Different Actions', () => {
   });
 
   test('Access the allow page', async ({ page }) => {
-    const testPageUrl = 'action/allow';
+    const testPageUrl = '/action/allow';
     const response = await page.goto(`${endpointUrl}${testPageUrl}`);
     expect(response?.status()).toBe(200);
   });
 
   test('Access the block page', async ({ page }) => {
-    const testPageUrl = 'action/block';
+    const testPageUrl = '/action/block';
     const response = await page.goto(`${endpointUrl}${testPageUrl}`);
     expect(response?.status()).toBe(403);
   });
 
   test('Access the substitute page', async ({ page }) => {
-    const testPageUrl = 'action/substitute';
+    const testPageUrl = '/action/substitute';
     const response = await page.goto(`${endpointUrl}${testPageUrl}`);
     expect(response?.status()).toBe(200);
 
@@ -60,7 +64,7 @@ test.describe('Check Different Actions', () => {
   });
 
   test('Access the set header page', async ({ page }) => {
-    const testPageUrl = 'action/setheader';
+    const testPageUrl = '/action/setheader';
     const response = await page.goto(`${endpointUrl}${testPageUrl}`);
     expect(response?.status()).toBe(200);
 
@@ -77,21 +81,21 @@ test.describe('Check Different Path Matching', () => {
   }
 
   test('Set header if the page url follows /page/wild*', async ({ page }) => {
-    const testPageUrl = 'path/wild';
+    const testPageUrl = '/path/wild';
     const response = await page.goto(`${endpointUrl}${testPageUrl}`); 
     expect(response?.status()).toBe(200);
 
     const responseJson = await response?.json();
     expect(responseJson.headers['x-recaptcha-test']).toEqual('wild-path'); 
 
-    const testPageUrl2 = 'path/wild/testA';
+    const testPageUrl2 = '/path/wild/testA';
     const response2 = await page.goto(`${endpointUrl}${testPageUrl2}`); 
     expect(response2?.status()).toBe(200);
     const responseJson2 = await response2?.json();
     expect(responseJson2.headers).not.toHaveProperty('x-recaptcha-test');
 
 
-    const testPageUrl3 = 'path/wildtestB';
+    const testPageUrl3 = '/path/wildtestB';
     const response3 = await page.goto(`${endpointUrl}${testPageUrl3}`); 
     expect(response3?.status()).toBe(200);
     const responseJson3 = await response3?.json();
@@ -99,19 +103,19 @@ test.describe('Check Different Path Matching', () => {
   });
 
   test('Set header if the page url follows /path/qu?stion', async ({ page }) => {
-    const testPageUrl = 'path/question';
+    const testPageUrl = '/path/question';
     const response = await page.goto(`${endpointUrl}${testPageUrl}`); 
     expect(response?.status()).toBe(200);
     const responseJson = await response?.json();
     expect(responseJson.headers['x-recaptcha-test']).toEqual('question-path'); 
 
-    const testPageUrl2 = 'path/quabcstion';
+    const testPageUrl2 = '/path/quabcstion';
     const response2 = await page.goto(`${endpointUrl}${testPageUrl2}`); 
     expect(response2?.status()).toBe(200);
     const responseJson2 = await response2?.json();
     expect(responseJson2.headers).not.toHaveProperty('x-recaptcha-test');
 
-    const testPageUrl3 = 'path/qustion';
+    const testPageUrl3 = '/path/qustion';
     const response3 = await page.goto(`${endpointUrl}${testPageUrl3}`); 
     expect(response3?.status()).toBe(200);
     const responseJson3 = await response3?.json();
@@ -126,19 +130,19 @@ test.describe('Check Different Conditions', () => {
   }
 
   test('Access the conditionally-allowed page', async ({ page }) => {
-    const testPageUrl = 'express/allow';
+    const testPageUrl = '/express/allow';
     const response = await page.goto(`${endpointUrl}${testPageUrl}`);
     expect(response?.status()).toEqual(200);
   });
 
   test('Access the conditionally-blocked page', async ({ page }) => {
-    const testPageUrl = 'express/block';
+    const testPageUrl = '/express/block';
     const response = await page.goto(`${endpointUrl}${testPageUrl}`);
     expect(response?.status()).toEqual(403);
   });
 
   test('Access the first condition page', async ({ page }) => {
-    const testPageUrl = 'condition/1';
+    const testPageUrl = '/condition/1';
     const response = await page.goto(`${endpointUrl}${testPageUrl}`); 
     expect(response?.status()).toEqual(200);
 
@@ -147,7 +151,7 @@ test.describe('Check Different Conditions', () => {
   });
 
   test('Access the second condition page', async ({ page }) => {
-    const testPageUrl = 'condition/2';
+    const testPageUrl = '/condition/2';
     const response = await page.goto(`${endpointUrl}${testPageUrl}`); 
     expect(response?.status()).toEqual(200);
     const responseJson = await response?.json()
@@ -155,7 +159,7 @@ test.describe('Check Different Conditions', () => {
   });
 
   test('Access the third condition page', async ({ page }) => {
-    const testPageUrl = 'condition/3';
+    const testPageUrl = '/condition/3';
     const response = await page.goto(`${endpointUrl}${testPageUrl}`); 
     expect(response?.status()).toEqual(200);
     const responseJson = await response?.json()
