@@ -1,9 +1,7 @@
 name: Integration Tests With Tokens
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+  workflow_dispatch:
+
 jobs:
   build:
     uses: ./.github/workflows/build_cloudflare.yml
