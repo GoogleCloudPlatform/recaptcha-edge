@@ -23,7 +23,6 @@
       "@google-cloud/recaptcha": ["../recaptcha-lib/dist"]
     }
   },
-  "include": ["src", "integration"], 
   "exclude": [
     "node_modules",
     "dist",

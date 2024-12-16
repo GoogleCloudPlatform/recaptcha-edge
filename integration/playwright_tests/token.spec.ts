@@ -25,7 +25,7 @@ test.beforeEach( async ({ context }) => {
 });
 
 test('should fetch the CF endpoint correctly', async ({ page }) => {
-  const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
+  const endpointUrl = process.env.ENDPOINT as string;
   const response = await page.goto(`${endpointUrl}/action/allow`);
   expect(response?.status()).toBe(200); 
   await expect(page).toHaveURL(`${endpointUrl}/action/allow`); 
@@ -34,7 +34,7 @@ test('should fetch the CF endpoint correctly', async ({ page }) => {
 test('should get session token as a cookie', async ({ browser, page }) => {
   let cookies : Cookie[] = [];
   
-  const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
+  const endpointUrl = process.env.ENDPOINT as string;
 
   try {
     // Perform JS injection automatically.
@@ -60,7 +60,7 @@ test('should get session token as a cookie', async ({ browser, page }) => {
 });
 
 test('should generate an action token after execute() by clicking the button', async ({ page }) => {
-  const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
+  const endpointUrl = process.env.ENDPOINT as string;
   // Go to the page with the reCAPTCHA.
   await page.goto(`${endpointUrl}/token/action`);
 
@@ -87,7 +87,7 @@ test('should generate an action token after execute() by clicking the button', a
 });
 
 test('should get session token after visiting the intended injectJS path', async ({ page }) => {
-  const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
+  const endpointUrl = process.env.ENDPOINT as string;
 
   await page.goto(`${endpointUrl}/hello.html`);
 
@@ -105,7 +105,7 @@ test('should get session token after visiting the intended injectJS path', async
 
 test('should get challenge token as a cookie', async ({ page }) => {
   let cookies : Cookie[] = [];
-  const endpointUrl = process.env.CLOUDFLARE_ENDPOINT as string;
+  const endpointUrl = process.env.ENDPOINT as string;
 
   try {
     await page.goto(`${endpointUrl}/action/redirect`);

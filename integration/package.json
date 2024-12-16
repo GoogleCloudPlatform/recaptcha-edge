@@ -4,7 +4,7 @@
   "type": "module",
   "description": "Integration tests for 3P Waf",
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run && npx playwright test"
   },
   "author": "",
   "license": "ISC",
