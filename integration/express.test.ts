@@ -122,3 +122,49 @@ describe('Check Different Path Matching', () => {
   });
 
 });
+
+describe('Check Different Conditions', () => {
+  const endpointUrl = process.env.ENDPOINT as string;
+  if (!endpointUrl) {
+    throw new Error('ENDPOINT environment variable not found.');
+  }
+
+  test('Access the conditionally-allowed page', async () => {
+    const testPageUrl = 'express/allow';
+    const response = await fetch(`${endpointUrl}${testPageUrl}`);
+    expect(response.status).toEqual(200);
+  });
+
+  test('Access the conditionally-blocked page', async () => {
+    const testPageUrl = 'express/block';
+    const response = await fetch(`${endpointUrl}${testPageUrl}`);
+    expect(response.status).toEqual(403);
+  });
+
+  test('Access the first condition page', async () => {
+    const testPageUrl = 'condition/1';
+    const response = await fetch(`${endpointUrl}${testPageUrl}`); 
+    expect(response.status).toEqual(200);
+    const html = await response.text();
+    const html_json = JSON.parse(html)
+    expect(html_json.headers['x-recaptcha-test']).toEqual('condition-match'); 
+  });
+
+  test('Access the second condition page', async () => {
+    const testPageUrl = 'condition/2';
+    const response = await fetch(`${endpointUrl}${testPageUrl}`); 
+    expect(response.status).toEqual(200);
+    const html = await response.text();
+    const html_json = JSON.parse(html)
+    expect(html_json.headers['x-recaptcha-test']).toEqual('condition-match'); 
+  });
+
+  test('Access the third condition page', async () => {
+    const testPageUrl = 'condition/3';
+    const response = await fetch(`${endpointUrl}${testPageUrl}`); 
+    expect(response.status).toEqual(200);
+    const html = await response.text();
+    const html_json = JSON.parse(html)
+    expect(html_json.headers['x-recaptcha-test']).toEqual('condition-match'); 
+  });
+});
