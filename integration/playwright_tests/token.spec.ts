@@ -48,7 +48,8 @@ test('should get session token as a cookie', async ({ browser, page }) => {
   }
 
   // Extract the token from the cookie.
-  const sessionToken = cookies.find(cookie => cookie.name === 'recaptcha-fastly-t')?.value;
+  const cookieRegex = /recaptcha-.+-t/; 
+  const sessionToken = cookies.find(cookie => cookieRegex.test(cookie.name))?.value;
   // Assert that the token is not empty.
   expect(sessionToken).toBeTruthy();
 
@@ -103,22 +104,24 @@ test('should get session token after visiting the intended injectJS path', async
   expect(scriptExists).toBe(true);
 });
 
-test('should get challenge token as a cookie', async ({ page }) => {
+test('should get challenge token as a cookie', async ({ browser, page }) => {
   let cookies : Cookie[] = [];
   const endpointUrl = process.env.ENDPOINT as string;
 
   try {
     await page.goto(`${endpointUrl}/action/redirect`);
     await page.waitForTimeout(5000);
-   
     // Get cookies from the selecteds domain.
     cookies = await page.context().cookies([endpointUrl]);
-    // Extract the token from the cookie.
-    const challengeToken = cookies.find(cookie => cookie.name === 'recaptcha-fastly-e')?.value;
-    expect(challengeToken).toBeTruthy();
   } catch (err) {
-    console.log(err.message);
+    await browser.close();
+    throw new Error(err.message);
   }
+
+  // Extract the token from the cookie.
+  const cookieRegex = /recaptcha-.+-e/; 
+  const challengeToken = cookies.find(cookie => cookieRegex.test(cookie.name))?.value;
+  expect(challengeToken).toBeTruthy();
 
   // Call CreateAsessment by visit condition matching pages.
   await page.goto(`${endpointUrl}/condition/1`);
