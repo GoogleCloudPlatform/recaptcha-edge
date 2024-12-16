@@ -243,7 +243,7 @@ export function recaptchaConfigFromRequest(request: EW.IngressClientRequest): Re
     expressSiteKey: request.getVariable("PMUSER_RECAPTCHAEXPRESSSITEKEY") || "",
     sessionSiteKey: request.getVariable("PMUSER_RECAPTCHASESSIONSITEKEY") || "",
     challengePageSiteKey: request.getVariable("PMUSER_RECAPTCHACHALLENGESITEKEY") || "",
-    recaptchaEndpoint: request.getVariable(DEFAULT_RECAPTCHA_ENDPOINT) || "",
-    debug: request.getVariable('DEBUG') === 'true'
+    recaptchaEndpoint: request.getVariable("PMUSER_RECAPTCHAENDPOINT") || DEFAULT_RECAPTCHA_ENDPOINT,
+    debug: request.getVariable("PMUSER_DEBUG") === "true"
   }
 }
