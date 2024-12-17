@@ -41,5 +41,5 @@ jobs:
       #- run: npm test
       - uses: actions/upload-artifact@v4
         with:
-          name: akamai-artifacts
+          name: akamai-dist
           path: bindings/akamai/dist/*

@@ -42,13 +42,13 @@ jobs:
         with:
           name: fastly-package
           path: bindings/fastly/pkg
-      
+
       - uses: actions/download-artifact@v4
         with:
           name: core-library-dist
           path: dist
 
-      - name: Deploy Compute@Edge Package
+      - name: Publish to Fastly
         run: fastly compute deploy --token ${{ secrets.FASTLY_API_TOKEN }} --service-id ${{ secrets.FASTLY_SERVICE_ID }} --package pkg/fastly_client.tar.gz
         env:
           FASTLY_API_TOKEN: ${{ secrets.FASTLY_API_TOKEN }}
