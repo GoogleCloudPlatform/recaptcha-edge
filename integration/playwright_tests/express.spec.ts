@@ -35,11 +35,11 @@ test.describe('Check Different Actions', () => {
     const response = await page.goto(endpointUrl);
     expect(response?.status()).toBe(200);
 
-    const hasCfConnectingIp = await page.evaluate(() => {
+    const host = await page.evaluate(() => {
       // Assuming your endpoint returns JSON with a 'headers' property
-      return 'cf-connecting-ip' in JSON.parse(document.body.innerText).headers;
+      return 'host' in JSON.parse(document.body.innerText).headers;
     });
-    expect(hasCfConnectingIp).toBe(true);
+    expect(host).toBe(endpointUrl);
   });
 
   test('Access the allow page', async ({ page }) => {
