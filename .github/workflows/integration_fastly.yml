@@ -1,7 +1,10 @@
 name: Integration Test Fastly
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-integrate-fastly
@@ -25,26 +28,45 @@ jobs:
           node-version: 22.x
           cache: 'npm'
       - run: npm ci
-      - name: Build Fastly Worker
-        run: npm run build  # Execute "js-compute-runtime dist/index.js bin/main.wasm"
+      - uses: actions/download-artifact@v4
+        with:
+          name: fastly-dist
+          path: dist
       - name: Publish to Fastly
         run: fastly compute publish --token ${{ secrets.FASTLY_API_TOKEN }} --service-id ${{ secrets.FASTLY_SERVICE_ID }}
         env:
           FASTLY_API_TOKEN: ${{ secrets.FASTLY_API_TOKEN }}
           FASTLY_SERVICE_ID: ${{ secrets.FASTLY_SERVICE_ID }}
-          FASTLY_ENDPOINT: ${{secrets.FASTLY_ENDPOINT}}
-  test: 
-    runs-on: ubuntu-latest
+          ACTION_SITE_KEY: ${{ secrets.CLOUDFLARE_ACTION_SITE_KEY }}
+          SESSION_SITE_KEY: ${{ secrets.CLOUDFLARE_SESSION_SITE_KEY }}
+          CHALLENGE_PAGE_SITE_KEY: ${{ secrets.CLOUDFLARE_CHALLENGE_PAGE_SITE_KEY }}
+          EXPRESS_SITE_KEY: ${{ secrets.CLOUDFLARE_EXPRESS_SITE_KEY }}
+          SESSION_JS_INSTALL_PATH: ${{ secrets.CLOUDFLARE_SESSION_JS_INSTALL_PATH }}
+          ENDPOINT: ${{ secrets.FASTLY_ENDPOINT }}
+
+  test:
     needs: [deploy]
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./integration/playwright_tests
     steps:
       - uses: actions/checkout@v4
-      - name: Use Node.js 22.x
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 22.x
-          cache: 'npm'
-      - run: npm ci --prefix integration
-      - name: Run Integration Tests
-        run: |
-          cd ./integration 
-          npm test
+          node-version: lts/*
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+      - name: Run Playwright tests
+        run: npx playwright test
+        env:
+          FASTLY_ENDPOINT: ${{ secrets.FASTLY_ENDPOINT }}  # Use FASTLY_ENDPOINT for consistency
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: ./integration/playwright_report/
+          retention-days: 30
