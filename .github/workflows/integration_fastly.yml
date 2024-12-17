@@ -47,11 +47,6 @@ jobs:
         env:
           FASTLY_API_TOKEN: ${{ secrets.FASTLY_API_TOKEN }}
           FASTLY_SERVICE_ID: ${{ secrets.FASTLY_SERVICE_ID }}
-      - name: Activate Newest Version
-        run: fastly service-version activate --token ${{ secrets.FASTLY_API_TOKEN }} --service-id ${{ secrets.FASTLY_SERVICE_ID }} --version=latest
-        env:
-          FASTLY_API_TOKEN: ${{ secrets.FASTLY_API_TOKEN }}
-          FASTLY_SERVICE_ID: ${{ secrets.FASTLY_SERVICE_ID }}
 
   test: 
     runs-on: ubuntu-latest
