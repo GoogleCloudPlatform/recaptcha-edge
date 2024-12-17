@@ -284,6 +284,7 @@ export async function processRequest(
     const url = new URL(req.url);
     for (const pattern of patterns) {
       if (picomatch.isMatch(url.pathname, pattern)) {
+        context.debug_trace.inject_js_match = true;
         context.log(
           "debug",
           "Request matching session JS inject pattern: " + pattern,
@@ -296,7 +297,15 @@ export async function processRequest(
     }
   }
 
-  return applyActions(context, req, actions);
+  let resp = applyActions(context, req, actions);
+
+  // Create a debug response header.
+  if (context.config.debug) {
+    let new_resp = await resp;
+    context.debug_trace.exception_count = context.exceptions.length;
+    new_resp.headers.append('X-RECAPTCHA-DEBUG', context.debug_trace.formatAsHeaderValue());
+  }
+  return resp;
 
   // TODO:post return call analytics
 }
