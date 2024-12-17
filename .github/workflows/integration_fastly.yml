@@ -25,8 +25,10 @@ jobs:
           node-version: 22.x
           cache: 'npm'
       - run: npm ci
-      - name: Build Fastly Worker
-        run: npm run build  # Execute "js-compute-runtime dist/index.js bin/main.wasm"
+      - uses: actions/download-artifact@v4
+        with:
+          name: fastly-dist
+          path: bindings/fastly/dist
       - name: Publish to Fastly
         run: fastly compute publish --token ${{ secrets.FASTLY_API_TOKEN }} --service-id ${{ secrets.FASTLY_SERVICE_ID }}
         env:
