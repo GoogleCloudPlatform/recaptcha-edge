@@ -37,7 +37,6 @@ jobs:
         uses: fastly/compute-actions/deploy@v5
         with:
           service_id: ${{ secrets.FASTLY_SERVICE_ID }}
-          project_directory: bindings/fastly/pkg
         env:
           FASTLY_API_TOKEN: ${{ secrets.FASTLY_API_TOKEN }}
           ACTION_SITE_KEY: ${{ secrets.CLOUDFLARE_ACTION_SITE_KEY }}
