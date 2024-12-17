@@ -27,7 +27,7 @@ jobs:
       - run: npm ci
       - uses: actions/download-artifact@v4
         with:
-          name: akamai-artifacts
+          name: akamai-dist
           path: bindings/akamai/dist
       - run: wget https://github.com/akamai/cli/releases/download/v1.6.0/akamai-v1.6.0-linuxamd64
       - run: chmod +x akamai-v1.6.0-linuxamd64

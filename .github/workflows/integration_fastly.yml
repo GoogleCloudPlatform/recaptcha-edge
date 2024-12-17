@@ -24,11 +24,26 @@ jobs:
         with:
           node-version: 22.x
           cache: 'npm'
+      - run: |
+          # Download and install latest fastly CLi version
+          # TODO: find and parse latest version of Fastly CLI
+          # This may be possible using the github REST API to list assets in a release
+          # and fetching the one matching the fastly_<VERSION>_linux_amd64.deb pattern.
+          wget https://github.com/fastly/cli/releases/download/v10.15.0/fastly_10.15.0_linux_amd64.deb
+          sudo dpkg -i fastly_10.15.0_linux_amd64.deb
+          sudo apt-get update
+          sudo apt-get install -y --fix-missing
       - run: npm ci
-      - name: Build Fastly Worker
-        run: npm run build  # Execute "js-compute-runtime dist/index.js bin/main.wasm"
+      - uses: actions/download-artifact@v4
+        with:
+          name: fastly-package
+          path: bindings/fastly/pkg
+      - uses: actions/download-artifact@v4
+        with:
+          name: core-library-dist
+          path: dist
       - name: Publish to Fastly
-        run: fastly compute publish --token ${{ secrets.FASTLY_API_TOKEN }} --service-id ${{ secrets.FASTLY_SERVICE_ID }}
+        run: fastly compute deploy --token ${{ secrets.FASTLY_API_TOKEN }} --service-id ${{ secrets.FASTLY_SERVICE_ID }} --package pkg/fastly_client.tar.gz
         env:
           FASTLY_API_TOKEN: ${{ secrets.FASTLY_API_TOKEN }}
           FASTLY_SERVICE_ID: ${{ secrets.FASTLY_SERVICE_ID }}
