@@ -27,18 +27,34 @@ jobs:
         with:
           node-version: 22.x
           cache: 'npm'
-      - run: npm install
+      - run: |
+          # Download and install latest fastly CLi version
+          # TODO: find and parse latest version of Fastly CLI
+          # This may be possible using the github REST API to list assets in a release
+          # and fetching the one matching the fastly_<VERSION>_linux_amd64.deb pattern.
+          wget https://github.com/fastly/cli/releases/download/v10.15.0/fastly_10.15.0_linux_amd64.deb
+          sudo dpkg -i fastly_10.15.0_linux_amd64.deb
+          sudo apt-get update
+          sudo apt-get install -y --fix-missing
+
+      - run: npm ci
       - uses: actions/download-artifact@v4
         with:
           name: fastly-package
           path: bindings/fastly/pkg
+      
+      - uses: actions/download-artifact@v4
+        with:
+          name: core-library-dist
+          path: dist
 
       - name: Deploy Compute@Edge Package
-        uses: fastly/compute-actions/deploy@v5
-        with:
-          service_id: ${{ secrets.FASTLY_SERVICE_ID }}
+        run: |
+          npm run build # workaround to install wasm-tools package
+          fastly compute publish --token ${{ secrets.FASTLY_API_TOKEN }} --service-id ${{ secrets.FASTLY_SERVICE_ID }} --package pkg/fastly_client.tar.gz
         env:
           FASTLY_API_TOKEN: ${{ secrets.FASTLY_API_TOKEN }}
+          FASTLY_SERVICE_ID: ${{ secrets.FASTLY_SERVICE_ID }}
           ACTION_SITE_KEY: ${{ secrets.CLOUDFLARE_ACTION_SITE_KEY }}
           SESSION_SITE_KEY: ${{ secrets.CLOUDFLARE_SESSION_SITE_KEY }}
           CHALLENGE_PAGE_SITE_KEY: ${{ secrets.CLOUDFLARE_CHALLENGE_PAGE_SITE_KEY }}
@@ -65,7 +81,7 @@ jobs:
       - name: Run Playwright tests
         run: npx playwright test
         env:
-          ENDPOINT: ${{ secrets.FASTLY_ENDPOINT }}  # Use FASTLY_ENDPOINT for consistency
+          ENDPOINT: ${{ secrets.FASTLY_ENDPOINT }}
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
