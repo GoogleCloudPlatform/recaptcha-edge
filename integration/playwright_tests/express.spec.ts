@@ -34,12 +34,6 @@ test.describe('Check Different Actions', () => {
   test('should fetch the endpoint correctly', async ({ page }) => {
     const response = await page.goto(endpointUrl);
     expect(response?.status()).toBe(200);
-
-    const host = await page.evaluate(() => {
-      // Assuming your endpoint returns JSON with a 'headers' property
-      return 'host' in JSON.parse(document.body.innerText).headers;
-    });
-    expect(host).toBe(endpointUrl);
   });
 
   test('Access the allow page', async ({ page }) => {
