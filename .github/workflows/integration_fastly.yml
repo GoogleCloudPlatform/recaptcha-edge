@@ -31,7 +31,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: fastly-package
-          path: dist
+          path: bindings/fastly/pkg
       - name: Publish to Fastly
         uses: fastly/compute-actions@v5
         env:
@@ -63,7 +63,7 @@ jobs:
       - name: Run Playwright tests
         run: npx playwright test
         env:
-          FASTLY_ENDPOINT: ${{ secrets.FASTLY_ENDPOINT }}  # Use FASTLY_ENDPOINT for consistency
+          ENDPOINT: ${{ secrets.FASTLY_ENDPOINT }}  # Use FASTLY_ENDPOINT for consistency
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
