@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { describe, expect, test, vi, afterAll, beforeAll } from "vitest";
+import { describe, test, afterAll, beforeAll } from "vitest";
 import assert from "node:assert";
 import path from "node:path";
 import url from "node:url";
@@ -24,7 +24,6 @@ import { ComputeApplication } from "@fastly/compute-testing";
 
 describe("Run local Viceroy", function () {
   // Represents the app running in the local development environment
-  const projectNumber = 12345;
   const testPolicies = [
     {
       name: "test-policy",

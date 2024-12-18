@@ -34,7 +34,7 @@ import {
   RecaptchaContext,
   SetHeaderAction,
   LogLevel,
-  DebugTrace
+  DebugTrace,
 } from "./index";
 
 import { Action, ActionSchema, createBlockAction } from "./action";
@@ -62,6 +62,7 @@ class TestContext extends RecaptchaContext {
   log = (level: LogLevel, msg: string) => {
     this.log_messages.push([level, [msg]]);
   };
+  // eslint-disable-next-line  @typescript-eslint/no-unused-vars
   buildEvent = (req: Request) => {
     return EventSchema.parse({
       userIpAddress: "1.2.3.4",
@@ -96,6 +97,7 @@ test("callCreateAssessment-ok", async () => {
 
   const testContext = {
     ...new TestContext(testConfig),
+    // eslint-disable-next-line  @typescript-eslint/no-unused-vars
     buildEvent: (req: Request) => {
       return baseEvent;
     },
@@ -176,9 +178,7 @@ test("callListFirewallPolicies-ok", async () => {
 test("ActionSchema-parseOk", () => {
   const allowaction: Action = ActionSchema.parse(JSON.parse('{"allow":{}}'));
   expect(allowaction.type).toEqual("allow");
-  const shaction: Action = ActionSchema.parse(
-    JSON.parse('{"setHeader":{"key":"test-key","value":"test-value"}}'),
-  );
+  const shaction: Action = ActionSchema.parse(JSON.parse('{"setHeader":{"key":"test-key","value":"test-value"}}'));
   expect(shaction.type).toEqual("setHeader");
   const shaction2 = shaction as SetHeaderAction;
   expect(shaction2.setHeader.key).toEqual("test-key");
@@ -190,13 +190,9 @@ test("ApplyActions-allow", async () => {
   const req = new Request("https://www.example.com/doallow");
   vi.stubGlobal(
     "fetch",
-    vi.fn(() =>
-      Promise.resolve({ status: 200, text: () => "<HTML>Hello World</HTML>" }),
-    ),
+    vi.fn(() => Promise.resolve({ status: 200, text: () => "<HTML>Hello World</HTML>" })),
   );
-  const resp = await applyActions(context, req, [
-    ActionSchema.parse({ allow: {} }),
-  ]);
+  const resp = await applyActions(context, req, [ActionSchema.parse({ allow: {} })]);
   expect(resp.status).toEqual(200);
   expect(resp.text()).toEqual("<HTML>Hello World</HTML>");
   expect(fetch).toHaveBeenCalledTimes(1);
@@ -207,9 +203,7 @@ test("ApplyActions-block", async () => {
   const req = new Request("https://www.example.com/doblock");
   vi.stubGlobal(
     "fetch",
-    vi.fn(() =>
-      Promise.resolve({ status: 200, text: () => "<HTML>Hello World</HTML>" }),
-    ),
+    vi.fn(() => Promise.resolve({ status: 200, text: () => "<HTML>Hello World</HTML>" })),
   );
   const resp = await applyActions(context, req, [createBlockAction()]);
   expect(resp).toEqual(new Response(null, { status: 403 }));
@@ -256,9 +250,7 @@ test("ApplyActions-redirect", async () => {
       });
     }),
   );
-  const resp = await applyActions(context, req, [
-    ActionSchema.parse({ redirect: {} }),
-  ]);
+  const resp = await applyActions(context, req, [ActionSchema.parse({ redirect: {} })]);
   expect(resp.status).toEqual(200);
   expect(resp.text()).toEqual("<HTML>Hello World</HTML>");
   expect(fetch).toHaveBeenCalledTimes(1);
@@ -276,9 +268,7 @@ test("ApplyActions-substitute", async () => {
       });
     }),
   );
-  const resp = await applyActions(context, req, [
-    ActionSchema.parse({ substitute: { path: "/newdest" } }),
-  ]);
+  const resp = await applyActions(context, req, [ActionSchema.parse({ substitute: { path: "/newdest" } })]);
   expect(resp.status).toEqual(200);
   expect(resp.text()).toEqual("<HTML>Hello World</HTML>");
   expect(fetch).toHaveBeenCalledTimes(1);
@@ -297,14 +287,10 @@ test("ApplyActions-injectJs", async () => {
       });
     }),
   );
-  const resp = await applyActions(context, req, [
-    ActionSchema.parse({ injectjs: {} }),
-  ]);
+  const resp = await applyActions(context, req, [ActionSchema.parse({ injectjs: {} })]);
   expect(resp.status).toEqual(200);
   // calls the TestContext injectRecaptchaJs.
-  expect(await resp.text()).toEqual(
-    '<HTML><script src="test.js"/>Hello World</HTML>',
-  );
+  expect(await resp.text()).toEqual('<HTML><script src="test.js"/>Hello World</HTML>');
   expect(fetch).toHaveBeenCalledTimes(1);
 });
 
@@ -327,9 +313,7 @@ test("ApplyActions-injectJsOnlyOnce", async () => {
   ]);
   expect(resp.status).toEqual(200);
   // calls the TestContext injectRecaptchaJs.
-  expect(await resp.text()).toEqual(
-    '<HTML><script src="test.js"/>Hello World</HTML>',
-  );
+  expect(await resp.text()).toEqual('<HTML><script src="test.js"/>Hello World</HTML>');
   expect(fetch).toHaveBeenCalledTimes(1);
 });
 
@@ -369,9 +353,7 @@ test("localPolicyAssessment-matchTrivialCondition", async () => {
     }),
   );
   const localAssessment = await localPolicyAssessment(context, req);
-  expect(localAssessment as Action[]).toEqual([
-    ActionSchema.parse({ block: {} }),
-  ]);
+  expect(localAssessment as Action[]).toEqual([ActionSchema.parse({ block: {} })]);
   expect(fetch).toHaveBeenCalledTimes(1);
 });
 
@@ -411,9 +393,7 @@ test("localPolicyAssessment-noMatch", async () => {
     }),
   );
   const localAssessment = await localPolicyAssessment(context, req);
-  expect(localAssessment as Action[]).toEqual([
-    ActionSchema.parse({ allow: {} }),
-  ]);
+  expect(localAssessment as Action[]).toEqual([ActionSchema.parse({ allow: {} })]);
   expect(fetch).toHaveBeenCalledTimes(1);
 });
 
@@ -479,9 +459,7 @@ test("policyPathMatch", async () => {
       new Request("https://www.example.com/goodpath"),
     ),
   ).toEqual(true);
-  expect(
-    policyPathMatch({}, new Request("https://www.example.com/goodpath")),
-  ).toEqual(true);
+  expect(policyPathMatch({}, new Request("https://www.example.com/goodpath"))).toEqual(true);
   expect(
     policyPathMatch(
       {
@@ -539,9 +517,7 @@ test("policyConditionMatch", async () => {
     ),
   ).toEqual(true);
 
-  expect(
-    policyConditionMatch({}, new Request("https://www.example.com/goodpath")),
-  ).toEqual(true);
+  expect(policyConditionMatch({}, new Request("https://www.example.com/goodpath"))).toEqual(true);
 
   expect(
     policyConditionMatch(
@@ -610,7 +586,7 @@ test("localPolicyAssessment-errJson", async () => {
       );
       return Promise.resolve({
         status: 200,
-        json: () => Promise.resolve({error: {message: "bad", code: 400, status: "INVALID_ARGUMENT"}}),
+        json: () => Promise.resolve({ error: { message: "bad", code: 400, status: "INVALID_ARGUMENT" } }),
       });
     }),
   );
@@ -626,9 +602,7 @@ test("evaluatePolicyAssessment-ok", async () => {
   vi.stubGlobal(
     "fetch",
     vi.fn((url) => {
-      expect(url).toEqual(
-        "https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123",
-      );
+      expect(url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123");
       return Promise.resolve({
         status: 200,
         json: () =>
@@ -654,9 +628,7 @@ test("evaluatePolicyAssessment-failedRpc", async () => {
   vi.stubGlobal(
     "fetch",
     vi.fn((url) => {
-      expect(url).toEqual(
-        "https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123",
-      );
+      expect(url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123");
       return Promise.reject(new Error("test-error"));
     }),
   );
@@ -671,9 +643,7 @@ test("evaluatePolicyAssessment-badJson", async () => {
   vi.stubGlobal(
     "fetch",
     vi.fn((url) => {
-      expect(url).toEqual(
-        "https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123",
-      );
+      expect(url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123");
       return Promise.resolve({
         status: 200,
         json: () => Promise.reject(new Error("test-error")),
@@ -691,16 +661,14 @@ test("evaluatePolicyAssessment-errJson", async () => {
   vi.stubGlobal(
     "fetch",
     vi.fn((url) => {
-      expect(url).toEqual(
-        "https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123",
-      );
+      expect(url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123");
       return Promise.resolve({
         status: 200,
-        json: () => Promise.resolve({error: {message: "bad", code: 400, status: "INVALID_ARGUMENT"}}),
+        json: () => Promise.resolve({ error: { message: "bad", code: 400, status: "INVALID_ARGUMENT" } }),
       });
     }),
   );
-  const assessment = await evaluatePolicyAssessment(context, req);
+  await evaluatePolicyAssessment(context, req);
   expect(context.exceptions[0].message).toEqual("bad");
   expect(fetch).toHaveBeenCalledTimes(1);
 });
@@ -797,8 +765,7 @@ test("processRequest-nomatch", async () => {
 
 test("processRequest-inject", async () => {
   const context = new TestContext(testConfig);
-  context.config.sessionJsInjectPath =
-    "/somepath;/some/other/path;/teste2e;/another/path";
+  context.config.sessionJsInjectPath = "/somepath;/some/other/path;/teste2e;/another/path";
   const req = new Request("https://www.example.com/teste2e");
   const testPolicies = [
     {
@@ -831,16 +798,13 @@ test("processRequest-inject", async () => {
     }),
   );
   const resp = await processRequest(context, req);
-  expect(await resp.text()).toEqual(
-    '<HTML><script src="test.js"/>Hello World</HTML>',
-  );
+  expect(await resp.text()).toEqual('<HTML><script src="test.js"/>Hello World</HTML>');
   expect(fetch).toHaveBeenCalledTimes(2);
 });
 
 test("processRequest-noinject", async () => {
   const context = new TestContext(testConfig);
-  context.config.sessionJsInjectPath =
-    "/somepath;/some/other/path;/another/path";
+  context.config.sessionJsInjectPath = "/somepath;/some/other/path;/another/path";
   const req = new Request("https://www.example.com/teste2e");
   const testPolicies = [
     {
@@ -1080,9 +1044,11 @@ test("DebugTrace-format", () => {
   const context = new TestContext(testConfig);
   context.config.apiKey = "";
   context.config.recaptchaEndpoint = "";
-  let trace = new DebugTrace(context);
+  const trace = new DebugTrace(context);
   trace.list_firewall_policies = "ok";
   trace.policy_count = 10;
   trace.site_key_used = "session";
-  expect(trace.formatAsHeaderValue()).toEqual("list_firewall_policies=ok;policy_count=10;site_key_used=session;site_keys_present=asce;empty_config=apikey,endpoint");
+  expect(trace.formatAsHeaderValue()).toEqual(
+    "list_firewall_policies=ok;policy_count=10;site_key_used=session;site_keys_present=asce;empty_config=apikey,endpoint",
+  );
 });

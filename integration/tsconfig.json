@@ -1,14 +1,14 @@
 {
   "compilerOptions": {
-    "target": "esnext", 
+    "target": "esnext",
     "module": "node16",
-    "moduleResolution": "node16", // Or "nodenext" 
-    "lib": ["esnext"], 
+    "moduleResolution": "node16", // Or "nodenext"
+    "lib": ["esnext"],
     "outDir": "./dist",
     "declaration": true,
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true, 
+    "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "strictNullChecks": true,
@@ -19,9 +19,5 @@
       "@google-cloud/recaptcha": ["../recaptcha-lib/dist"]
     }
   },
-  "exclude": [
-    "node_modules",
-    "dist",
-    "**/*.test.*",
-  ]
+  "exclude": ["node_modules", "dist", "**/*.test.*"]
 }

@@ -19,10 +19,7 @@
  * make decisions based on score.
  */
 
-import {
-  CloudflareContext,
-  recaptchaConfigFromEnv,
-} from "@google-cloud/recaptcha-cloudflare";
+import { CloudflareContext, recaptchaConfigFromEnv } from "@google-cloud/recaptcha-cloudflare";
 
 export default {
   async fetch(request, env, ctx): Promise<Response> {
@@ -41,9 +38,7 @@ export default {
     }
     if (block) {
       // Or return a templated HTML page.
-      return new Response(
-        "This request has been blocked for security reasons.",
-      );
+      return new Response("This request has been blocked for security reasons.");
     } else {
       return fetch(request);
     }

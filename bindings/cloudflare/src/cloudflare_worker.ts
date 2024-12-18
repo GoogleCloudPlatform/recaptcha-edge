@@ -20,18 +20,10 @@
 
 type Env = any;
 
-import {
-  CloudflareContext,
-  processRequest,
-  recaptchaConfigFromEnv,
-} from "./index";
+import { CloudflareContext, processRequest, recaptchaConfigFromEnv } from "./index";
 
 export default {
-  async fetch(
-    request: Request,
-    env: Env,
-    ctx: ExecutionContext,
-  ): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const cfctx = new CloudflareContext(env, ctx, recaptchaConfigFromEnv(env));
     return processRequest(cfctx, request);
   },

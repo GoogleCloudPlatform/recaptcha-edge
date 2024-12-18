@@ -2,7 +2,13 @@
   "name": "@google-cloud/recaptcha-fastly",
   "version": "1.0.0",
   "description": "A reCAPTCHA Enterprise Typescript Libarary for Fastly Compute@Edge.",
-  "keywords": ["recaptcha", "waf", "fastly", "bot", "security"],
+  "keywords": [
+    "recaptcha",
+    "waf",
+    "fastly",
+    "bot",
+    "security"
+  ],
   "homepage": "https://github.com/GoogleCloudPlatform/recaptcha-waf/tree/main/bindings/fastly#readme",
   "license": "Apache-2.0",
   "author": "reCAPTCHA Team <no-reply@google.com>",
@@ -11,7 +17,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/GoogleCloudPlatform/recaptcha-waf.git",
-    "directory": "bindings/fastly" 
+    "directory": "bindings/fastly"
   },
   "scripts": {
     "prebuild": "tsc",
