@@ -127,5 +127,6 @@ export function recaptchaConfigFromEnv(env: Env): RecaptchaConfig {
     recaptchaEndpoint: env.RECAPTCHA_ENDPOINT ?? DEFAULT_RECAPTCHA_ENDPOINT,
     sessionJsInjectPath: env.SESSION_JS_INSTALL_PATH,
     debug: env.DEBUG ?? false,
+    unsafe_debug_dump_logs: env.UNSAFE_DEBUG_DUMP_LOGS ?? false
   };
 }
