@@ -10,10 +10,6 @@
     "esModuleInterop": true,
     "skipLibCheck": true, 
     "forceConsistentCasingInFileNames": true,
-
-    "types": [ "@cloudflare/workers-types/experimental",
-        "@cloudflare/vitest-pool-workers"], 
-
     "resolveJsonModule": true,
     "strictNullChecks": true,
     "noImplicitThis": true,
@@ -27,6 +23,5 @@
     "node_modules",
     "dist",
     "**/*.test.*",
-    "vite.config.ts" 
   ]
 }
