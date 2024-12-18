@@ -29,16 +29,12 @@ export const ListFirewallPoliciesResponseSchema = z.object({
 });
 
 /** Response type from ListFirewallPolicies RPC */
-export type ListFirewallPoliciesResponse = z.infer<
-  typeof ListFirewallPoliciesResponseSchema
->;
+export type ListFirewallPoliciesResponse = z.infer<typeof ListFirewallPoliciesResponseSchema>;
 
 /**
  * Call the reCAPTCHA API to list firewall policies.
  */
-export async function callListFirewallPolicies(
-  context: RecaptchaContext,
-): Promise<ListFirewallPoliciesResponse> {
+export async function callListFirewallPolicies(context: RecaptchaContext): Promise<ListFirewallPoliciesResponse> {
   const options = {
     method: "GET",
     headers: {
@@ -56,25 +52,25 @@ export async function callListFirewallPolicies(
       return response
         .json()
         .then((json) => {
-          let ret = ListFirewallPoliciesResponseSchema.safeParse(json);
+          const ret = ListFirewallPoliciesResponseSchema.safeParse(json);
           if (ret.success && Object.keys(ret.data).length > 0) {
-            context.debug_trace.list_firewall_policies = 'ok';
+            context.debug_trace.list_firewall_policies = "ok";
             context.debug_trace.policy_count = ret.data.firewallPolicies.length;
             context.log("debug", "[rpc] listFirewallPolicies (ok)");
             return ret.data;
           }
-          let err_ret = RpcErrorSchema.required().safeParse(json);
+          const err_ret = RpcErrorSchema.required().safeParse(json);
           if (err_ret.success) {
             throw err_ret.data.error;
           }
-          throw {message: "Response does not conform to ListFirewallPolicies schema: " + json};
+          throw { message: "Response does not conform to ListFirewallPolicies schema: " + json };
         })
         .catch((reason) => {
           throw new error.ParseError(reason.message);
         });
     })
     .catch((reason) => {
-      context.debug_trace.list_firewall_policies = 'err';
+      context.debug_trace.list_firewall_policies = "err";
       context.log("debug", "[rpc] listFirewallPolicies (fail)");
       if (reason instanceof error.RecaptchaError) {
         throw reason;

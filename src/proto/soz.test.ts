@@ -17,12 +17,12 @@
 /**
  * Tests for sozencode.ts
  */
-import { expect, test, vi } from "vitest";
+import { expect, test } from "vitest";
 
 import { createSoz } from "./soz";
 
 test("createSoz-ok", async () => {
-  expect(
-    createSoz("example.com", "192.168.0.1", 12345, "challengeSiteKey"),
-  ).toEqual("CgTAqAABKgtleGFtcGxlLmNvbRoQY2hhbGxlbmdlU2l0ZUtleTi5YA");
+  expect(createSoz("example.com", "192.168.0.1", 12345, "challengeSiteKey")).toEqual(
+    "CgTAqAABKgtleGFtcGxlLmNvbRoQY2hhbGxlbmdlU2l0ZUtleTi5YA"
+  );
 });

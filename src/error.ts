@@ -35,8 +35,8 @@ export class RecaptchaError extends Error {
     return {
       name: this.name,
       message: this.message,
-      recommendedAction: this.recommendedAction
-    }
+      recommendedAction: this.recommendedAction,
+    };
   }
 }
 

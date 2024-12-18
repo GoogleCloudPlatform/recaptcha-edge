@@ -24,8 +24,7 @@ import { ReCaptchaSoz } from "../generated/soz";
 
 function base64UrlEncode(bytes: Uint8Array) {
   let base64 = "";
-  const base64Chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+  const base64Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
   for (let i = 0; i < bytes.length; i += 3) {
     const byte1 = bytes[i];
@@ -53,12 +52,7 @@ function base64UrlEncode(bytes: Uint8Array) {
  * @param {string} siteKey - The reCAPTCHA Enterprise site key.
  * @return {string} - The base64 encoded reCaptchaSoz message.
  */
-export function createSoz(
-  host: string,
-  userIp: string,
-  projectNumber: number,
-  siteKey: string,
-): string {
+export function createSoz(host: string, userIp: string, projectNumber: number, siteKey: string): string {
   const message: ReCaptchaSoz = {
     host,
     projectNumber: BigInt(projectNumber),
@@ -66,7 +60,7 @@ export function createSoz(
   };
   try {
     message.userIp = new Uint8Array(ipaddr.parse(userIp).toByteArray());
-  } catch (e) {
+  } catch (e) { // eslint-disable-line @typescript-eslint/no-unused-vars
     // Invalid IP address. Ignore it.
   }
   const bytes = ReCaptchaSoz.toBinary(message);

@@ -28,22 +28,19 @@ import picomatch from "picomatch";
  * Adds reCAPTCHA specific values to an Event strucutre.
  * This includes, the siteKey, the token, cookies, and flags like express.
  */
-export function createPartialEventWithSiteInfo(
-  context: RecaptchaContext,
-  req: Request,
-): Event {
+export function createPartialEventWithSiteInfo(context: RecaptchaContext, req: Request): Event {
   const event: Event = {};
   const actionToken = req.headers.get("X-Recaptcha-Token");
   if (context.config.actionSiteKey && actionToken) {
     event.token = actionToken;
     event.siteKey = context.config.actionSiteKey;
     event.wafTokenAssessment = true;
-    context.debug_trace.site_key_used = 'action';
+    context.debug_trace.site_key_used = "action";
     context.log("debug", "siteKind: action");
   } else {
     const cookieMap = new Map<string, string>();
-    var challengeToken: string | undefined;
-    var sessionToken: string | undefined;
+    let challengeToken: string | undefined;
+    let sessionToken: string | undefined;
     for (const cookie of req.headers.get("cookie")?.split(";") ?? []) {
       const [key, value] = cookie.split("=");
       cookieMap.set(key.trim(), value.trim());
@@ -67,12 +64,9 @@ export function createPartialEventWithSiteInfo(
       sessionToken = cookieMap.get(context.sessionPageCookie);
     }
     if (context.config.debug) {
+      // eslint-disable-next-line  @typescript-eslint/no-unused-vars
       for (const [key, value] of cookieMap.entries()) {
-        if (
-          key.startsWith("recaptcha") &&
-          key !== context.challengePageCookie &&
-          key !== context.sessionPageCookie
-        ) {
+        if (key.startsWith("recaptcha") && key !== context.challengePageCookie && key !== context.sessionPageCookie) {
           context.log(
             "info",
             "An unused reCAPTCHA cookie in the request matches a different environment: " +
@@ -83,25 +77,25 @@ export function createPartialEventWithSiteInfo(
       }
     }
 
-     if (context.config.challengePageSiteKey && challengeToken) {
+    if (context.config.challengePageSiteKey && challengeToken) {
       event.token = challengeToken;
       event.siteKey = context.config.challengePageSiteKey;
       event.wafTokenAssessment = true;
-      context.debug_trace.site_key_used = 'challenge';
+      context.debug_trace.site_key_used = "challenge";
       context.log("debug", "siteKind: challenge");
     } else if (context.config.sessionSiteKey && sessionToken) {
       event.token = sessionToken;
       event.siteKey = context.config.sessionSiteKey;
       event.wafTokenAssessment = true;
-      context.debug_trace.site_key_used = 'session';
+      context.debug_trace.site_key_used = "session";
       context.log("debug", "siteKind: session");
     } else if (context.config.expressSiteKey) {
       event.siteKey = context.config.expressSiteKey;
       event.express = true;
-      context.debug_trace.site_key_used = 'express';
+      context.debug_trace.site_key_used = "express";
       context.log("debug", "siteKind: express");
     } else {
-      context.debug_trace.site_key_used = 'none';
+      context.debug_trace.site_key_used = "none";
       throw new error.RecaptchaError(
         "No site key was found matching the incoming request token, and express is not enabled.",
         action.createAllowAction(),
@@ -155,27 +149,24 @@ export async function callCreateAssessment(
       return response
         .json()
         .then((json) => {
-          let ret = AssessmentSchema.safeParse(json);
+          const ret = AssessmentSchema.safeParse(json);
           if (ret.success && Object.keys(ret.data).length > 0) {
-            context.debug_trace.create_assessment = 'ok';
+            context.debug_trace.create_assessment = "ok";
             return ret.data;
           }
-          let err_ret = RpcErrorSchema.required().safeParse(json);
+          const err_ret = RpcErrorSchema.required().safeParse(json);
           if (err_ret.success) {
             throw err_ret.data.error;
           }
-          throw {message: "Response does not conform to Assesment schema: " + json};
+          throw { message: "Response does not conform to Assesment schema: " + json };
         })
         .catch((reason) => {
-          throw new error.ParseError(
-            reason.message,
-            action.createAllowAction(),
-          );
+          throw new error.ParseError(reason.message, action.createAllowAction());
         });
     })
     .catch((reason) => {
       context.log("debug", "[rpc] createAssessment (fail)");
-      context.debug_trace.create_assessment = 'err';
+      context.debug_trace.create_assessment = "err";
       if (reason instanceof error.RecaptchaError) {
         throw reason;
       }

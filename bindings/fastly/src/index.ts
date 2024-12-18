@@ -20,16 +20,9 @@ import { Dictionary } from "fastly:dictionary";
 
 const RECAPTCHA_JS = "https://www.google.com/recaptcha/enterprise.js";
 // Firewall Policies API is currently only available in the public preview.
-const DEFAULT_RECAPTCHA_ENDPOINT =
-  "https://public-preview-recaptchaenterprise.googleapis.com";
+const DEFAULT_RECAPTCHA_ENDPOINT = "https://public-preview-recaptchaenterprise.googleapis.com";
 
-import {
-  processRequest,
-  RecaptchaConfig,
-  RecaptchaContext,
-  LogLevel,
-  InitError,
-} from "@google-cloud/recaptcha";
+import { processRequest, RecaptchaConfig, RecaptchaContext, LogLevel, InitError } from "@google-cloud/recaptcha";
 import { HTMLRewriter } from "@worker-tools/html-rewriter";
 import pkg from "../package.json";
 
@@ -67,10 +60,7 @@ export class FastlyContext extends RecaptchaContext {
    */
   log_performance_debug(event: string) {
     if (this.config.debug) {
-      this.performance_counters.push([
-        event,
-        performance.now() - this.start_time,
-      ]);
+      this.performance_counters.push([event, performance.now() - this.start_time]);
     }
   }
 
@@ -108,10 +98,7 @@ export class FastlyContext extends RecaptchaContext {
    * Fetch from the customer's origin.
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_origin(
-    req: RequestInfo,
-    options?: RequestInit,
-  ): Promise<Response> {
+  async fetch_origin(req: RequestInfo, options?: RequestInit): Promise<Response> {
     return this.fetch(req, { ...options, backend: "origin" });
   }
 
@@ -119,10 +106,7 @@ export class FastlyContext extends RecaptchaContext {
    * Call fetch for ListFirewallPolicies.
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_list_firewall_policies(
-    req: RequestInfo,
-    options?: RequestInit,
-  ): Promise<Response> {
+  async fetch_list_firewall_policies(req: RequestInfo, options?: RequestInit): Promise<Response> {
     return this.fetch(req, { ...options, backend: "recaptcha" });
   }
 
@@ -130,10 +114,7 @@ export class FastlyContext extends RecaptchaContext {
    * Call fetch for CreateAssessment
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_create_assessment(
-    req: RequestInfo,
-    options?: RequestInit,
-  ): Promise<Response> {
+  async fetch_create_assessment(req: RequestInfo, options?: RequestInit): Promise<Response> {
     return this.fetch(req, { ...options, backend: "recaptcha" });
   }
 
@@ -141,10 +122,7 @@ export class FastlyContext extends RecaptchaContext {
    * Call fetch for getting the ChallengePage
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_challenge_page(
-    req: RequestInfo,
-    options?: RequestInit,
-  ): Promise<Response> {
+  async fetch_challenge_page(req: RequestInfo, options?: RequestInit): Promise<Response> {
     return this.fetch(req, { ...options, backend: "google" });
   }
 }
@@ -153,14 +131,14 @@ export function recaptchaConfigFromConfigStore(name: string): RecaptchaConfig {
   let cfg: Dictionary | ConfigStore;
   try {
     cfg = new ConfigStore(name);
-  } catch (e) {
-    try {    
+  } catch (e) { // eslint-disable-line  @typescript-eslint/no-unused-vars
+    try {
       // Backup. Try dictionary.
       cfg = new Dictionary(name);
     } catch (e) {
-      throw new InitError("Failed to open Fastly config store: \"" + name + "\". " + JSON.stringify(e));
+      throw new InitError('Failed to open Fastly config store: "' + name + '". ' + JSON.stringify(e));
     }
-  } 
+  }
   return {
     projectNumber: Number(cfg.get("project_number")),
     apiKey: cfg.get("api_key") ?? "",
@@ -168,11 +146,10 @@ export function recaptchaConfigFromConfigStore(name: string): RecaptchaConfig {
     expressSiteKey: cfg.get("express_site_key") ?? undefined,
     sessionSiteKey: cfg.get("session_site_key") ?? undefined,
     challengePageSiteKey: cfg.get("challengepage_site_key") ?? undefined,
-    recaptchaEndpoint:
-      cfg.get("recaptcha_endpoint") ?? DEFAULT_RECAPTCHA_ENDPOINT,
+    recaptchaEndpoint: cfg.get("recaptcha_endpoint") ?? DEFAULT_RECAPTCHA_ENDPOINT,
     sessionJsInjectPath: cfg.get("session_js_install_path") ?? undefined,
     debug: Boolean(cfg.get("debug") ?? false),
-    unsafe_debug_dump_logs: Boolean(cfg.get("unsafe_debug_dump_logs") ?? false)
+    unsafe_debug_dump_logs: Boolean(cfg.get("unsafe_debug_dump_logs") ?? false),
   };
 }
 
@@ -187,13 +164,10 @@ addEventListener("fetch", (event) => event.respondWith(handleRequest(event)));
 
 async function handleRequest(event: FetchEvent) {
   try {
-    let config = recaptchaConfigFromConfigStore("recaptcha");
-    const fastly_ctx = new FastlyContext(
-      event,
-      config
-    );
+    const config = recaptchaConfigFromConfigStore("recaptcha");
+    const fastly_ctx = new FastlyContext(event, config);
     return processRequest(fastly_ctx, event.request);
-  } catch(e)  {
+  } catch (e) {  // eslint-disable-line  @typescript-eslint/no-unused-vars
     // Default just fetch from origin...
     return fetch(event.request, { backend: "origin" });
   }
