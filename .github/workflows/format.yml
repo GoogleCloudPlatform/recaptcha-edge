@@ -33,5 +33,5 @@ jobs:
       - name: Run linters
         uses: wearerequired/lint-action@v2
         with:
-          eslint: true
+          # eslint: true # disabled due to issue: https://github.com/wearerequired/lint-action/issues/788
           prettier: true
