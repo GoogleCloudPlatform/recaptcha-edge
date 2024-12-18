@@ -76,6 +76,7 @@ export interface RecaptchaConfig {
   sessionJsInjectPath?: string;
   recaptchaEndpoint: string;
   debug?: boolean;
+  dump_logs?: boolean;
   strict_cookie?: boolean;
 }
 

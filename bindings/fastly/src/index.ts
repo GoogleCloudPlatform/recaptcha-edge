@@ -172,6 +172,7 @@ export function recaptchaConfigFromConfigStore(name: string): RecaptchaConfig {
       cfg.get("recaptcha_endpoint") ?? DEFAULT_RECAPTCHA_ENDPOINT,
     sessionJsInjectPath: cfg.get("session_js_install_path") ?? undefined,
     debug: Boolean(cfg.get("debug") ?? false),
+    dump_logs: Boolean(cfg.get("unsafe_debug_dump_logs") ?? false)
   };
 }
 
@@ -191,7 +192,12 @@ async function handleRequest(event: FetchEvent) {
       event,
       config
     );
-    return processRequest(fastly_ctx, event.request);
+    let resp = processRequest(fastly_ctx, event.request);
+    if (config.dump_logs) {
+      await resp;
+      return new Response(JSON.stringify({logs: fastly_ctx.log_messages, exceptions: fastly_ctx.exceptions}, null, 2));
+    }
+    return resp;
   } catch(e)  {
     // Default just fetch from origin...
     return fetch(event.request, { backend: "origin" });

@@ -41,5 +41,10 @@ export async function responseProvider(inreq: EW.IngressClientRequest) {
   const response = await processRequest(akamaiContext, req);
   // convert Response back to createResponse
   // TODO: populate headers
-  return createResponse(response.status, {}, (response.body ?? '') as (ReadableStream | string));
+  let resp = createResponse(response.status, {}, (response.body ?? '') as (ReadableStream | string));
+  if (akamaiContext.config.dump_logs) {
+    await resp;
+    return new Response(JSON.stringify({logs: akamaiContext.log_messages, exceptions: akamaiContext.exceptions}, null, 2));
+  }
+  return resp;
 }
