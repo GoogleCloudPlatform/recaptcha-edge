@@ -33,11 +33,6 @@ export default {
     ctx: ExecutionContext,
   ): Promise<Response> {
     const cfctx = new CloudflareContext(env, ctx, recaptchaConfigFromEnv(env));
-    let resp = processRequest(cfctx, request);
-    if (cfctx.config.unsafe_debug_dump_logs) {
-      await resp;
-      return new Response(JSON.stringify({logs: cfctx.log_messages, exceptions: cfctx.exceptions}, null, 2));
-    }
-    return resp;
+    return processRequest(cfctx, request);
   },
 } satisfies ExportedHandler;

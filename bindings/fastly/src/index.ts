@@ -192,12 +192,7 @@ async function handleRequest(event: FetchEvent) {
       event,
       config
     );
-    let resp = processRequest(fastly_ctx, event.request);
-    if (config.unsafe_debug_dump_logs) {
-      await resp;
-      return new Response(JSON.stringify({logs: fastly_ctx.log_messages, exceptions: fastly_ctx.exceptions}, null, 2));
-    }
-    return resp;
+    return processRequest(fastly_ctx, event.request);
   } catch(e)  {
     // Default just fetch from origin...
     return fetch(event.request, { backend: "origin" });

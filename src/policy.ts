@@ -305,6 +305,21 @@ export async function processRequest(
     context.debug_trace.exception_count = context.exceptions.length;
     new_resp.headers.append('X-RECAPTCHA-DEBUG', context.debug_trace.formatAsHeaderValue());
   }
+	// Create a response that dumps the exceptions and log messages.
+  // This response will look like a JSON object like { logs: ["log msg 1", "log msg 2"], exceptions: ["exception1"]}
+	// This is used solely for debugging, and will replace the expected response.
+	// This is unsafe and should never be used in production, as it overwrites the response.
+	// The logs dumped here are much more substantial than the debug response header populated with the 'debug' falg.
+	if (context.config.unsafe_debug_dump_logs) {
+		await resp;
+		return new Response(
+			JSON.stringify(
+				{ logs: context.log_messages, exceptions: context.exceptions },
+				null,
+				2
+			)
+		);
+	}
   return resp;
 
   // TODO:post return call analytics
