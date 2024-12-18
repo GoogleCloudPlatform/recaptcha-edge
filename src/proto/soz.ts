@@ -60,7 +60,8 @@ export function createSoz(host: string, userIp: string, projectNumber: number, s
   };
   try {
     message.userIp = new Uint8Array(ipaddr.parse(userIp).toByteArray());
-  } catch (e) { // eslint-disable-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (e) {
     // Invalid IP address. Ignore it.
   }
   const bytes = ReCaptchaSoz.toBinary(message);

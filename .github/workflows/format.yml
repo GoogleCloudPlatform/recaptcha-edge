@@ -1,12 +1,12 @@
 name: Check Format
 
 on:
-    push:
-        branches: [ "main" ]
-    pull_request:
-        branches: [ "main" ]
-    workflow_dispatch:
-    workflow_call:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-check-format
@@ -24,7 +24,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.x
-          cache: 'npm'
+          cache: "npm"
 
       # ESLint and Prettier must be in `package.json`
       - name: Install Node.js dependencies

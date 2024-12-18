@@ -2,9 +2,9 @@ name: Integration Test Fastly
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -27,7 +27,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.x
-          cache: 'npm'
+          cache: "npm"
       - run: |
           # Download and install latest fastly CLi version
           # TODO: find and parse latest version of Fastly CLI

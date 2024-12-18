@@ -106,7 +106,7 @@ export {
 
 export class AkamaiContext extends RecaptchaContext {
   // eslint-disable-next-line  @typescript-eslint/no-unused-vars
-  static injectRecaptchaJs(inputResponse: object) { 
+  static injectRecaptchaJs(inputResponse: object) {
     throw new Error("Method not implemented.");
   }
   readonly sessionPageCookie = "recaptcha-akam-t";

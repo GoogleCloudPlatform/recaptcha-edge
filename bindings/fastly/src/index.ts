@@ -131,7 +131,8 @@ export function recaptchaConfigFromConfigStore(name: string): RecaptchaConfig {
   let cfg: Dictionary | ConfigStore;
   try {
     cfg = new ConfigStore(name);
-  } catch (e) { // eslint-disable-line  @typescript-eslint/no-unused-vars
+  } catch (e) {
+    // eslint-disable-line  @typescript-eslint/no-unused-vars
     try {
       // Backup. Try dictionary.
       cfg = new Dictionary(name);
@@ -167,7 +168,8 @@ async function handleRequest(event: FetchEvent) {
     const config = recaptchaConfigFromConfigStore("recaptcha");
     const fastly_ctx = new FastlyContext(event, config);
     return processRequest(fastly_ctx, event.request);
-  } catch (e) {  // eslint-disable-line  @typescript-eslint/no-unused-vars
+    // eslint-disable-next-line  @typescript-eslint/no-unused-vars
+  } catch (e) {
     // Default just fetch from origin...
     return fetch(event.request, { backend: "origin" });
   }

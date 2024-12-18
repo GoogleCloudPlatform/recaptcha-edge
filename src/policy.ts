@@ -55,7 +55,7 @@ export function policyPathMatch(policy: FirewallPolicy, req: Request): boolean {
  * @return true if the condition matches, false if it doesn't match, or
  * 'unknown' if we can't evaluate the condition locally.
  */
-  // eslint-disable-next-line  @typescript-eslint/no-unused-vars
+// eslint-disable-next-line  @typescript-eslint/no-unused-vars
 export function policyConditionMatch(policy: FirewallPolicy, req: Request): boolean | "unknown" {
   // An empty condition imples 'true' and always matches.
   if (!policy?.condition?.trim()) {
@@ -303,13 +303,7 @@ export async function processRequest(context: RecaptchaContext, req: Request): P
   // The logs dumped here are much more substantial than the debug response header populated with the 'debug' flag.
   if (context.config.unsafe_debug_dump_logs) {
     await resp;
-    return new Response(
-      JSON.stringify(
-        { logs: context.log_messages, exceptions: context.exceptions },
-        null,
-        2
-      )
-    );
+    return new Response(JSON.stringify({ logs: context.log_messages, exceptions: context.exceptions }, null, 2));
   }
   return resp;
 
