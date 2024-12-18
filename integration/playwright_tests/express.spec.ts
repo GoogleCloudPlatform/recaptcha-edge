@@ -139,7 +139,6 @@ test.describe('Check Different Conditions', () => {
     const testPageUrl = '/condition/1';
     const response = await page.goto(`${endpointUrl}${testPageUrl}`); 
     expect(response?.status()).toEqual(200);
-
     const responseJson = await response?.json()
     expect(responseJson.headers['x-recaptcha-test']).toEqual('condition-match'); 
   });
