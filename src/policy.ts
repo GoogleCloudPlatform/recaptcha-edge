@@ -309,7 +309,7 @@ export async function processRequest(
   // This response will look like a JSON object like { logs: ["log msg 1", "log msg 2"], exceptions: ["exception1"]}
 	// This is used solely for debugging, and will replace the expected response.
 	// This is unsafe and should never be used in production, as it overwrites the response.
-	// The logs dumped here are much more substantial than the debug response header populated with the 'debug' falg.
+	// The logs dumped here are much more substantial than the debug response header populated with the 'debug' flag.
 	if (context.config.unsafe_debug_dump_logs) {
 		await resp;
 		return new Response(
