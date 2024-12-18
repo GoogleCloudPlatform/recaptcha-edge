@@ -1,98 +1,131 @@
-import { test, expect, Cookie } from '@playwright/test';
-import { chromium, firefox, webkit } from 'playwright';
+/**
+ * Copyright 2024 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-test.beforeEach(async ({ context }) => {
-  // Create a new page with an empty context for each test
-  const page = await context.newPage(); 
+/**
+ * @fileoverview Integration tes for tokens with Playwright browser session.
+ */
+
+import { test, expect, Cookie } from '@playwright/test';
+
+test.beforeEach( async ({ context }) => {
+  await context.newPage();
 });
 
 test('should fetch the CF endpoint correctly', async ({ page }) => {
-  const response = await page.goto("https://www.branowl.xyz/action/allow");
+  const endpointUrl = process.env.ENDPOINT as string;
+  const response = await page.goto(`${endpointUrl}/action/allow`);
   expect(response?.status()).toBe(200); 
-  await expect(page).toHaveURL("https://www.branowl.xyz/action/allow"); 
+  await expect(page).toHaveURL(`${endpointUrl}/action/allow`); 
 });
 
-test('should get session token as a cookie', async ({ page }) => {
+test('should get session token as a cookie', async ({ browser, page }) => {
   let cookies : Cookie[] = [];
-  const browser = await chromium.launch({ headless: true});
-  const context = await browser.newContext();
   
-  const endpointUrl = "https://www.branowl.xyz"; 
+  const endpointUrl = process.env.ENDPOINT as string;
 
   try {
-    const page = await context.newPage();
     // Perform JS injection automatically.
     await page.goto(`${endpointUrl}/token/session`);
-    await page.waitForTimeout(5000); // important
-    // Get cookies from the current context
-    cookies = await context.cookies();
-
+    await page.waitForTimeout(3000);
+    // Get cookies from the current context.
+    cookies = await page.context().cookies();
   } catch (err) {
     await browser.close();
     throw new Error(err.message);
   }
 
-  // // Extract the token from the cookie
-  const sessionToken = cookies.find(cookie => cookie.name === 'recaptcha-fastly-t')?.value; // TODO: the cookie name should be more generic
-  // // Assert that the token is not empty
+  // Extract the token from the cookie.
+  const cookieRegex = /recaptcha-.+-t/; 
+  const sessionToken = cookies.find(cookie => cookieRegex.test(cookie.name))?.value;
+  // Assert that the token is not empty.
   expect(sessionToken).toBeTruthy();
 
-  // call CreateAsessment by visit condition matching pages
-  const condition1Response = await page.goto(`${endpointUrl}/condition/1`);
-
-  // Assert that the x-recaptcha-test header is set correctly
-  const headers = condition1Response?.headers();
-  // Match the expected value from the firewall rule
-  // expect(headers?.['x-recaptcha-test']).toBe('condition-match'); 
+  // Call CreateAsessment by visit condition matching pages.
+  await page.goto(`${endpointUrl}/condition/1`);
+  await expect(page).toHaveURL(`${endpointUrl}/condition/1`)
+  // Match the expected value from the firewall rule.
+  await expect(page.getByText('x-recaptcha-test')).toBeVisible({timeout:3000})
 });
 
 test('should generate an action token after execute() by clicking the button', async ({ page }) => {
-  const endpointUrl = "https://www.branowl.xyz"; 
-
-  // Go to the page with the reCAPTCHA
+  const endpointUrl = process.env.ENDPOINT as string;
+  // Go to the page with the reCAPTCHA.
   await page.goto(`${endpointUrl}/token/action`);
 
-  // Intercept the request triggered by the button click
+  // Intercept the request triggered by the button click.
   const responsePromise = page.waitForResponse(response => 
     response.url().includes('/token/action') && 
     response.request().method() === 'GET' &&
-    !!response.request().headers()['x-recaptcha-token'] // Check if the header exists
+    !!response.request().headers()['x-recaptcha-token'] // Check if the header exists.
   );
-
-  // Click the "Execute Button"
   await page.click('#execute-button');
 
-  // Wait for the response and extract the token from the header
+  // Wait for the response and extract the token from the header.
   const response = await responsePromise;
   const actionToken = response.request().headers()['x-recaptcha-token'];
 
-  // Assert that the token is not empty
+  // Assert that the token is not empty.
   expect(actionToken).toBeTruthy();
-  // console.log('Action Token:', actionToken);
 
-  // call CreateAsessment by visit condition matching pages
-  const condition1Response = await page.goto(`${endpointUrl}/condition/1`);
-
-  // Assert that the x-recaptcha-test header is set correctly
-  const headers = condition1Response?.headers();
-  // Match the expected value from the firewall rule
-  // expect(headers?.['x-recaptcha-test']).toBe('condition-match'); 
-
+  // Call CreateAsessment by visit condition matching pages.
+  await page.goto(`${endpointUrl}/condition/1`);
+  await expect(page).toHaveURL(`${endpointUrl}/condition/1`)
+  // Match the expected value from the firewall rule.
+  await expect(page.getByText('x-recaptcha-test')).toBeVisible({timeout:3000})
 });
 
 test('should get session token after visiting the intended injectJS path', async ({ page }) => {
-  const endpointUrl = "https://www.branowl.xyz/hello.html"; 
+  const endpointUrl = process.env.ENDPOINT as string;
 
-  await page.goto(`${endpointUrl}`);
+  await page.goto(`${endpointUrl}/hello.html`);
 
-  // Wait for the reCAPTCHA script to be injected (adjust timeout if needed)
-  await page.waitForTimeout(5000); 
+  // Wait for the reCAPTCHA script to be injected (adjust timeout if needed).
+  await page.waitForTimeout(2000); 
 
-  // Check if the reCAPTCHA script is present in the page
+  // Check if the reCAPTCHA script is present in the page.
   const scriptExists = await page.evaluate(() => {
     return Array.from(document.querySelectorAll('script')).some(script => 
       script.src.includes('www.google.com/recaptcha/enterprise.js')
     );
   });
   expect(scriptExists).toBe(true);
+});
+
+test('should get challenge token as a cookie', async ({ browser, page }) => {
+  let cookies : Cookie[] = [];
+  const endpointUrl = process.env.ENDPOINT as string;
+
+  try {
+    await page.goto(`${endpointUrl}/action/redirect`);
+    await page.waitForTimeout(5000);
+    // Get cookies from the selecteds domain.
+    cookies = await page.context().cookies([endpointUrl]);
+  } catch (err) {
+    await browser.close();
+    throw new Error(err.message);
+  }
+
+  // Extract the token from the cookie.
+  const cookieRegex = /recaptcha-.+-e/; 
+  const challengeToken = cookies.find(cookie => cookieRegex.test(cookie.name))?.value;
+  expect(challengeToken).toBeTruthy();
+
+  // Call CreateAsessment by visit condition matching pages.
+  await page.goto(`${endpointUrl}/condition/1`);
+  await expect(page).toHaveURL(`${endpointUrl}/condition/1`)
+  // Match the expected value from the firewall rule.
+  await expect(page.getByText('x-recaptcha-test')).toBeVisible({timeout:3000})
 });
