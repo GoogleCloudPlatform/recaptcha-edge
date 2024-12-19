@@ -289,7 +289,13 @@ export async function processRequest(context: RecaptchaContext, req: Request): P
   if (context.config.unsafe_debug_dump_logs) {
     await resp;
     resp = Promise.resolve(
-      new Response(JSON.stringify({ logs: context.log_messages, exceptions: context.exceptions }, null, 2)),
+      new Response(
+        JSON.stringify(
+          { logs: context.log_messages, exceptions: context.exceptions, request_headers: req.headers.entries() },
+          null,
+          2,
+        ),
+      ),
     );
   }
   // Create a debug response header.
