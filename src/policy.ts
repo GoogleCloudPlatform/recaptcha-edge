@@ -279,14 +279,8 @@ export async function processRequest(context: RecaptchaContext, req: Request): P
     }
   }
 
-  const resp = applyActions(context, req, actions);
+  let resp = applyActions(context, req, actions);
 
-  // Create a debug response header.
-  if (context.config.debug) {
-    const new_resp = await resp;
-    context.debug_trace.exception_count = context.exceptions.length;
-    new_resp.headers.append("X-RECAPTCHA-DEBUG", context.debug_trace.formatAsHeaderValue());
-  }
   // Create a response that dumps the exceptions and log messages.
   // This response will look like a JSON object like { logs: ["log msg 1", "log msg 2"], exceptions: ["exception1"]}
   // This is used solely for debugging, and will replace the expected response.
@@ -294,11 +288,20 @@ export async function processRequest(context: RecaptchaContext, req: Request): P
   // The logs dumped here are much more substantial than the debug response header populated with the 'debug' flag.
   if (context.config.unsafe_debug_dump_logs) {
     await resp;
-    console.log(JSON.stringify({ logs: context.log_messages, exceptions: context.exceptions }, null, 2));
-    return new Response(JSON.stringify({ logs: context.log_messages, exceptions: context.exceptions }, null, 2));
+    resp = Promise.resolve(
+      new Response(JSON.stringify({ logs: context.log_messages, exceptions: context.exceptions }, null, 2)),
+    );
+  }
+  // Create a debug response header.
+  // This header has some useful stats like what action was chose, what site key was used, how many policies were loaded, etc.
+  if (context.config.debug) {
+    let resolved_resp = await resp;
+    context.debug_trace.exception_count = context.exceptions.length;
+    resolved_resp.headers.append("X-RECAPTCHA-DEBUG", context.debug_trace.formatAsHeaderValue());
+    resp = Promise.resolve(resolved_resp);
   }
 
   return resp;
 
-  // TODO:post return call analytics
+  // TODO: post return call analytics
 }
