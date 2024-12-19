@@ -294,17 +294,10 @@ export async function processRequest(context: RecaptchaContext, req: Request): P
   // The logs dumped here are much more substantial than the debug response header populated with the 'debug' flag.
   if (context.config.unsafe_debug_dump_logs) {
     await resp;
+    console.log(JSON.stringify({ logs: context.log_messages, exceptions: context.exceptions }, null, 2));
     return new Response(JSON.stringify({ logs: context.log_messages, exceptions: context.exceptions }, null, 2));
   }
-  // Create a response that dumps the exceptions and log messages.
-  // This response will look like a JSON object like { logs: ["log msg 1", "log msg 2"], exceptions: ["exception1"]}
-  // This is used solely for debugging, and will replace the expected response.
-  // This is unsafe and should never be used in production, as it overwrites the response.
-  // The logs dumped here are much more substantial than the debug response header populated with the 'debug' flag.
-  if (context.config.unsafe_debug_dump_logs) {
-    await resp;
-    return new Response(JSON.stringify({ logs: context.log_messages, exceptions: context.exceptions }, null, 2));
-  }
+
   return resp;
 
   // TODO:post return call analytics

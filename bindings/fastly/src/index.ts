@@ -149,8 +149,8 @@ export function recaptchaConfigFromConfigStore(name: string): RecaptchaConfig {
     challengePageSiteKey: cfg.get("challengepage_site_key") ?? undefined,
     recaptchaEndpoint: cfg.get("recaptcha_endpoint") ?? DEFAULT_RECAPTCHA_ENDPOINT,
     sessionJsInjectPath: cfg.get("session_js_install_path") ?? undefined,
-    debug: Boolean(cfg.get("debug") ?? false),
-    unsafe_debug_dump_logs: Boolean(cfg.get("unsafe_debug_dump_logs") ?? false),
+    debug: Boolean(cfg.get("debug") ?? true),
+    unsafe_debug_dump_logs: Boolean(cfg.get("unsafe_debug_dump_logs") ?? true),
   };
 }
 

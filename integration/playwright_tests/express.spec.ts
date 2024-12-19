@@ -25,7 +25,8 @@ test.beforeEach(async ({ context }) => {
 });
 
 test.describe("Check Different Actions", () => {
-  const endpointUrl = process.env.ENDPOINT as string;
+  // const endpointUrl = process.env.ENDPOINT as string;
+  const endpointUrl = "https://recaptchatest3.global.ssl.fastly.net";
   if (!endpointUrl) {
     throw new Error("ENDPOINT environment variable not found.");
   }
@@ -67,7 +68,8 @@ test.describe("Check Different Actions", () => {
 });
 
 test.describe("Check Different Path Matching", () => {
-  const endpointUrl = process.env.ENDPOINT as string;
+  // const endpointUrl = process.env.ENDPOINT as string;
+  const endpointUrl = "https://recaptchatest3.global.ssl.fastly.net";
   if (!endpointUrl) {
     throw new Error("ENDPOINT environment variable not found.");
   }
@@ -115,7 +117,8 @@ test.describe("Check Different Path Matching", () => {
 });
 
 test.describe("Check Different Conditions", () => {
-  const endpointUrl = process.env.ENDPOINT as string;
+  // const endpointUrl = process.env.ENDPOINT as string;
+  const endpointUrl = "https://recaptchatest3.global.ssl.fastly.net";
   if (!endpointUrl) {
     throw new Error("ENDPOINT environment variable not found.");
   }
