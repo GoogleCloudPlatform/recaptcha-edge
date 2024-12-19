@@ -7,5 +7,6 @@
   "action_site_key": "actionkey",
   "session_site_key": "sessionkey",
   "express_site_key": "expresskey",
-  "challengepage_site_key": "challengekey"
+  "challengepage_site_key": "challengekey",
+  "session_js_install_path": "/inject"
 }

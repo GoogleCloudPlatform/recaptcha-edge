@@ -78,15 +78,21 @@ export class FastlyContext extends RecaptchaContext {
   injectRecaptchaJs(resp: Response): Promise<Response> {
     const sessionKey = this.config.sessionSiteKey;
     const RECAPTCHA_JS_SCRIPT = `<script src="${RECAPTCHA_JS}?render=${sessionKey}&waf=session" async defer></script>`;
+    
+    try {
+    let new_resp = new HTMLRewriter()
+    .on("head", {
+      element(element: any) {
+        element.append(RECAPTCHA_JS_SCRIPT, { html: true });
+      },
+    })
+    .transform(new Response(resp.body, resp));
     return Promise.resolve(
-      new HTMLRewriter()
-        .on("head", {
-          element(element: any) {
-            element.append(RECAPTCHA_JS_SCRIPT, { html: true });
-          },
-        })
-        .transform(new Response(resp.body, resp)),
+      new_resp
     );
+    } catch (e) {
+      return Promise.resolve(new Response(JSON.stringify(e, Object.getOwnPropertyNames(e))));
+    } 
   }
 
   log(level: LogLevel, msg: string) {

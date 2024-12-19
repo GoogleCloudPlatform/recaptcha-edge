@@ -54,6 +54,9 @@ describe("Run local Viceroy", function () {
   origin_app.get("/helloworld", (req, res) => {
     res.send("<html><head><title>hello</title></head>helloworld</html>");
   });
+  origin_app.get("/inject", (req, res) => {
+    res.send("<html><head><title>inject</title></head>inject</html>");
+  });
   origin_app.listen(18080, () => {
     console.log("origin mock running on port 18080");
   });
@@ -122,7 +125,13 @@ describe("Run local Viceroy", function () {
 
   test("remote redirect", async function () {
     const response = await app.fetch("/action/redirect");
-    assert.equal(assessment_count, 1);
+    assert.equal(await response.text(), "<html>challengepage!</html>");
+  });
+
+  test("js injection", async function () {
+    const response = await app.fetch("/inject");
+    //assert.equal(response.ok, true);
+    assert.equal(response.status, 200);
     assert.equal(await response.text(), "<html>challengepage!</html>");
   });
 
