@@ -2,9 +2,9 @@ name: Build and Test Fastly
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
   workflow_call:
 
@@ -15,7 +15,7 @@ concurrency:
 jobs:
   build-core:
     uses: ./.github/workflows/build_core.yml
- 
+
   fastly:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -29,7 +29,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.x
-          cache: 'npm'
+          cache: "npm"
       - uses: actions/download-artifact@v4
         with:
           name: core-library-dist
@@ -44,8 +44,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --fix-missing
       - run: npm ci
-      - run: npm run build 
-      - run: npm test 
+      - run: npm run build
+      - run: npm test
       - run: npm run pack
       - run: mv pkg/package.tar.gz pkg/fastly_client.tar.gz
       - uses: actions/upload-artifact@v4
@@ -54,5 +54,5 @@ jobs:
           path: bindings/fastly/dist/*
       - uses: actions/upload-artifact@v4
         with:
-             name: fastly-package
-             path: bindings/fastly/pkg/fastly_client.tar.gz
+          name: fastly-package
+          path: bindings/fastly/pkg/fastly_client.tar.gz

@@ -92,20 +92,14 @@ export function createInjectJsAction(): InjectJsAction {
 }
 
 /** Zod schema for a terminal action */
-export const TerminalActionSchema = AllowActionSchema.or(BlockActionSchema).or(
-  ChallengePageActionSchema,
-);
+export const TerminalActionSchema = AllowActionSchema.or(BlockActionSchema).or(ChallengePageActionSchema);
 
 /** Zod schema for a non-terminal action that modifies the backend Request */
-export const RequestNonTerminalActionSchema = SetHeaderActionSchema.or(
-  RedirectActionSchema,
-).or(SubstituteActionSchema);
+export const RequestNonTerminalActionSchema = SetHeaderActionSchema.or(RedirectActionSchema).or(SubstituteActionSchema);
 /** Zod schema for a non-terminal action that modifies the backend Response */
 export const ResponseNonTerminalActionSchema = InjectJsActionSchema;
 /** Zod schema for any action */
-export const ActionSchema = TerminalActionSchema.or(
-  RequestNonTerminalActionSchema,
-).or(ResponseNonTerminalActionSchema);
+export const ActionSchema = TerminalActionSchema.or(RequestNonTerminalActionSchema).or(ResponseNonTerminalActionSchema);
 /**
  * Type representing a terminal action.
  * A terminal action is one that conceptually ends reCAPTCHA processing,
@@ -115,12 +109,8 @@ export const ActionSchema = TerminalActionSchema.or(
  */
 export type TerminalAction = z.infer<typeof TerminalActionSchema>;
 /** A non-terminal action that modifies the request */
-export type RequestNonTerminalAction = z.infer<
-  typeof RequestNonTerminalActionSchema
->;
+export type RequestNonTerminalAction = z.infer<typeof RequestNonTerminalActionSchema>;
 /** A non-terminal action that modifies the response */
-export type ResponseNonTerminalAction = z.infer<
-  typeof ResponseNonTerminalActionSchema
->;
+export type ResponseNonTerminalAction = z.infer<typeof ResponseNonTerminalActionSchema>;
 /** An action determined by the FirewallPolicy system */
 export type Action = z.infer<typeof ActionSchema>;

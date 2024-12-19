@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import { afterAll, afterEach, beforeAll, expect, test, vi } from "vitest";
-import {responseProvider} from './edge_worker';
-
+import { beforeAll, expect, test, vi } from "vitest";
+import { responseProvider } from "./edge_worker";
 
 // Helper to convert a string to a Akamai Request/Response body.
 function stringToStream(str: string): ReadableStream<Uint8Array> {
@@ -57,47 +56,87 @@ const MockRequest = {
   clientIp: "192.168.0.1",
   wasTerminated: () => false,
   cacheKey: {
-    excludeQueryString: () => { throw "unimplemented" },
-    includeQueryString: () => { throw "unimplemented" },
-    includeQueryArgument: () => { throw "unimplemented" },
-    includeCookie: () => { throw "unimplemented" },
-    includeHeader: () => { throw "unimplemented" },
-    includeVariable: () => { throw "unimplemented" },
+    excludeQueryString: () => {
+      throw "unimplemented";
+    },
+    includeQueryString: () => {
+      throw "unimplemented";
+    },
+    includeQueryArgument: () => {
+      throw "unimplemented";
+    },
+    includeCookie: () => {
+      throw "unimplemented";
+    },
+    includeHeader: () => {
+      throw "unimplemented";
+    },
+    includeVariable: () => {
+      throw "unimplemented";
+    },
   },
-  route: () => { throw "unimplemented" },
-  getVariable: () => { return "" },
-  setVariable: () => { return "" },
-  respondWith: () => {throw "unimplemented" },
-  getHeader: () => { throw "unimplemented" },
-  getHeaders: () => { throw "unimplemented" },
-  setHeader: () => { throw "unimplemented" },
-  addHeader: () => { throw "unimplemented" },
-  removeHeader: () => { throw "unimplemented" },
+  route: () => {
+    throw "unimplemented";
+  },
+  getVariable: () => {
+    return "";
+  },
+  setVariable: () => {
+    return "";
+  },
+  respondWith: () => {
+    throw "unimplemented";
+  },
+  getHeader: () => {
+    throw "unimplemented";
+  },
+  getHeaders: () => {
+    throw "unimplemented";
+  },
+  setHeader: () => {
+    throw "unimplemented";
+  },
+  addHeader: () => {
+    throw "unimplemented";
+  },
+  removeHeader: () => {
+    throw "unimplemented";
+  },
 };
 
 // Create a mock for httpRequest function. Needs to be 'hoisted' due to the way
 // vi.mock works. See: https://vitest.dev/api/vi.html#vi-hoisted
 const { mockHttpRequest } = vi.hoisted(() => {
-  return { mockHttpRequest: vi.fn() }
-})
+  return { mockHttpRequest: vi.fn() };
+});
 
 beforeAll(() => {
-  vi.mock('log', () => {
-      return {
-        logger: {
-          log: vi.fn(() => {return {}})
-        }
-      }
+  vi.mock("log", () => {
+    return {
+      logger: {
+        log: vi.fn(() => {
+          return {};
+        }),
+      },
+    };
   });
-  vi.mock('streams', () => { return {}});
-  vi.mock('html-rewriter', () => { return {}});
-  vi.mock('http-request', () => { return {
-    httpRequest: mockHttpRequest
-  }});
-  vi.mock('create-response', () => { 
-    return { 
-      createResponse: (status: number, headers: any, body: any) => { return Promise.resolve({status, headers, body}); }
-    }
+  vi.mock("streams", () => {
+    return {};
+  });
+  vi.mock("html-rewriter", () => {
+    return {};
+  });
+  vi.mock("http-request", () => {
+    return {
+      httpRequest: mockHttpRequest,
+    };
+  });
+  vi.mock("create-response", () => {
+    return {
+      createResponse: (status: number, headers: any, body: any) => {
+        return Promise.resolve({ status, headers, body });
+      },
+    };
   });
 });
 
@@ -120,10 +159,9 @@ test("nomatch-ok", async () => {
     },
   ];
 
-  mockHttpRequest.mockImplementationOnce(() => { 
-    const encoder = new TextEncoder();
-    return Promise.resolve(
-      {
+  mockHttpRequest
+    .mockImplementationOnce(() => {
+      return Promise.resolve({
         body: JSON.stringify({ firewallPolicies: testPolicies }),
         json: () => Promise.resolve({ firewallPolicies: testPolicies }),
         ok: true,
@@ -131,21 +169,18 @@ test("nomatch-ok", async () => {
         getHeader: () => undefined,
         getHeaders: () => [],
       });
-    }
-  ).mockImplementationOnce(() => { 
-    const encoder = new TextEncoder();
-    return Promise.resolve(
-      {
+    })
+    .mockImplementationOnce(() => {
+      return Promise.resolve({
         body: stringToStream("<HTML>HELLO WORLD!</HTML>"),
         ok: true,
         status: 200,
         getHeader: () => undefined,
         getHeaders: () => [],
       });
-    }
-  );
+    });
 
-  let resp = await responseProvider(vi.mocked(MockRequest));
+  const resp = await responseProvider(vi.mocked(MockRequest));
   expect(await readStream(resp.body as ReadableStream)).toEqual("<HTML>HELLO WORLD!</HTML>");
 });
 
@@ -160,25 +195,22 @@ test("localmatch-ok", async () => {
     },
   ];
 
-  mockHttpRequest.mockImplementationOnce(() => { 
-    const encoder = new TextEncoder();
-    return Promise.resolve(
-      {
-        body: JSON.stringify({ firewallPolicies: testPolicies }),
-        json: () => Promise.resolve({ firewallPolicies: testPolicies }),
-        ok: true,
-        status: 200,
-        getHeader: () => undefined,
-        getHeaders: () => [],
-      });
-    }
-  );
+  mockHttpRequest.mockImplementationOnce(() => {
+    return Promise.resolve({
+      body: JSON.stringify({ firewallPolicies: testPolicies }),
+      json: () => Promise.resolve({ firewallPolicies: testPolicies }),
+      ok: true,
+      status: 200,
+      getHeader: () => undefined,
+      getHeaders: () => [],
+    });
+  });
 
-  let req = vi.mocked({
+  const req = vi.mocked({
     ...MockRequest,
     url: "http://www.example.com/block",
     path: "/block",
   });
-  let resp = await responseProvider(req);
+  const resp = await responseProvider(req);
   expect(resp.status).toEqual(403);
 });

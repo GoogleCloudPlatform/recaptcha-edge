@@ -34,19 +34,9 @@ export {
   SubstituteActionSchema,
 } from "./action";
 
-export {
-  Assessment,
-  AssessmentSchema,
-  Event,
-  EventSchema,
-  FirewallPolicy,
-  FirewallPolicySchema,
-} from "./assessment";
+export { Assessment, AssessmentSchema, Event, EventSchema, FirewallPolicy, FirewallPolicySchema } from "./assessment";
 
-export {
-  callCreateAssessment,
-  createPartialEventWithSiteInfo,
-} from "./createAssessment";
+export { callCreateAssessment, createPartialEventWithSiteInfo } from "./createAssessment";
 
 export {
   ListFirewallPoliciesResponse,
@@ -76,72 +66,73 @@ export interface RecaptchaConfig {
   sessionJsInjectPath?: string;
   recaptchaEndpoint: string;
   debug?: boolean;
+  unsafe_debug_dump_logs?: boolean;
   strict_cookie?: boolean;
 }
 
 export class DebugTrace {
-	exception_count?: number;
-	list_firewall_policies?: "ok" | "err";
-	create_assessment?: "ok" | "err";
-	policy_count?: number;
-	policy_match?: boolean;
-	inject_js_match?: boolean;
-	site_key_used?: "action" | "session" | "challenge" | "express" | "none";
-	site_keys_present?: string;
-	version?: string;
-	empty_config?: string;
+  exception_count?: number;
+  list_firewall_policies?: "ok" | "err";
+  create_assessment?: "ok" | "err";
+  policy_count?: number;
+  policy_match?: boolean;
+  inject_js_match?: boolean;
+  site_key_used?: "action" | "session" | "challenge" | "express" | "none";
+  site_keys_present?: string;
+  version?: string;
+  empty_config?: string;
 
-	constructor(context: RecaptchaContext) {
-		this.site_keys_present = "";
-		if (!!context.config.actionSiteKey?.trim()) {
-			this.site_keys_present += "a";
-		}
-		if (!!context.config.sessionSiteKey?.trim()) {
-			this.site_keys_present += "s";
-		}
-		if (!!context.config.challengePageSiteKey?.trim()) {
-			this.site_keys_present += "c";
-		}
-		if (!!context.config.expressSiteKey?.trim()) {
-			this.site_keys_present += "e";
-		}
-		let empty = [];
-		if (!context.config.apiKey.trim()) {
-			empty.push("apikey");
-		}
-		if (!context.config.projectNumber) {
-			empty.push("project");
-		}
-		if (!context.config.recaptchaEndpoint) {
-			empty.push("endpoint");
-		}
-		if (!this.site_keys_present) {
-			empty.push("sitekeys");
-		}
-		if (empty.length > 0) {
-			this.empty_config = empty.join(",");
-		}
-		this.version = context.environment[1];
-	}
+  constructor(context: RecaptchaContext) {
+    this.site_keys_present = "";
+    if (context.config.actionSiteKey?.trim()) {
+      this.site_keys_present += "a";
+    }
+    if (context.config.sessionSiteKey?.trim()) {
+      this.site_keys_present += "s";
+    }
+    if (context.config.challengePageSiteKey?.trim()) {
+      this.site_keys_present += "c";
+    }
+    if (context.config.expressSiteKey?.trim()) {
+      this.site_keys_present += "e";
+    }
+    const empty = [];
+    if (!context.config.apiKey.trim()) {
+      empty.push("apikey");
+    }
+    if (!context.config.projectNumber) {
+      empty.push("project");
+    }
+    if (!context.config.recaptchaEndpoint) {
+      empty.push("endpoint");
+    }
+    if (!this.site_keys_present) {
+      empty.push("sitekeys");
+    }
+    if (empty.length > 0) {
+      this.empty_config = empty.join(",");
+    }
+    this.version = context.environment[1];
+  }
 
-	/**
-	 * Creates a Header value from an object, used for debug data.
-	 * @param data an Object with string,number,boolean values.
-	 * @returns a string in the format k1=v1;k2=v2
-	 */
-	formatAsHeaderValue(): string {
-		const parts: string[] = [];
-		for (const key of Object.keys(this)) {
-			// Iterate over property names
-			const value = this[key as keyof this]; // Access value using key and type assertion
+  /**
+   * Creates a Header value from an object, used for debug data.
+   * @param data an Object with string,number,boolean values.
+   * @returns a string in the format k1=v1;k2=v2
+   */
+  formatAsHeaderValue(): string {
+    const parts: string[] = [];
+    for (const key of Object.keys(this)) {
+      // Iterate over property names
+      const value = this[key as keyof this]; // Access value using key and type assertion
 
-			if (value) {
-				parts.push(`${key}=${value}`);
-			}
-		}
+      if (value) {
+        parts.push(`${key}=${value}`);
+      }
+    }
 
-		return parts.join(";");
-	}
+    return parts.join(";");
+  }
 }
 
 export type LogLevel = "debug" | "info" | "warning" | "error";
@@ -155,10 +146,7 @@ export abstract class RecaptchaContext {
   exceptions: any[] = [];
   log_messages: Array<[LogLevel, string[]]> = [];
   debug_trace: DebugTrace;
-  readonly environment: [string, string] = [
-    "[npm] @google-cloud/recaptcha",
-    "",
-  ];
+  readonly environment: [string, string] = ["[npm] @google-cloud/recaptcha", ""];
   abstract readonly httpGetCachingEnabled: boolean;
   abstract readonly sessionPageCookie: string;
   abstract readonly challengePageCookie: string;
@@ -176,10 +164,7 @@ export abstract class RecaptchaContext {
    * Fetch from the customer's origin.
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_origin(
-    req: RequestInfo,
-    options?: RequestInit,
-  ): Promise<Response> {
+  async fetch_origin(req: RequestInfo, options?: RequestInit): Promise<Response> {
     return this.fetch(req, options);
   }
 
@@ -187,10 +172,7 @@ export abstract class RecaptchaContext {
    * Call fetch for ListFirewallPolicies.
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_list_firewall_policies(
-    req: RequestInfo,
-    options?: RequestInit,
-  ): Promise<Response> {
+  async fetch_list_firewall_policies(req: RequestInfo, options?: RequestInit): Promise<Response> {
     return this.fetch(req, options);
   }
 
@@ -198,10 +180,7 @@ export abstract class RecaptchaContext {
    * Call fetch for CreateAssessment
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_create_assessment(
-    req: RequestInfo,
-    options?: RequestInit,
-  ): Promise<Response> {
+  async fetch_create_assessment(req: RequestInfo, options?: RequestInit): Promise<Response> {
     return this.fetch(req, options);
   }
 
@@ -209,10 +188,7 @@ export abstract class RecaptchaContext {
    * Call fetch for getting the ChallengePage
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_challenge_page(
-    req: RequestInfo,
-    options?: RequestInit,
-  ): Promise<Response> {
+  async fetch_challenge_page(req: RequestInfo, options?: RequestInit): Promise<Response> {
     return this.fetch(req, options);
   }
 
@@ -223,6 +199,7 @@ export abstract class RecaptchaContext {
    * does nothing. This method should conditionally log performance only if the
    * config.debug flag is set to true.
    */
+  // eslint-disable-next-line  @typescript-eslint/no-unused-vars
   log_performance_debug(event: string) {}
 
   /**

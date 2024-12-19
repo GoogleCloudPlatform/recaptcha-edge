@@ -14,13 +14,7 @@
  * limitations under the License.
  */
 
-import {
-  createExecutionContext,
-  env,
-  fetchMock,
-  SELF,
-  waitOnExecutionContext,
-} from "cloudflare:test";
+import { createExecutionContext, env, fetchMock, SELF, waitOnExecutionContext } from "cloudflare:test";
 import { afterEach, beforeAll, expect, test } from "vitest";
 
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
@@ -73,11 +67,7 @@ test("nomatch-ok", async () => {
           userAgent: "test-user-agent",
           userIpAddress: "1.2.3.4",
           requestedUri: "http://example.com/teste2e",
-          headers: [
-            "cf-connecting-ip:1.2.3.4",
-            "user-agent:test-user-agent",
-            "x-recaptcha-token:action-token",
-          ],
+          headers: ["cf-connecting-ip:1.2.3.4", "user-agent:test-user-agent", "x-recaptcha-token:action-token"],
           firewallPolicyEvaluation: true,
         },
         assessmentEnvironment: {
@@ -88,10 +78,7 @@ test("nomatch-ok", async () => {
     })
     .reply(200, JSON.stringify({ firewallPolicyAssessment: {} }));
   // Mock the third fetch request to the actual website
-  fetchMock
-    .get("http://example.com")
-    .intercept({ path: "/teste2e" })
-    .reply(200, "<HTML>Hello World</HTML>");
+  fetchMock.get("http://example.com").intercept({ path: "/teste2e" }).reply(200, "<HTML>Hello World</HTML>");
   const req = new IncomingRequest("http://example.com/teste2e", {
     headers: {
       "X-Recaptcha-Token": "action-token",

@@ -1,40 +1,46 @@
 {
-    "name": "@google-cloud/recaptcha-akamai",
-    "version": "1.0.0",
-    "description": "A reCAPTCHA Enterprise Typescript Libarary for Akamai Edge Workers.",
-    "keywords": ["recaptcha", "waf", "akamai", "bot", "security"],
-    "homepage": "https://github.com/GoogleCloudPlatform/recaptcha-waf/tree/main/bindings/akamai#readme",
-    "license": "Apache-2.0",
-    "author": "reCAPTCHA Team <no-reply@google.com>",
-    "private": true,
-    "type": "module",
-    "main": "dist/edge_worker.js",
-    "repository": {
-      "type": "git",
-      "url": "https://github.com/GoogleCloudPlatform/recaptcha-waf.git",
-      "directory": "bindings/akamai" 
-    },
-    "scripts": {
-        "build": "esbuild --bundle src/edge_worker.ts --platform=node --format=esm --external:create-response --external:http-request --external:html-rewriter --external:streams --external:log --outdir=dist && mv dist/edge_worker.js dist/main.js && cp src/bundle.json dist/",
-        "pack": "cd dist && tar -czvf akamai.tgz bundle.json main.js",
-        "deploy": "",
-        "devclean": "rm -rf node_nodules && rm -rf dist && rm package-lock.json",
-        "test": "vitest"
-    },
-    "dependencies": {
-        "@google-cloud/recaptcha": "^1.0.0"
-    },
-    "devDependencies": {
-        "@types/node": "^22.9.0",
-        "@types/node-fetch": "^2.6.11",
-        "@types/request": "^2.48.12",
-        "esbuild": "^0.24.0",
-        "esbuild-plugin-tsc": "^0.4.0",
-        "typescript": "^5.5.3",
-        "vitest": "^2.1.5",
-        "whatwg-fetch": "^3.6.20"
-    },
-    "workspaces": [
-        "../../"
-    ]
+  "name": "@google-cloud/recaptcha-akamai",
+  "version": "1.0.0",
+  "description": "A reCAPTCHA Enterprise Typescript Libarary for Akamai Edge Workers.",
+  "keywords": [
+    "recaptcha",
+    "waf",
+    "akamai",
+    "bot",
+    "security"
+  ],
+  "homepage": "https://github.com/GoogleCloudPlatform/recaptcha-waf/tree/main/bindings/akamai#readme",
+  "license": "Apache-2.0",
+  "author": "reCAPTCHA Team <no-reply@google.com>",
+  "private": true,
+  "type": "module",
+  "main": "dist/edge_worker.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GoogleCloudPlatform/recaptcha-waf.git",
+    "directory": "bindings/akamai"
+  },
+  "scripts": {
+    "build": "esbuild --bundle src/edge_worker.ts --platform=node --format=esm --external:create-response --external:http-request --external:html-rewriter --external:streams --external:log --outdir=dist && mv dist/edge_worker.js dist/main.js && cp src/bundle.json dist/",
+    "pack": "cd dist && tar -czvf akamai.tgz bundle.json main.js",
+    "deploy": "",
+    "devclean": "rm -rf node_nodules && rm -rf dist && rm package-lock.json",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@google-cloud/recaptcha": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@types/node-fetch": "^2.6.11",
+    "@types/request": "^2.48.12",
+    "esbuild": "^0.24.0",
+    "esbuild-plugin-tsc": "^0.4.0",
+    "typescript": "^5.5.3",
+    "vitest": "^2.1.5",
+    "whatwg-fetch": "^3.6.20"
+  },
+  "workspaces": [
+    "../../"
+  ]
 }

@@ -22,14 +22,10 @@ type Env = any;
 
 const RECAPTCHA_JS = "https://www.google.com/recaptcha/enterprise.js";
 // Firewall Policies API is currently only available in the public preview.
-const DEFAULT_RECAPTCHA_ENDPOINT =
-  "https://public-preview-recaptchaenterprise.googleapis.com";
+const DEFAULT_RECAPTCHA_ENDPOINT = "https://public-preview-recaptchaenterprise.googleapis.com";
 
-import {
-  processRequest,
-  RecaptchaConfig,
-  RecaptchaContext,
-} from "@google-cloud/recaptcha";
+// eslint-disable-next-line  @typescript-eslint/no-unused-vars
+import { processRequest, RecaptchaConfig, RecaptchaContext } from "@google-cloud/recaptcha";
 import pkg from "../package.json";
 
 export {
@@ -67,10 +63,7 @@ export class CloudflareContext extends RecaptchaContext {
    */
   log_performance_debug(event: string) {
     if (this.config.debug) {
-      this.performance_counters.push([
-        event,
-        performance.now() - this.start_time,
-      ]);
+      this.performance_counters.push([event, performance.now() - this.start_time]);
     }
   }
 
@@ -87,9 +80,9 @@ export class CloudflareContext extends RecaptchaContext {
 
   injectRecaptchaJs(resp: Response): Promise<Response> {
     const sessionKey = this.config.sessionSiteKey;
-    const recaptchaJsUrl = new URL(RECAPTCHA_JS); 
-    recaptchaJsUrl.searchParams.set('render', sessionKey);
-    recaptchaJsUrl.searchParams.set('waf', 'session');
+    const recaptchaJsUrl = new URL(RECAPTCHA_JS);
+    recaptchaJsUrl.searchParams.set("render", sessionKey);
+    recaptchaJsUrl.searchParams.set("waf", "session");
     const RECAPTCHA_JS_SCRIPT = `<script src="${recaptchaJsUrl.toString()}" async defer></script>`;
     return Promise.resolve(
       new HTMLRewriter()
@@ -102,10 +95,7 @@ export class CloudflareContext extends RecaptchaContext {
     );
   }
 
-  async fetch_list_firewall_policies(
-    req: RequestInfo,
-    options?: RequestInit,
-  ): Promise<Response> {
+  async fetch_list_firewall_policies(req: RequestInfo, options?: RequestInit): Promise<Response> {
     return this.fetch(req, {
       ...options,
       cf: {
@@ -127,5 +117,6 @@ export function recaptchaConfigFromEnv(env: Env): RecaptchaConfig {
     recaptchaEndpoint: env.RECAPTCHA_ENDPOINT ?? DEFAULT_RECAPTCHA_ENDPOINT,
     sessionJsInjectPath: env.SESSION_JS_INSTALL_PATH,
     debug: env.DEBUG ?? false,
+    unsafe_debug_dump_logs: env.UNSAFE_DEBUG_DUMP_LOGS ?? false,
   };
 }

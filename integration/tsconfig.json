@@ -1,19 +1,15 @@
 {
   "compilerOptions": {
-    "target": "esnext", 
+    "target": "esnext",
     "module": "node16",
-    "moduleResolution": "node16", // Or "nodenext" 
-    "lib": ["esnext"], 
+    "moduleResolution": "node16", // Or "nodenext"
+    "lib": ["esnext"],
     "outDir": "./dist",
     "declaration": true,
     "strict": true,
     "esModuleInterop": true,
-    "skipLibCheck": true, 
+    "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-
-    "types": [ "@cloudflare/workers-types/experimental",
-        "@cloudflare/vitest-pool-workers"], 
-
     "resolveJsonModule": true,
     "strictNullChecks": true,
     "noImplicitThis": true,
@@ -23,11 +19,5 @@
       "@google-cloud/recaptcha": ["../recaptcha-lib/dist"]
     }
   },
-  "include": ["src", "integration"], 
-  "exclude": [
-    "node_modules",
-    "dist",
-    "**/*.test.*",
-    "vite.config.ts" 
-  ]
+  "exclude": ["node_modules", "dist", "**/*.test.*"]
 }

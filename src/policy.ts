@@ -36,8 +36,7 @@ type LocalAssessment = action.Action[] | "recaptcha-required";
 export const RECAPTCHA_JS = "https://www.google.com/recaptcha/enterprise.js";
 
 /** @type {string} */
-export const CHALLENGE_PAGE_URL =
-  "https://www.google.com/recaptcha/challengepage";
+export const CHALLENGE_PAGE_URL = "https://www.google.com/recaptcha/challengepage";
 
 /**
  * Checks whether a particular policy path pattern matches the incoming request.
@@ -56,10 +55,8 @@ export function policyPathMatch(policy: FirewallPolicy, req: Request): boolean {
  * @return true if the condition matches, false if it doesn't match, or
  * 'unknown' if we can't evaluate the condition locally.
  */
-export function policyConditionMatch(
-  policy: FirewallPolicy,
-  req: Request,
-): boolean | "unknown" {
+// eslint-disable-next-line  @typescript-eslint/no-unused-vars
+export function policyConditionMatch(policy: FirewallPolicy, req: Request): boolean | "unknown" {
   // An empty condition imples 'true' and always matches.
   if (!policy?.condition?.trim()) {
     return true;
@@ -82,10 +79,7 @@ export function policyConditionMatch(
  * Check if a request can be locally accessed,
  * with amortized caching of policies.
  */
-export async function localPolicyAssessment(
-  context: RecaptchaContext,
-  req: Request,
-): Promise<LocalAssessment> {
+export async function localPolicyAssessment(context: RecaptchaContext, req: Request): Promise<LocalAssessment> {
   // TODO: local overrides or hooks
 
   // Optimization to inspect a cached copy of the firewall policies if HTTP caching is enabled.
@@ -121,10 +115,7 @@ export async function localPolicyAssessment(
 /**
  * Evaluate the policy assessment for a request.
  */
-export async function evaluatePolicyAssessment(
-  context: RecaptchaContext,
-  req: Request,
-): Promise<action.Action[]> {
+export async function evaluatePolicyAssessment(context: RecaptchaContext, req: Request): Promise<action.Action[]> {
   let assessment;
   try {
     context.log_performance_debug("[rpc] callCreateAssessment - start");
@@ -194,10 +185,7 @@ export async function applyActions(
     const event = context.buildEvent(req);
     const url = new URL(req.url);
     if (!context.config.challengePageSiteKey) {
-      context.log(
-        "error",
-        "[!] attempt to redirect without challenge page site key!",
-      );
+      context.log("error", "[!] attempt to redirect without challenge page site key!");
     }
     const soz = createSoz(
       url.hostname,
@@ -260,10 +248,7 @@ export async function applyActions(
 /**
  * Process reCAPTCHA request.
  */
-export async function processRequest(
-  context: RecaptchaContext,
-  req: Request,
-): Promise<Response> {
+export async function processRequest(context: RecaptchaContext, req: Request): Promise<Response> {
   let actions = [];
   try {
     const localAssessment = await localPolicyAssessment(context, req);
@@ -280,15 +265,12 @@ export async function processRequest(
   }
 
   if (context.config.sessionJsInjectPath) {
-    let patterns = context.config.sessionJsInjectPath?.split(";");
+    const patterns = context.config.sessionJsInjectPath?.split(";");
     const url = new URL(req.url);
     for (const pattern of patterns) {
       if (picomatch.isMatch(url.pathname, pattern)) {
         context.debug_trace.inject_js_match = true;
-        context.log(
-          "debug",
-          "Request matching session JS inject pattern: " + pattern,
-        );
+        context.log("debug", "Request matching session JS inject pattern: " + pattern);
         // We don't need to check if it's already there, since policies currently
         // can't insert this action.
         actions.unshift(action.createInjectJsAction());
@@ -297,13 +279,31 @@ export async function processRequest(
     }
   }
 
-  let resp = applyActions(context, req, actions);
+  const resp = applyActions(context, req, actions);
 
   // Create a debug response header.
   if (context.config.debug) {
-    let new_resp = await resp;
+    const new_resp = await resp;
     context.debug_trace.exception_count = context.exceptions.length;
-    new_resp.headers.append('X-RECAPTCHA-DEBUG', context.debug_trace.formatAsHeaderValue());
+    new_resp.headers.append("X-RECAPTCHA-DEBUG", context.debug_trace.formatAsHeaderValue());
+  }
+  // Create a response that dumps the exceptions and log messages.
+  // This response will look like a JSON object like { logs: ["log msg 1", "log msg 2"], exceptions: ["exception1"]}
+  // This is used solely for debugging, and will replace the expected response.
+  // This is unsafe and should never be used in production, as it overwrites the response.
+  // The logs dumped here are much more substantial than the debug response header populated with the 'debug' flag.
+  if (context.config.unsafe_debug_dump_logs) {
+    await resp;
+    return new Response(JSON.stringify({ logs: context.log_messages, exceptions: context.exceptions }, null, 2));
+  }
+  // Create a response that dumps the exceptions and log messages.
+  // This response will look like a JSON object like { logs: ["log msg 1", "log msg 2"], exceptions: ["exception1"]}
+  // This is used solely for debugging, and will replace the expected response.
+  // This is unsafe and should never be used in production, as it overwrites the response.
+  // The logs dumped here are much more substantial than the debug response header populated with the 'debug' flag.
+  if (context.config.unsafe_debug_dump_logs) {
+    await resp;
+    return new Response(JSON.stringify({ logs: context.log_messages, exceptions: context.exceptions }, null, 2));
   }
   return resp;
 
