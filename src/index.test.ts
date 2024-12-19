@@ -50,12 +50,16 @@ const testConfig: RecaptchaConfig = {
 };
 
 class TestContext extends RecaptchaContext {
-  config = testConfig;
   sessionPageCookie = "recaptcha-test-t";
   challengePageCookie = "recaptcha-test-e";
   httpGetCachingEnabled = true;
   exceptions: any[] = [];
   log_messages: Array<[LogLevel, string[]]> = [];
+
+  constructor(config: RecaptchaConfig) {
+    super(config);
+  }
+
   logException = (e: any) => {
     this.exceptions.push(e);
   };
@@ -870,6 +874,52 @@ test("processRequest-block", async () => {
   const resp = await processRequest(context, req);
   expect(resp.status).toEqual(403);
   expect(fetch).toHaveBeenCalledTimes(1);
+});
+
+test("processRequest-dump", async () => {
+  const context = new TestContext({ ...testConfig, unsafe_debug_dump_logs: true });
+  const req = new Request("https://www.example.com/nomatch", {
+    headers: {
+      "Content-Type": "application/json",
+      Hello: "World",
+    },
+  });
+  const testPolicies = [
+    {
+      name: "test-policy",
+      description: "test-description",
+      path: "/teste2e",
+      // 'type' isn't a part of the interface, but is added for testing.
+      actions: [{ block: {}, type: "block" }],
+    },
+    {
+      name: "test-policy2",
+      description: "test-description2",
+      path: "/badpath2",
+      condition: "test-condition2",
+      actions: [{ block: {}, type: "block" }],
+    },
+  ];
+  vi.stubGlobal("fetch", vi.fn());
+  (fetch as Mock).mockImplementationOnce(() =>
+    Promise.resolve({
+      status: 200,
+      json: () => Promise.resolve({ firewallPolicies: testPolicies }),
+    }),
+  );
+  const resp = await processRequest(context, req);
+  expect(await resp.json()).toEqual({
+    logs: [
+      ["debug", ["[rpc] listFirewallPolicies (ok)"]],
+      ["debug", ["local assessment succeeded"]],
+      ["debug", ["terminalAction: allow"]],
+    ],
+    exceptions: [],
+    request_headers: {
+      "content-type": "application/json",
+      hello: "World",
+    },
+  });
 });
 
 test("processRequest-raise", async () => {
