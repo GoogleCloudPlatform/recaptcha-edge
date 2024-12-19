@@ -67,7 +67,7 @@ export class FastlyContext extends RecaptchaContext {
   buildEvent(req: Request): object {
     return {
       // extracting common signals
-      userIpAddress: req.headers.get("Fastly-Client-IP") ?? undefined,
+      userIpAddress: req.headers.get("fastly-client-ip") ?? undefined,
       headers: Array.from(req.headers.entries()).map(([k, v]) => `${k}:${v}`),
       ja3: this.event.client.tlsJA3MD5 ?? undefined,
       requestedUri: req.url,
@@ -149,8 +149,8 @@ export function recaptchaConfigFromConfigStore(name: string): RecaptchaConfig {
     challengePageSiteKey: cfg.get("challengepage_site_key") ?? undefined,
     recaptchaEndpoint: cfg.get("recaptcha_endpoint") ?? DEFAULT_RECAPTCHA_ENDPOINT,
     sessionJsInjectPath: cfg.get("session_js_install_path") ?? undefined,
-    debug: Boolean(cfg.get("debug") ?? true),
-    unsafe_debug_dump_logs: Boolean(cfg.get("unsafe_debug_dump_logs") ?? true),
+    debug: (cfg.get("debug") ?? "false") == "true",
+    unsafe_debug_dump_logs: (cfg.get("unsafe_debug_dump_logs") ?? "false") == "true",
   };
 }
 
