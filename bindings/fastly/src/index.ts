@@ -67,7 +67,7 @@ export class FastlyContext extends RecaptchaContext {
   buildEvent(req: Request): object {
     return {
       // extracting common signals
-      userIpAddress: req.headers.get("Fastly-Client-IP") ?? undefined,
+      userIpAddress: this.event.client.address ?? undefined,
       headers: Array.from(req.headers.entries()).map(([k, v]) => `${k}:${v}`),
       ja3: this.event.client.tlsJA3MD5 ?? undefined,
       requestedUri: req.url,
@@ -167,6 +167,8 @@ async function handleRequest(event: FetchEvent) {
   try {
     const config = recaptchaConfigFromConfigStore("recaptcha");
     const fastly_ctx = new FastlyContext(event, config);
+    fastly_ctx.log("debug", "Fastly client JA3MD5: " + event.client.tlsJA3MD5);
+    fastly_ctx.log("debug", "Fastly client address " + event.client.address);
     return processRequest(fastly_ctx, event.request);
     // eslint-disable-next-line  @typescript-eslint/no-unused-vars
   } catch (e) {
