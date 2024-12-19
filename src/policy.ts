@@ -291,7 +291,11 @@ export async function processRequest(context: RecaptchaContext, req: Request): P
     resp = Promise.resolve(
       new Response(
         JSON.stringify(
-          { logs: context.log_messages, exceptions: context.exceptions, request_headers: Object.fromEntries(req.headers.entries()) },
+          {
+            logs: context.log_messages,
+            exceptions: context.exceptions,
+            request_headers: Object.fromEntries(req.headers.entries()),
+          },
           null,
           2,
         ),
