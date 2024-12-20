@@ -178,7 +178,7 @@ export abstract class RecaptchaContext {
   addRequestHeader(req: EdgeRequest, key: string, value: string): EdgeRequest {
     let headers = new Headers(req.headers);
     headers.append(key, value);
-    return new Request(req.url, {...req, headers});
+    return new Request(req.url, { ...req, headers });
   }
 
   createResponse(body: string, options?: ResponseInit): EdgeResponse {
