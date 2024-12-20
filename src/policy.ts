@@ -199,7 +199,7 @@ export async function applyActions(
   for (const action of reqNonterminalActions) {
     context.log("debug", "reqNonterminal action: " + action.type);
     if (action.type === "setHeader") {
-      req.headers.set(action.setHeader.key, action.setHeader.value);
+      req = context.addRequestHeader(req, action.setHeader.key, action.setHeader.value);
       continue;
     }
     if (action.type === "substitute") {

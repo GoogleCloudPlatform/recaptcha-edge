@@ -55,15 +55,15 @@ export {
 
 export interface EdgeRequest {
   clone(): EdgeRequest;
-  headers: Headers;
-  method: string;
+  readonly headers: Headers;
+  readonly method: string;
   readonly url: string;
 }
 export type EdgeRequestInfo = EdgeRequest | string;
 export interface EdgeResponse {
   text(): Promise<string>;
   json(): Promise<unknown>;
-  headers: Headers;
+  readonly headers: Headers;
   readonly url: string;
   readonly status: number;
 }
@@ -173,6 +173,12 @@ export abstract class RecaptchaContext {
 
   replacePath(req: EdgeRequest, new_path: string): EdgeRequest {
     return new Request(new_path, req);
+  }
+
+  addRequestHeader(req: EdgeRequest, key: string, value: string): EdgeRequest {
+    let headers = new Headers(req.headers);
+    headers.append(key, value);
+    return new Request(req.url, {...req, headers});
   }
 
   createResponse(body: string, options?: ResponseInit): EdgeResponse {
