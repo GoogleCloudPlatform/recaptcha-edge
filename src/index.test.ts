@@ -36,6 +36,7 @@ import {
   LogLevel,
   DebugTrace,
   EdgeRequest,
+  EdgeResponse,
 } from "./index";
 
 import { Action, ActionSchema, createBlockAction } from "./action";
@@ -77,7 +78,7 @@ class TestContext extends RecaptchaContext {
   replacePath(req: EdgeRequest, new_path: string): EdgeRequest {
     return new Request(new_path, req);
   }
-  injectRecaptchaJs = async (resp: Response) => {
+  injectRecaptchaJs = async (resp: EdgeResponse) => {
     let html = await resp.text();
     html = html.replace("<HTML>", '<HTML><script src="test.js"/>');
     return new Response(html, resp);
@@ -111,6 +112,19 @@ test("callCreateAssessment-ok", async () => {
     },
     fetch: (req, options) => fetch(req, options),
     fetch_create_assessment: (req, options) => fetch(req, options),
+    replacePath(req: EdgeRequest, new_path: string): EdgeRequest {
+      return new Request(new_path, req);
+    },
+  
+    addRequestHeader(req: EdgeRequest, key: string, value: string): EdgeRequest {
+      let headers = new Headers(req.headers);
+      headers.append(key, value);
+      return new Request(req.url, { ...req, headers });
+    },
+  
+    createResponse(body: string, options?: ResponseInit): EdgeResponse {
+      return new Response(body, options);
+    }
   };
 
   const resp = await callCreateAssessment(

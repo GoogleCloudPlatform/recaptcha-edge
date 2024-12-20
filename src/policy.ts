@@ -249,7 +249,7 @@ export async function processRequest(context: RecaptchaContext, req: EdgeRequest
       actions = await evaluatePolicyAssessment(context, req);
     } else {
       context.log("debug", "local assessment succeeded");
-      actions = localAssessment;
+      //actions = await localAssessment;
     }
   } catch (reason) {
     context.logException(reason);
