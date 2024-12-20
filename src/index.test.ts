@@ -35,6 +35,7 @@ import {
   SetHeaderAction,
   LogLevel,
   DebugTrace,
+  EdgeRequest,
 } from "./index";
 
 import { Action, ActionSchema, createBlockAction } from "./action";
@@ -67,12 +68,15 @@ class TestContext extends RecaptchaContext {
     this.log_messages.push([level, [msg]]);
   };
   // eslint-disable-next-line  @typescript-eslint/no-unused-vars
-  buildEvent = (req: Request) => {
+  buildEvent = (req: EdgeRequest) => {
     return EventSchema.parse({
       userIpAddress: "1.2.3.4",
       userAgent: "test-user-agent",
     });
   };
+  replacePath(req: EdgeRequest, new_path: string): EdgeRequest {
+    return new Request(new_path, req);
+  }
   injectRecaptchaJs = async (resp: Response) => {
     let html = await resp.text();
     html = html.replace("<HTML>", '<HTML><script src="test.js"/>');
@@ -242,10 +246,10 @@ test("ApplyActions-redirect", async () => {
   req.headers.set("test-key", "test-value");
   vi.stubGlobal(
     "fetch",
-    vi.fn((req) => {
-      expect(req.url).toEqual("https://www.google.com/recaptcha/challengepage");
-      expect(req.headers.get("test-key")).toEqual(null);
-      expect(req.headers.get("X-ReCaptcha-Soz")).toEqual(
+    vi.fn((url, options) => {
+      expect(url).toEqual("https://www.google.com/recaptcha/challengepage");
+      expect(options.headers.get("test-key")).toEqual(null);
+      expect(options.headers.get("X-ReCaptcha-Soz")).toEqual(
         "CgQBAgMEKg93d3cuZXhhbXBsZS5jb20aF2NoYWxsZW5nZS1wYWdlLXNpdGUta2V5OLlg",
       );
       return Promise.resolve({

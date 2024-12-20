@@ -21,14 +21,14 @@
 import * as action from "./action";
 import { Assessment, AssessmentSchema, Event, EventSchema, RpcErrorSchema } from "./assessment";
 import * as error from "./error";
-import { RecaptchaContext } from "./index";
+import { EdgeRequest, RecaptchaContext } from "./index";
 import picomatch from "picomatch";
 
 /**
  * Adds reCAPTCHA specific values to an Event strucutre.
  * This includes, the siteKey, the token, cookies, and flags like express.
  */
-export function createPartialEventWithSiteInfo(context: RecaptchaContext, req: Request): Event {
+export function createPartialEventWithSiteInfo(context: RecaptchaContext, req: EdgeRequest): Event {
   const event: Event = {};
   const actionToken = req.headers.get("X-Recaptcha-Token");
   if (context.config.actionSiteKey && actionToken) {
@@ -110,7 +110,7 @@ export function createPartialEventWithSiteInfo(context: RecaptchaContext, req: R
  */
 export async function callCreateAssessment(
   context: RecaptchaContext,
-  req: Request,
+  req: EdgeRequest,
   environment?: [string, string],
   additionalParams?: Event,
 ): Promise<Assessment> {

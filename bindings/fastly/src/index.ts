@@ -120,10 +120,18 @@ export class FastlyContext extends RecaptchaContext {
 
   /**
    * Call fetch for getting the ChallengePage
-   * Parameters and outputs are the same as the 'fetch' function.
+   * @param path: the URL to fetch the challenge page from.
+   * @param soz_base64: the base64 encoded soz.
    */
-  async fetch_challenge_page(req: RequestInfo, options?: RequestInit): Promise<Response> {
-    return this.fetch(req, { ...options, backend: "google" });
+  async fetch_challenge_page(path: string, soz_base64: string): Promise<Response> {
+    return this.fetch(path, {
+      backend: "google",
+      method: "POST",
+      headers: new Headers({
+        "content-type": "application/json;charset=UTF-8",
+        "X-ReCaptcha-Soz": soz_base64,
+      }),
+    });
   }
 }
 

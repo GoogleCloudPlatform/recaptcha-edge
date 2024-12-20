@@ -53,6 +53,14 @@ export {
   processRequest,
 } from "./policy";
 
+export interface EdgeRequest {
+  clone(): EdgeRequest;
+  headers: Headers;
+  method: string;
+  readonly url: string;
+}
+export type EdgeRequestInfo = EdgeRequest | string;
+
 /**
  * reCAPTCHA Enterprise configuration.
  */
@@ -156,15 +164,19 @@ export abstract class RecaptchaContext {
     this.debug_trace = new DebugTrace(this);
   }
 
-  async fetch(req: RequestInfo, options?: RequestInit): Promise<Response> {
-    return fetch(req, options);
+  replacePath(req: EdgeRequest, new_path: string): EdgeRequest {
+    return new Request(new_path, req);
+  }
+
+  async fetch(req: EdgeRequestInfo, options?: RequestInit): Promise<Response> {
+    return fetch(req as Request, options);
   }
 
   /**
    * Fetch from the customer's origin.
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_origin(req: RequestInfo, options?: RequestInit): Promise<Response> {
+  async fetch_origin(req: EdgeRequestInfo, options?: RequestInit): Promise<Response> {
     return this.fetch(req, options);
   }
 
@@ -172,7 +184,7 @@ export abstract class RecaptchaContext {
    * Call fetch for ListFirewallPolicies.
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_list_firewall_policies(req: RequestInfo, options?: RequestInit): Promise<Response> {
+  async fetch_list_firewall_policies(req: EdgeRequestInfo, options?: RequestInit): Promise<Response> {
     return this.fetch(req, options);
   }
 
@@ -180,16 +192,23 @@ export abstract class RecaptchaContext {
    * Call fetch for CreateAssessment
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_create_assessment(req: RequestInfo, options?: RequestInit): Promise<Response> {
+  async fetch_create_assessment(req: EdgeRequestInfo, options?: RequestInit): Promise<Response> {
     return this.fetch(req, options);
   }
 
   /**
    * Call fetch for getting the ChallengePage
-   * Parameters and outputs are the same as the 'fetch' function.
+   * @param path: the URL to fetch the challenge page from.
+   * @param soz_base64: the base64 encoded soz.
    */
-  async fetch_challenge_page(req: RequestInfo, options?: RequestInit): Promise<Response> {
-    return this.fetch(req, options);
+  async fetch_challenge_page(path: string, soz_base64: string): Promise<Response> {
+    return this.fetch(path, {
+      method: "POST",
+      headers: new Headers({
+        "content-type": "application/json;charset=UTF-8",
+        "X-ReCaptcha-Soz": soz_base64,
+      }),
+    });
   }
 
   /**
@@ -226,6 +245,6 @@ export abstract class RecaptchaContext {
     this.log_messages.push([level, [msg]]);
   }
 
-  abstract buildEvent(req: Request): any;
+  abstract buildEvent(req: EdgeRequest): any;
   abstract injectRecaptchaJs(resp: Response): Promise<Response>;
 }

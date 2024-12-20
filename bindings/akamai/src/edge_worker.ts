@@ -29,10 +29,9 @@ import { ReadableStream } from "streams";
 
 export async function responseProvider(inreq: EW.IngressClientRequest) {
   const akamaiContext = new AkamaiContext(recaptchaConfigFromRequest(inreq));
-
-  const req = { ...new Request(inreq.url, inreq), ...inreq };
+  
   // Use the akamaiContext and its methods to handle the request
-  const response = await processRequest(akamaiContext, req);
+  const response = await processRequest(akamaiContext, inreq);
   // convert Response back to createResponse
   // TODO: populate headers
   return createResponse(response.status, {}, (response.body ?? "") as ReadableStream | string);
