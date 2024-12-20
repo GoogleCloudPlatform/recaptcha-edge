@@ -61,7 +61,6 @@ export interface EdgeRequest {
 }
 export type EdgeRequestInfo = EdgeRequest | string;
 export interface EdgeResponse {
-  clone(): EdgeResponse;
   text(): Promise<string>;
   json(): Promise<unknown>;
   headers: Headers;
