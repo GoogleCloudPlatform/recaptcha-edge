@@ -214,7 +214,7 @@ test("ApplyActions-block", async () => {
     vi.fn(() => Promise.resolve({ status: 200, text: () => "<HTML>Hello World</HTML>" })),
   );
   const resp = await applyActions(context, req, [createBlockAction()]);
-  expect(resp).toEqual(new Response(null, { status: 403 }));
+  expect(await resp.text()).toEqual("");
   expect(resp.status).toEqual(403);
   // TODO: custom html
   expect(fetch).toHaveBeenCalledTimes(0);

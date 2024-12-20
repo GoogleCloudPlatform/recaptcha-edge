@@ -16,8 +16,6 @@
  */
 
 import { AkamaiContext, processRequest, recaptchaConfigFromRequest } from "./index";
-import { createResponse } from "create-response";
-import { ReadableStream } from "streams";
 
 /**
  * The Akamai Edge Worker event handler.
@@ -29,10 +27,7 @@ import { ReadableStream } from "streams";
 
 export async function responseProvider(inreq: EW.IngressClientRequest) {
   const akamaiContext = new AkamaiContext(recaptchaConfigFromRequest(inreq));
-  
+
   // Use the akamaiContext and its methods to handle the request
-  const response = await processRequest(akamaiContext, inreq);
-  // convert Response back to createResponse
-  // TODO: populate headers
-  return createResponse(response.status, {}, (response.body ?? "") as ReadableStream | string);
+  return await processRequest(akamaiContext, inreq);
 }

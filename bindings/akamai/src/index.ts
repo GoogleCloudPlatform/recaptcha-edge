@@ -15,9 +15,10 @@
  * limitations under the License.
  */
 
-import { RecaptchaConfig, RecaptchaContext, EdgeRequest, EdgeRequestInfo } from "@google-cloud/recaptcha";
+import { RecaptchaConfig, RecaptchaContext, EdgeRequest, EdgeRequestInfo, EdgeResponse } from "@google-cloud/recaptcha";
 import { HtmlRewritingStream } from "html-rewriter";
 import { httpRequest } from "http-request";
+import { createResponse } from "create-response";
 import { logger } from "log";
 import { ReadableStream } from "streams";
 import pkg from "../package.json";
@@ -142,7 +143,11 @@ export class AkamaiContext extends RecaptchaContext {
     };
   }
 
-  async fetch(req: EdgeRequestInfo, options?: RequestInit): Promise<Response> {
+  createResponse(body: string, options?: ResponseInit): EdgeResponse {
+    return createResponse(options?.status || 200, options?.headers, body);
+  }
+
+  async fetch(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse> {
     // Convert RequestInfo to string if it's not already
     const url = typeof req === "string" ? req : req.url;
     return httpRequest(url, {
@@ -150,27 +155,6 @@ export class AkamaiContext extends RecaptchaContext {
       headers: headersGuard(options?.headers),
       body: bodyGuard(options?.body ?? null),
       /* there is no timeout in a Fetch API request. Consider making it a member of the Context */
-    }).then((resp: any) => {
-      return Promise.resolve({
-        ...resp,
-        type: "basic",
-        statusText: resp.status.toString(),
-        bodyUsed: false,
-        redirected: false,
-        headers: new Headers(resp.getHeaders()),
-        arrayBuffer: () => {
-          throw "unimplemented";
-        },
-        blob: () => {
-          throw "unimplemented";
-        },
-        clone: () => {
-          throw "unimplemented";
-        },
-        formData: () => {
-          throw "unimplemented";
-        },
-      });
     });
   }
 
@@ -227,7 +211,7 @@ export class AkamaiContext extends RecaptchaContext {
   // TODO: Cache the firewall policies.
   // https://techdocs.akamai.com/api-definitions/docs/caching
   // https://techdocs.akamai.com/property-mgr/docs/caching-2#how-it-works
-  async fetch_list_firewall_policies(req: EdgeRequestInfo, options?: RequestInit): Promise<Response> {
+  async fetch_list_firewall_policies(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse> {
     return this.fetch(req, {
       ...options,
     });

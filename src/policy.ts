@@ -23,7 +23,7 @@ import * as action from "./action";
 import { FirewallPolicy } from "./assessment";
 import { callCreateAssessment } from "./createAssessment";
 import * as error from "./error";
-import { RecaptchaContext, EdgeRequest } from "./index";
+import { RecaptchaContext, EdgeRequest, EdgeResponse } from "./index";
 import { callListFirewallPolicies } from "./listFirewallPolicies";
 import { createSoz } from "./proto/soz";
 
@@ -143,7 +143,7 @@ export async function applyActions(
   context: RecaptchaContext,
   req: EdgeRequest,
   actions: action.Action[],
-): Promise<Response> {
+): Promise<EdgeResponse> {
   let terminalAction: action.Action = action.createAllowAction();
   const reqNonterminalActions: action.RequestNonTerminalAction[] = [];
   const respNonterminalActions: action.ResponseNonTerminalAction[] = [];
@@ -176,7 +176,7 @@ export async function applyActions(
   context.log("debug", "terminalAction: " + terminalAction.type);
 
   if (terminalAction.type === "block") {
-    return new Response(null, { status: 403 }); // TODO: custom html
+    return context.createResponse("", { status: 403 }); // TODO: custom html
   }
 
   if (terminalAction.type === "redirect") {
@@ -239,7 +239,7 @@ export async function applyActions(
 /**
  * Process reCAPTCHA request.
  */
-export async function processRequest(context: RecaptchaContext, req: EdgeRequest): Promise<Response> {
+export async function processRequest(context: RecaptchaContext, req: EdgeRequest): Promise<EdgeResponse> {
   let actions = [];
   try {
     const localAssessment = await localPolicyAssessment(context, req);
@@ -280,7 +280,7 @@ export async function processRequest(context: RecaptchaContext, req: EdgeRequest
   if (context.config.unsafe_debug_dump_logs) {
     await resp;
     resp = Promise.resolve(
-      new Response(
+      context.createResponse(
         JSON.stringify(
           {
             logs: context.log_messages,
