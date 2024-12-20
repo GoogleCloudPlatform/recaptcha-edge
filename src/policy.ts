@@ -240,8 +240,9 @@ export async function applyActions(
  * Process reCAPTCHA request.
  */
 export async function processRequest(context: RecaptchaContext, req: EdgeRequest): Promise<EdgeResponse> {
-  let actions = [];
+  let actions: action.Action[] = [];
   try {
+    throw "dodge local policy";
     const localAssessment = await localPolicyAssessment(context, req);
     if (localAssessment === "recaptcha-required") {
       context.log("debug", "no local match, calling reCAPTCHA");
