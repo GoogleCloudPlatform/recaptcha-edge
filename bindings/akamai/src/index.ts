@@ -18,7 +18,7 @@
 import { RecaptchaConfig, RecaptchaContext, EdgeRequest, EdgeRequestInfo, EdgeResponse } from "@google-cloud/recaptcha";
 import { HtmlRewritingStream } from "html-rewriter";
 import { httpRequest } from "http-request";
-import { createResponse } from "create-response";
+import { createResponse as akamaiCreateResponse } from "create-response";
 import { logger } from "log";
 import { ReadableStream } from "streams";
 import pkg from "../package.json";
@@ -144,7 +144,7 @@ export class AkamaiContext extends RecaptchaContext {
   }
 
   createResponse(body: string, options?: ResponseInit): EdgeResponse {
-    return createResponse(options?.status || 200, options?.headers, body);
+    return akamaiCreateResponse(options?.status || 200, options?.headers, body);
   }
 
   async fetch(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse> {
