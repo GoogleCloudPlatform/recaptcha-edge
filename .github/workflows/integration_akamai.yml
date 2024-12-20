@@ -53,7 +53,7 @@ jobs:
       - name: Upload Bundle
         run: akamai ew upload --edgerc ~/.edgerc --jsonout --bundle dist/akamai.tgz ${{ secrets.AKAMAI_INTEGRATION_EW_ID }}
       - name: Activate Bundle
-        run: akamai ew activate --edgerc ~/.edgerc --jsonout ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} staging ${{ steps.get-next-version.outputs.NEXT_VERSION }}
+        run: akamai ew activate --edgerc ~/.edgerc --jsonout ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} production ${{ steps.get-next-version.outputs.NEXT_VERSION }}
       - name: Wait for Activation
         run: |
           timeout=600
