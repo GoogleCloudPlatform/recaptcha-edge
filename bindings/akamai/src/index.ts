@@ -15,14 +15,12 @@
  * limitations under the License.
  */
 
-import { RecaptchaConfig, RecaptchaContext } from "@google-cloud/recaptcha";
+import { RecaptchaConfig, RecaptchaContext, EdgeRequest, EdgeRequestInfo } from "@google-cloud/recaptcha";
 import { HtmlRewritingStream } from "html-rewriter";
 import { httpRequest } from "http-request";
 import { logger } from "log";
 import { ReadableStream } from "streams";
 import pkg from "../package.json";
-
-type RequestInfo = Request | string;
 
 function headersGuard(
   headers: Headers | Record<string, string | readonly string[]> | string[][] | undefined,
@@ -133,7 +131,7 @@ export class AkamaiContext extends RecaptchaContext {
     }
   }
 
-  buildEvent(req: Request): object {
+  buildEvent(req: EdgeRequest): object {
     return {
       // extracting common signals
       userIpAddress: req.headers.get("True-Client-IP"),
@@ -144,7 +142,7 @@ export class AkamaiContext extends RecaptchaContext {
     };
   }
 
-  async fetch(req: RequestInfo, options?: RequestInit): Promise<Response> {
+  async fetch(req: EdgeRequestInfo, options?: RequestInit): Promise<Response> {
     // Convert RequestInfo to string if it's not already
     const url = typeof req === "string" ? req : req.url;
     return httpRequest(url, {
@@ -229,7 +227,7 @@ export class AkamaiContext extends RecaptchaContext {
   // TODO: Cache the firewall policies.
   // https://techdocs.akamai.com/api-definitions/docs/caching
   // https://techdocs.akamai.com/property-mgr/docs/caching-2#how-it-works
-  async fetch_list_firewall_policies(req: RequestInfo, options?: RequestInit): Promise<Response> {
+  async fetch_list_firewall_policies(req: EdgeRequestInfo, options?: RequestInit): Promise<Response> {
     return this.fetch(req, {
       ...options,
     });
