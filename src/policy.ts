@@ -167,7 +167,7 @@ export async function applyActions(
         continue;
       case "injectjs":
         context.log("debug", "nonTerminalAction: " + action.type);
-        //respNonterminalActions.push(action);
+        respNonterminalActions.push(action);
         continue;
       default:
         /* v8 ignore next */
