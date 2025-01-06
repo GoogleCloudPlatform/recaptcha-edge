@@ -34,10 +34,12 @@ const streamReplace = (
   const decoder = new TextDecoder("utf-8");
   const encoder = new TextEncoder();
   const inputReader = inputStream.getReader();
+  let found = false; // Flag to track if replacement has been made.
 
   const outputStream = new ReadableStream<Uint8Array>({
     start() {
       buffer = "";
+      found = false;
     },
     async pull(controller) {
       const { value: chunk, done: readerDone } = await inputReader.read();
@@ -46,20 +48,23 @@ const streamReplace = (
         buffer += decoder.decode(chunk);
       }
 
-      let targetIndex = buffer.indexOf(targetStr);
-      if (targetIndex !== -1) {
-        // Only replace once
-        const beforeTarget = buffer.slice(0, targetIndex);
-        const afterTarget = buffer.slice(targetIndex + targetStr.length);
-        controller.enqueue(encoder.encode(beforeTarget + replacementStr));
-        buffer = afterTarget;
-        targetIndex = -1;
+      if (!found) {
+        // Only perform replacement if not already found.
+        let targetIndex = buffer.indexOf(targetStr);
+        if (targetIndex !== -1) {
+          const beforeTarget = buffer.slice(0, targetIndex);
+          const afterTarget = buffer.slice(targetIndex + targetStr.length);
+          controller.enqueue(encoder.encode(beforeTarget + replacementStr));
+          buffer = afterTarget;
+          targetIndex = -1;
+          found = true;
+        }
       }
 
       if (readerDone) {
         controller.enqueue(encoder.encode(buffer));
         controller.close();
-      } else if (buffer.length > targetStr.length) {
+      } else if (buffer.length > targetStr.length && !found) {
         const safeChunk = buffer.slice(0, buffer.length - targetStr.length);
         controller.enqueue(encoder.encode(safeChunk));
         buffer = buffer.slice(buffer.length - targetStr.length);
