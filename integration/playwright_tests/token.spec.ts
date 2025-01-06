@@ -25,8 +25,7 @@ test.beforeEach(async ({ context }) => {
 });
 
 test("should fetch the WAF endpoint correctly", async ({ page }) => {
-  // const endpointUrl = process.env.ENDPOINT as string;
-  const endpointUrl = "https://recaptchatest3.global.ssl.fastly.net";
+  const endpointUrl = process.env.ENDPOINT as string;
   const response = await page.goto(`${endpointUrl}/action/allow`);
   expect(response?.status()).toBe(200);
   await expect(page).toHaveURL(`${endpointUrl}/action/allow`);
@@ -35,8 +34,7 @@ test("should fetch the WAF endpoint correctly", async ({ page }) => {
 test("should get session token as a cookie", async ({ browser, page }) => {
   let cookies: Cookie[] = [];
 
-  // const endpointUrl = process.env.ENDPOINT as string;
-  const endpointUrl = "https://recaptchatest3.global.ssl.fastly.net";
+  const endpointUrl = process.env.ENDPOINT as string;
 
   try {
     // Perform JS injection automatically.
@@ -63,8 +61,7 @@ test("should get session token as a cookie", async ({ browser, page }) => {
 });
 
 test("should generate an action token after execute() by clicking the button", async ({ page }) => {
-  // const endpointUrl = process.env.ENDPOINT as string;
-  const endpointUrl = "https://recaptchatest3.global.ssl.fastly.net";
+  const endpointUrl = process.env.ENDPOINT as string;
   // Go to the page with the reCAPTCHA.
   await page.goto(`${endpointUrl}/token/action`);
 
@@ -110,8 +107,7 @@ test("should get session token after visiting the intended injectJS path", async
 
 test("should get challenge token as a cookie", async ({ browser, page }) => {
   let cookies: Cookie[] = [];
-  // const endpointUrl = process.env.ENDPOINT as string;
-  const endpointUrl = "https://recaptchatest3.global.ssl.fastly.net";
+  const endpointUrl = process.env.ENDPOINT as string;
 
   try {
     await page.goto(`${endpointUrl}/action/redirect`);
