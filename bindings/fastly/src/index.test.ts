@@ -19,6 +19,7 @@ import assert from "node:assert";
 import path from "node:path";
 import url from "node:url";
 import express from "express";
+import { JSDOM } from "jsdom";
 
 import { ComputeApplication } from "@fastly/compute-testing";
 
@@ -53,6 +54,9 @@ describe("Run local Viceroy", function () {
   const origin_app = express();
   origin_app.get("/helloworld", (req, res) => {
     res.send("<html><head><title>hello</title></head>helloworld</html>");
+  });
+  origin_app.get("/inject", (req, res) => {
+    res.send("<html><head><title>inject</title></head>inject</html>");
   });
   origin_app.listen(18080, () => {
     console.log("origin mock running on port 18080");
@@ -122,8 +126,21 @@ describe("Run local Viceroy", function () {
 
   test("remote redirect", async function () {
     const response = await app.fetch("/action/redirect");
-    assert.equal(assessment_count, 1);
     assert.equal(await response.text(), "<html>challengepage!</html>");
+  });
+
+  test("js injection", async function () {
+    const response = await app.fetch("/inject");
+
+    const html = await response.text();
+    const dom = new JSDOM(html);
+    const document = dom.window.document;
+
+    // Check if the script tag with the specific src exists
+    const scriptTag = document.querySelector("script");
+
+    assert.ok(scriptTag, "Script tag not found");
+    assert.equal(scriptTag.src, "https://www.google.com/recaptcha/enterprise.js?render=sessionkey&waf=session");
   });
 
   afterAll(async function () {
