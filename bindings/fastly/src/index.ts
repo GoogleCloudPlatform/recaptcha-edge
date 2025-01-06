@@ -25,17 +25,13 @@ const DEFAULT_RECAPTCHA_ENDPOINT = "https://public-preview-recaptchaenterprise.g
 import { processRequest, RecaptchaConfig, RecaptchaContext, LogLevel, InitError } from "@google-cloud/recaptcha";
 import pkg from "../package.json";
 
-interface StreamReplaceOptions {
-  targetStr: string;
-  replacementStr: string;
-}
-
 const streamReplace = (
   inputStream: ReadableStream<Uint8Array>,
-  options: StreamReplaceOptions,
+  targetStr: string,
+  replacementStr: string,
 ): ReadableStream<Uint8Array> => {
   let buffer = "";
-  const decoder = new TextDecoder();
+  const decoder = new TextDecoder("utf-8");
   const encoder = new TextEncoder();
   const inputReader = inputStream.getReader();
 
@@ -50,22 +46,23 @@ const streamReplace = (
         buffer += decoder.decode(chunk);
       }
 
-      let headCloseIndex = buffer.indexOf(options.targetStr);
-      while (headCloseIndex !== -1) {
-        const beforeHeadClose = buffer.slice(0, headCloseIndex);
-        const afterHeadClose = buffer.slice(headCloseIndex + options.targetStr.length);
-        controller.enqueue(encoder.encode(beforeHeadClose + options.replacementStr));
-        buffer = afterHeadClose;
-        headCloseIndex = buffer.indexOf(options.targetStr);
+      let targetIndex = buffer.indexOf(targetStr);
+      if (targetIndex !== -1) {
+        // Only replace once
+        const beforeTarget = buffer.slice(0, targetIndex);
+        const afterTarget = buffer.slice(targetIndex + targetStr.length);
+        controller.enqueue(encoder.encode(beforeTarget + replacementStr));
+        buffer = afterTarget;
+        targetIndex = -1;
       }
 
       if (readerDone) {
         controller.enqueue(encoder.encode(buffer));
         controller.close();
-      } else if (buffer.length > options.targetStr.length * 2) {
-        const safeChunk = buffer.slice(0, buffer.length - options.targetStr.length);
+      } else if (buffer.length > targetStr.length) {
+        const safeChunk = buffer.slice(0, buffer.length - targetStr.length);
         controller.enqueue(encoder.encode(safeChunk));
-        buffer = buffer.slice(buffer.length - options.targetStr.length);
+        buffer = buffer.slice(buffer.length - targetStr.length);
       }
     },
     cancel() {
@@ -130,10 +127,7 @@ export class FastlyContext extends RecaptchaContext {
     const RECAPTCHA_JS_SCRIPT = `<script src="${RECAPTCHA_JS}?render=${sessionKey}&waf=session" async defer></script>`;
     // rewrite the response
     if (resp.headers.get("Content-Type")?.startsWith("text/html")) {
-      const newRespStream = streamReplace(resp.body!, {
-        targetStr: "</head>",
-        replacementStr: RECAPTCHA_JS_SCRIPT + "</head>",
-      });
+      const newRespStream = streamReplace(resp.body!, "</head>", RECAPTCHA_JS_SCRIPT + "</head>");
       resp = new Response(newRespStream, resp);
     }
     return Promise.resolve(resp);
