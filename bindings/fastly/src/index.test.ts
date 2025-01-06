@@ -131,11 +131,11 @@ describe("Run local Viceroy", function () {
 
   test("js injection", async function () {
     const response = await app.fetch("/inject");
-  
+
     const html = await response.text();
     const dom = new JSDOM(html);
     const document = dom.window.document;
- 
+
     // Check if the script tag with the specific src exists
     const scriptTag = document.querySelector("script");
 

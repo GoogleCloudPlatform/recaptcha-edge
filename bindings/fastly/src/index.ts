@@ -32,16 +32,16 @@ interface StreamReplaceOptions {
 
 const streamReplace = (
   inputStream: ReadableStream<Uint8Array>,
-  options: StreamReplaceOptions
+  options: StreamReplaceOptions,
 ): ReadableStream<Uint8Array> => {
-  let buffer = '';
+  let buffer = "";
   const decoder = new TextDecoder();
   const encoder = new TextEncoder();
   const inputReader = inputStream.getReader();
 
   const outputStream = new ReadableStream<Uint8Array>({
     start() {
-      buffer = '';
+      buffer = "";
     },
     async pull(controller) {
       const { value: chunk, done: readerDone } = await inputReader.read();
@@ -125,12 +125,11 @@ export class FastlyContext extends RecaptchaContext {
     };
   }
 
-
   async injectRecaptchaJs(resp: Response): Promise<Response> {
     const sessionKey = this.config.sessionSiteKey;
     const RECAPTCHA_JS_SCRIPT = `<script src="${RECAPTCHA_JS}?render=${sessionKey}&waf=session" async defer></script>`;
     // rewrite the response
-    if (resp.headers.get("Content-Type")?.startsWith('text/html')) {
+    if (resp.headers.get("Content-Type")?.startsWith("text/html")) {
       const newRespStream = streamReplace(resp.body!, {
         targetStr: "</head>",
         replacementStr: RECAPTCHA_JS_SCRIPT + "</head>",
