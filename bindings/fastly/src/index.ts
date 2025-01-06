@@ -129,7 +129,6 @@ export class FastlyContext extends RecaptchaContext {
   async injectRecaptchaJs(resp: Response): Promise<Response> {
     const sessionKey = this.config.sessionSiteKey;
     const RECAPTCHA_JS_SCRIPT = `<script src="${RECAPTCHA_JS}?render=${sessionKey}&waf=session" async defer></script>`;
-
     // rewrite the response
     if (resp.headers.get("Content-Type")?.startsWith('text/html')) {
       const newRespStream = streamReplace(resp.body!, {
@@ -219,8 +218,6 @@ async function handleRequest(event: FetchEvent) {
   try {
     const config = recaptchaConfigFromConfigStore("recaptcha");
     const fastly_ctx = new FastlyContext(event, config);
-    fastly_ctx.log("debug", "Fastly client JA3MD5: " + event.client.tlsJA3MD5);
-    fastly_ctx.log("debug", "Fastly client address " + event.client.address);
     return processRequest(fastly_ctx, event.request);
     // eslint-disable-next-line  @typescript-eslint/no-unused-vars
   } catch (e) {
