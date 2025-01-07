@@ -240,6 +240,7 @@ export async function applyActions(
  * Process reCAPTCHA request.
  */
 export async function processRequest(context: RecaptchaContext, req: EdgeRequest): Promise<EdgeResponse> {
+  return context.fetch_origin(req);
   let actions: action.Action[] = [];
   try {
     throw "dodge local policy";
