@@ -24,7 +24,7 @@ test.beforeEach(async ({ context }) => {
   await context.newPage();
 });
 
-test("should fetch the CF endpoint correctly", async ({ page }) => {
+test("should fetch the WAF endpoint correctly", async ({ page }) => {
   const endpointUrl = process.env.ENDPOINT as string;
   const response = await page.goto(`${endpointUrl}/action/allow`);
   expect(response?.status()).toBe(200);

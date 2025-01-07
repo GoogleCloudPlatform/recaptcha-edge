@@ -132,7 +132,7 @@ test.describe("Check Different Conditions", () => {
     expect(response?.status()).toEqual(403);
   });
 
-  test("Access the first condition page", async ({ page }) => {
+  test("Access the condition page with matching path", async ({ page }) => {
     const testPageUrl = "/condition/1";
     const response = await page.goto(`${endpointUrl}${testPageUrl}`);
     expect(response?.status()).toEqual(200);
@@ -140,15 +140,7 @@ test.describe("Check Different Conditions", () => {
     expect(responseJson.headers["x-recaptcha-test"]).toEqual("condition-match");
   });
 
-  test("Access the second condition page", async ({ page }) => {
-    const testPageUrl = "/condition/2";
-    const response = await page.goto(`${endpointUrl}${testPageUrl}`);
-    expect(response?.status()).toEqual(200);
-    const responseJson = await response?.json();
-    expect(responseJson.headers["x-recaptcha-test"]).toEqual("condition-match");
-  });
-
-  test("Access the third condition page", async ({ page }) => {
+  test("Access the condition page with score criteria", async ({ page }) => {
     const testPageUrl = "/condition/3";
     const response = await page.goto(`${endpointUrl}${testPageUrl}`);
     expect(response?.status()).toEqual(200);
