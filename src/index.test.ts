@@ -115,16 +115,16 @@ test("callCreateAssessment-ok", async () => {
     replacePath(req: EdgeRequest, new_path: string): EdgeRequest {
       return new Request(new_path, req);
     },
-  
+
     addRequestHeader(req: EdgeRequest, key: string, value: string): EdgeRequest {
       let headers = new Headers(req.headers);
       headers.append(key, value);
       return new Request(req.url, { ...req, headers });
     },
-  
+
     createResponse(body: string, options?: ResponseInit): EdgeResponse {
       return new Response(body, options);
-    }
+    },
   };
 
   const resp = await callCreateAssessment(
