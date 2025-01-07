@@ -207,6 +207,17 @@ export class AkamaiContext extends RecaptchaContext {
     );
   }
 
+  async fetch_origin(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse> {
+    // Convert RequestInfo to string if it's not already
+    const url = typeof req === "string" ? req : req.url;
+    return httpRequest(url, {
+      //method: options?.method ?? undefined,
+      //headers: headersGuard(options?.headers),
+      //body: bodyGuard(options?.body ?? null),
+      /* there is no timeout in a Fetch API request. Consider making it a member of the Context */
+    });
+  }
+
   // Fetch the firewall lists.
   // TODO: Cache the firewall policies.
   // https://techdocs.akamai.com/api-definitions/docs/caching
