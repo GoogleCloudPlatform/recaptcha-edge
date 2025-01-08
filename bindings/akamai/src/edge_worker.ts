@@ -25,9 +25,11 @@ import { AkamaiContext, processRequest, recaptchaConfigFromRequest } from "./ind
  * to handle the request.
  */
 import { httpRequest } from "http-request";
+import { createResponse } from "create-response";
 export async function responseProvider(inreq: EW.IngressClientRequest) {
   const akamaiContext = new AkamaiContext(recaptchaConfigFromRequest(inreq));
-  return httpRequest(`http://${inreq.host}/${inreq.url}`);
+  let resp = await httpRequest(`http://${inreq.host}/${inreq.url}`);
+  return Promise.resolve(createResponse(200, {}, resp.body));
   // Use the akamaiContext and its methods to handle the request
   return await processRequest(akamaiContext, inreq);
 }
