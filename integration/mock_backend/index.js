@@ -13,7 +13,7 @@ try {
     key: key,
     cert: cert,
   };
-}
+} catch {}
 
 app.engine("handlebars", handlebars.engine({ defaultLayout: false })); // No default layout here
 app.set("view engine", "handlebars");
