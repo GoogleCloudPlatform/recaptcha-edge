@@ -14,6 +14,14 @@ Add site keys to config.js.
 
 Run with `npm run start`
 
+For HTTPS, self-signed certs must be added to a `certs` directory. Run the following command:
+
+`sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout selfsigned.key -out selfsigned.crt`
+
+followed by:
+
+`mkdir certs && mv selfsigned.key selfsigned.crt certs`
+
 ## How to use
 
 This project is intended to fill in as a backend in a WAF workflow. This Backend
