@@ -131,8 +131,7 @@ test("should get challenge token as a cookie", async ({ browser, page }) => {
   await expect(page.getByText("x-recaptcha-test")).toBeVisible({ timeout: 3000 });
 });
 
-
-test("should get session token and then challenge token", async ({ browser, page }) => {
+test("should get session token and then challenge token", async ({ page }) => {
   const endpointUrl = process.env.ENDPOINT as string;
 
   await page.goto(`${endpointUrl}/hello.html`);
@@ -162,6 +161,8 @@ test("should get session token and then challenge token", async ({ browser, page
   const challengeCookieRegex = /recaptcha-.+-e/;
   const challengeTokenCookie = allCookies.find((cookie) => challengeCookieRegex.test(cookie.name));
   const challengeToken = challengeTokenCookie?.value;
+
+  expect(sessionToken).toBeTruthy();
   expect(challengeToken).toBeTruthy();
 
   await page.goto(`${endpointUrl}/condition/1`);
