@@ -130,3 +130,42 @@ test("should get challenge token as a cookie", async ({ browser, page }) => {
   // Match the expected value from the firewall rule.
   await expect(page.getByText("x-recaptcha-test")).toBeVisible({ timeout: 3000 });
 });
+
+
+test("should get session token and then challenge token", async ({ browser, page }) => {
+  const endpointUrl = process.env.ENDPOINT as string;
+
+  await page.goto(`${endpointUrl}/hello.html`);
+
+  await page.waitForTimeout(2000);
+
+  const scriptExists = await page.evaluate(() => {
+    return Array.from(document.querySelectorAll("script")).some((script) =>
+      script.src.includes("www.google.com/recaptcha/enterprise.js"),
+    );
+  });
+  expect(scriptExists).toBe(true);
+  // Get cookies (session token).
+  const cookies = await page.context().cookies([endpointUrl]);
+  const sessionCookieRegex = /recaptcha-.+-t/;
+  const sessionToken = cookies.find((cookie) => sessionCookieRegex.test(cookie.name))?.value;
+
+  // Navigate to the page that issues the challenge token.
+  await page.goto(`${endpointUrl}/action/redirect`);
+  // Nocaptcha setting allows us to always pass the challenge.
+  await page.waitForTimeout(5000);
+
+  // Get cookies again.
+  const allCookies = await page.context().cookies([endpointUrl]);
+
+  // 5. Extract the challenge token from the cookies.
+  const challengeCookieRegex = /recaptcha-.+-e/;
+  const challengeTokenCookie = allCookies.find((cookie) => challengeCookieRegex.test(cookie.name));
+  const challengeToken = challengeTokenCookie?.value;
+  expect(challengeToken).toBeTruthy();
+
+  await page.goto(`${endpointUrl}/condition/1`);
+  await expect(page).toHaveURL(`${endpointUrl}/condition/1`);
+  // Match the expected value from the firewall rule.
+  await expect(page.getByText("x-recaptcha-test")).toBeVisible({ timeout: 3000 });
+});
