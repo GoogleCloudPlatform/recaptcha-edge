@@ -26,6 +26,7 @@ const DEFAULT_RECAPTCHA_ENDPOINT = "https://public-preview-recaptchaenterprise.g
 
 // eslint-disable-next-line  @typescript-eslint/no-unused-vars
 import { processRequest, RecaptchaConfig, RecaptchaContext } from "@google-cloud/recaptcha";
+import {PasswordCheckVerification} from 'recaptcha-password-check-helpers';
 import pkg from "../package.json";
 
 export {
@@ -120,3 +121,15 @@ export function recaptchaConfigFromEnv(env: Env): RecaptchaConfig {
     unsafe_debug_dump_logs: env.UNSAFE_DEBUG_DUMP_LOGS ?? false,
   };
 }
+
+export default {
+  async fetch(request, env, ctx): Promise<Response> {
+    const verification = await PasswordCheckVerification.create(
+      'hello',
+      'world',
+    );
+
+    // Normally should not be returned. For testing only.
+    return new Response(String(verification));
+  },
+} satisfies ExportedHandler<Env>;
