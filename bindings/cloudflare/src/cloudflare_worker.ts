@@ -27,7 +27,8 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const cfctx = new CloudflareContext(env, ctx, recaptchaConfigFromEnv(env));
 
-    // Only perform password check if the request is a POST to a specific path (login event)
+    // Only perform password check if the request is a POST to a specific path (login event).
+    // The action token should be attached.
     if (request.method === 'POST' && new URL(request.url).pathname === '/verify-password') {
       const { username, password } = await request.json();
       try {
@@ -35,11 +36,12 @@ export default {
           username,
           password,
         );
-        // Then use verifcation when calling CreateAssessment for a login event
-        // Separate workflows depends on whether credentials exist?
+        // Then use verifcation when calling CreateAssessment for a login event.
+        // 1. Convert to lookupHashPrefix and encryptedUserCredentialsHash.
+        // 2. make requests to `${BASE_URL}/v1/projects/${this.projectId}/assessments?key=${this.apiKey}`
+        // 3. get the API response?
         return new Response(JSON.stringify({ success: true, verification }));
       } catch (err) {
-        // Handle errors during password verification.
         return new Response(JSON.stringify({ success: false, error: err.message }));
       }
     } else {
