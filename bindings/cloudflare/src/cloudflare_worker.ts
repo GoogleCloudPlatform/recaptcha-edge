@@ -40,6 +40,10 @@ export default {
         // 1. Convert to lookupHashPrefix and encryptedUserCredentialsHash.
         // 2. make requests to `${BASE_URL}/v1/projects/${this.projectId}/assessments?key=${this.apiKey}`
         // 3. get the API response?
+        const lookupHashPrefix = 
+              Buffer.from(verification.getLookupHashPrefix()).toString('base64');
+        const encryptedUserCredentialsHash = 
+              Buffer.from(verification.getEncryptedUserCredentialsHash()).toString('base64');
         return new Response(JSON.stringify({ success: true, verification }));
       } catch (err) {
         return new Response(JSON.stringify({ success: false, error: err.message }));
