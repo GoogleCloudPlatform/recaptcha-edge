@@ -21,10 +21,30 @@
 type Env = any;
 
 import { CloudflareContext, processRequest, recaptchaConfigFromEnv } from "./index";
+import { PasswordCheckVerification } from 'recaptcha-password-check-helpers';
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const cfctx = new CloudflareContext(env, ctx, recaptchaConfigFromEnv(env));
-    return processRequest(cfctx, request);
+
+    // Only perform password check if the request is a POST to a specific path (login event)
+    if (request.method === 'POST' && new URL(request.url).pathname === '/verify-password') {
+      const { username, password } = await request.json();
+      try {
+        const verification = await PasswordCheckVerification.create(
+          username,
+          password,
+        );
+        // Then use verifcation when calling CreateAssessment for a login event
+        // Separate workflows depends on whether credentials exist?
+        return new Response(JSON.stringify({ success: true, verification }));
+      } catch (err) {
+        // Handle errors during password verification.
+        return new Response(JSON.stringify({ success: false, error: err.message }));
+      }
+    } else {
+      // For other requests, process them normally without password verification.
+      return processRequest(cfctx, request);
+    }
   },
 } satisfies ExportedHandler;
