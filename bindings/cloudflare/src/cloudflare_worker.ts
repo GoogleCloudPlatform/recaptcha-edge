@@ -21,7 +21,8 @@
 type Env = any;
 
 import { CloudflareContext, processRequest, recaptchaConfigFromEnv } from "./index";
-import { PasswordCheckVerification } from 'recaptcha-password-check-helpers';
+import { PldHelper } from "./password_check_helpers";
+import { PasswordCheckVerification } from "recaptcha-password-check-helpers";
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -29,22 +30,19 @@ export default {
 
     // Only perform password check if the request is a POST to a specific path (login event).
     // The action token should be attached.
-    if (request.method === 'POST' && new URL(request.url).pathname === '/verify-password') {
-      const { username, password } = await request.json();
+    if (request.method === "POST" && new URL(request.url).pathname === "/verify-password") {
+      // (TODO) Desi how to get the required parameters.
+      const { username, password, projectId, apiKey } = await request.json();
+      const pldHelper = new PldHelper(username, password, projectId, apiKey);
       try {
-        const verification = await PasswordCheckVerification.create(
-          username,
-          password,
-        );
-        // Then use verifcation when calling CreateAssessment for a login event.
-        // 1. Convert to lookupHashPrefix and encryptedUserCredentialsHash.
-        // 2. make requests to `${BASE_URL}/v1/projects/${this.projectId}/assessments?key=${this.apiKey}`
-        // 3. get the API response?
-        const lookupHashPrefix = 
-              Buffer.from(verification.getLookupHashPrefix()).toString('base64');
-        const encryptedUserCredentialsHash = 
-              Buffer.from(verification.getEncryptedUserCredentialsHash()).toString('base64');
-        return new Response(JSON.stringify({ success: true, verification }));
+        const isLeaked = await pldHelper.checkCredentials();
+        if (isLeaked) {
+          console.log("Password found in a data breach.");
+        } else {
+          console.log("Password not found in any known breaches.");
+        }
+
+        return new Response(JSON.stringify({ success: true }));
       } catch (err) {
         return new Response(JSON.stringify({ success: false, error: err.message }));
       }
