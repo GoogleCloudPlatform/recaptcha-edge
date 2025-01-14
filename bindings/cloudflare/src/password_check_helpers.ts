@@ -18,9 +18,9 @@
  * @fileoverview pre-written password check helpers.
  */
 
-import {PasswordCheckVerification} from 'recaptcha-password-check-helpers';
+import { PasswordCheckVerification } from "recaptcha-password-check-helpers";
 
-const BASE_URL = 'https://recaptchaenterprise.googleapis.com';
+const BASE_URL = "https://recaptchaenterprise.googleapis.com";
 
 interface ApiResponse {
   privatePasswordLeakVerification: PrivatePasswordLeakVerification;
@@ -33,54 +33,48 @@ interface PrivatePasswordLeakVerification {
 
 export class PldHelper {
   constructor(
-      private readonly username: string, private readonly password: string,
-      private readonly projectId: string, private readonly apiKey: string) {
-    if (apiKey === '') {
-      throw new Error('`api_key` must be provided for local runs');
+    private readonly username: string,
+    private readonly password: string,
+    private readonly projectId: string,
+    private readonly apiKey: string,
+  ) {
+    if (apiKey === "") {
+      throw new Error("`api_key` must be provided for local runs");
     }
   }
 
   // Optional
   run() {
     this.checkCredentials()
-        .then((leakFound) => {
-          console.log(`Leak found: ${leakFound}`);
-        })
-        .catch((e) => {
-          console.log('Something went wrong', e);
-        });
+      .then((leakFound) => {
+        console.log(`Leak found: ${leakFound}`);
+      })
+      .catch((e) => {
+        console.log("Something went wrong", e);
+      });
   }
 
   async checkCredentials(): Promise<boolean> {
-    const verification =
-        await PasswordCheckVerification.create(this.username, this.password);
+    const verification = await PasswordCheckVerification.create(this.username, this.password);
     const res = await this.createAssessment(verification);
 
-    const encryptedLeakMatchPrefixes =
-        res.encryptedLeakMatchPrefixes.map((prefix) => {
-          return Buffer.from(prefix, 'base64');
-        });
-    const reencryptedUserCredentialsHash =
-        Buffer.from(res.reencryptedUserCredentialsHash, 'base64');
+    const encryptedLeakMatchPrefixes = res.encryptedLeakMatchPrefixes.map((prefix) => {
+      return Buffer.from(prefix, "base64");
+    });
+    const reencryptedUserCredentialsHash = Buffer.from(res.reencryptedUserCredentialsHash, "base64");
 
-    return verification
-        .verify(reencryptedUserCredentialsHash, encryptedLeakMatchPrefixes)
-        .areCredentialsLeaked();
+    return verification.verify(reencryptedUserCredentialsHash, encryptedLeakMatchPrefixes).areCredentialsLeaked();
   }
 
-  async createAssessment(verification: PasswordCheckVerification):
-      Promise<PrivatePasswordLeakVerification> {
+  async createAssessment(verification: PasswordCheckVerification): Promise<PrivatePasswordLeakVerification> {
     const body = JSON.stringify({
       event: {
-        expectedAction: 'login',
+        expectedAction: "login",
       },
       privatePasswordLeakVerification: {
-        lookupHashPrefix:
-            Buffer.from(verification.getLookupHashPrefix()).toString('base64'),
-        encryptedUserCredentialsHash:
-            Buffer.from(verification.getEncryptedUserCredentialsHash())
-                .toString('base64'),
-      }
+        lookupHashPrefix: Buffer.from(verification.getLookupHashPrefix()).toString("base64"),
+        encryptedUserCredentialsHash: Buffer.from(verification.getEncryptedUserCredentialsHash()).toString("base64"),
+      },
     });
 
     const res = await this.makeRequest(body);
@@ -93,24 +87,24 @@ export class PldHelper {
     const url = `${BASE_URL}/v1/projects/${this.projectId}/assessments?key=${this.apiKey}`;
 
     return new Promise((resolve, reject) => {
-      const options = {method: 'POST', headers};
+      const options = { method: "POST", headers };
 
       const req = request(url, options, (res) => {
-        res.setEncoding('utf8');
-        let data = '';
-        res.on('data', (chunk) => {
+        res.setEncoding("utf8");
+        let data = "";
+        res.on("data", (chunk) => {
           data += chunk;
         });
-        res.on('end', () => {
+        res.on("end", () => {
           if (res.statusCode !== 200) {
-            throw new Error('Request failed: ' + data);
+            throw new Error("Request failed: " + data);
           }
           resolve(JSON.parse(data) as ApiResponse);
         });
       });
 
-      req.on('error', (e) => {
-        console.log('Something went wrong', e);
+      req.on("error", (e) => {
+        console.log("Something went wrong", e);
         reject(e);
       });
 
@@ -121,8 +115,8 @@ export class PldHelper {
   }
 
   async buildHeaders() {
-    const headers: {[key: string]: string} = {
-      'Content-type': 'application/json; charset=utf-8',
+    const headers: { [key: string]: string } = {
+      "Content-type": "application/json; charset=utf-8",
     };
 
     return headers;
