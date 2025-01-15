@@ -31,12 +31,19 @@ import picomatch from "picomatch";
 export function createPartialEventWithSiteInfo(context: RecaptchaContext, req: Request): Event {
   const event: Event = {};
   const actionToken = req.headers.get("X-Recaptcha-Token");
+  const clone_req = req.clone();
   if (context.config.actionSiteKey && actionToken) {
+    // WAF action token in the header.
     event.token = actionToken;
     event.siteKey = context.config.actionSiteKey;
     event.wafTokenAssessment = true;
     context.debug_trace.site_key_used = "action";
     context.log("debug", "siteKind: action");
+  } else if (context.config.actionSiteKey && req.method === "POST" && clone_req.body) {
+    // New condition: Check for POST request and regularToken in body
+    event.siteKey = context.config.actionSiteKey;
+    context.debug_trace.site_key_used = "action";
+    context.log("debug", "siteKind: action-regular");
   } else {
     const cookieMap = new Map<string, string>();
     let challengeToken: string | undefined;
@@ -114,8 +121,7 @@ export async function callCreateAssessment(
   environment?: [string, string],
   additionalParams?: Event,
 ): Promise<Assessment> {
-  // TODO: this should use a builder pattern. with a CreateAssessmentRequest
-  // type.
+  // TODO: this should use a builder pattern. with a CreateAssessmentRequest type.
   const site_info = createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(context.buildEvent(req));
   const event = {
