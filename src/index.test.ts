@@ -944,12 +944,12 @@ test("processRequest-raise", async () => {
   expect(fetch).toHaveBeenCalledTimes(3);
 });
 
-test("createPartialEventWithSiteInfo-actionToken", () => {
+test("createPartialEventWithSiteInfo-actionToken", async () => {
   const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/teste2e", {
     headers: { "X-Recaptcha-Token": "action-token" },
   });
-  const site_info = createPartialEventWithSiteInfo(context, req);
+  const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(context.buildEvent(req));
   const event = {
     ...site_info,
@@ -965,7 +965,7 @@ test("createPartialEventWithSiteInfo-actionToken", () => {
   expect(context.debug_trace.site_key_used).toEqual("action");
 });
 
-test("createPartialEventWithSiteInfo-regularActionToken", () => {
+test("createPartialEventWithSiteInfo-regularActionToken", async () => {
   const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/teste2e", {
     body: JSON.stringify({
@@ -976,7 +976,7 @@ test("createPartialEventWithSiteInfo-regularActionToken", () => {
     },
     method: "POST",
   });
-  const site_info = createPartialEventWithSiteInfo(context, req);
+  const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(context.buildEvent(req));
   const event = {
     ...site_info,
@@ -992,12 +992,12 @@ test("createPartialEventWithSiteInfo-regularActionToken", () => {
   expect(context.debug_trace.site_key_used).toEqual("action");
 });
 
-test("createPartialEventWithSiteInfo-sessionToken", () => {
+test("createPartialEventWithSiteInfo-sessionToken", async () => {
   const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/test", {
     headers: { cookie: "recaptcha-test-t=session-token" },
   });
-  const site_info = createPartialEventWithSiteInfo(context, req);
+  const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(context.buildEvent(req));
   const event = {
     ...site_info,
@@ -1013,13 +1013,13 @@ test("createPartialEventWithSiteInfo-sessionToken", () => {
   expect(context.debug_trace.site_key_used).toEqual("session");
 });
 
-test("createPartialEventWithSiteInfo-strictSessionToken", () => {
+test("createPartialEventWithSiteInfo-strictSessionToken", async () => {
   const context = new TestContext(testConfig);
   context.config.strict_cookie = true;
   const req = new Request("https://www.example.com/test", {
     headers: { cookie: "recaptcha-example-t=session-token" },
   });
-  const site_info = createPartialEventWithSiteInfo(context, req);
+  const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(context.buildEvent(req));
   const event = {
     ...site_info,
@@ -1034,13 +1034,13 @@ test("createPartialEventWithSiteInfo-strictSessionToken", () => {
   expect(context.debug_trace.site_key_used).toEqual("express");
 });
 
-test("createPartialEventWithSiteInfo-nonStrictSessionToken", () => {
+test("createPartialEventWithSiteInfo-nonStrictSessionToken", async () => {
   const context = new TestContext(testConfig);
   context.config.strict_cookie = false;
   const req = new Request("https://www.example.com/test", {
     headers: { cookie: "recaptcha-example-t=session-token" },
   });
-  const site_info = createPartialEventWithSiteInfo(context, req);
+  const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(context.buildEvent(req));
   const event = {
     ...site_info,
@@ -1056,12 +1056,12 @@ test("createPartialEventWithSiteInfo-nonStrictSessionToken", () => {
   expect(context.debug_trace.site_key_used).toEqual("session");
 });
 
-test("createPartialEventWithSiteInfo-challengeToken", () => {
+test("createPartialEventWithSiteInfo-challengeToken", async () => {
   const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/test", {
     headers: { cookie: "recaptcha-test-e=challenge-token" },
   });
-  const site_info = createPartialEventWithSiteInfo(context, req);
+  const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(context.buildEvent(req));
   const event = {
     ...site_info,
@@ -1077,13 +1077,13 @@ test("createPartialEventWithSiteInfo-challengeToken", () => {
   expect(context.debug_trace.site_key_used).toEqual("challenge");
 });
 
-test("createPartialEventWithSiteInfo-nonStrictChallengeToken", () => {
+test("createPartialEventWithSiteInfo-nonStrictChallengeToken", async () => {
   const context = new TestContext(testConfig);
   context.config.strict_cookie = false;
   const req = new Request("https://www.example.com/test", {
     headers: { cookie: "recaptcha-example-e=challenge-token" },
   });
-  const site_info = createPartialEventWithSiteInfo(context, req);
+  const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(context.buildEvent(req));
   const event = {
     ...site_info,
@@ -1099,10 +1099,10 @@ test("createPartialEventWithSiteInfo-nonStrictChallengeToken", () => {
   expect(context.debug_trace.site_key_used).toEqual("challenge");
 });
 
-test("createPartialEventWithSiteInfo-express", () => {
+test("createPartialEventWithSiteInfo-express", async () => {
   const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/test", {});
-  const site_info = createPartialEventWithSiteInfo(context, req);
+  const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(context.buildEvent(req));
   const event = {
     ...site_info,

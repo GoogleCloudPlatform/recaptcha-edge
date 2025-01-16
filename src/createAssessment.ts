@@ -32,7 +32,7 @@ import { extractBoundary, parse } from "parse-multipart-form-data";
 async function getTokenFromBody(request: Request): Promise<string | null> {
   const contentType = request.headers.get("content-type");
   // The name of a regular token is `g-recaptcha-response` in POST parameteres (viewed in Playload).
-  if (contentType && contentType.includes("application/json")) {
+  if (contentType && contentType.includes("application/json;charset=UTF-8")) {
     try {
       // Clone to avoid consuming the original body.
       const body = await request.clone().json();
@@ -141,21 +141,23 @@ export async function createPartialEventWithSiteInfo(context: RecaptchaContext, 
       event.wafTokenAssessment = true;
       context.debug_trace.site_key_used = "session";
       context.log("debug", "siteKind: session");
-    } else if (context.config.expressSiteKey) {
-      event.siteKey = context.config.expressSiteKey;
-      event.express = true;
-      context.debug_trace.site_key_used = "express";
-      context.log("debug", "siteKind: express");
     } else if (context.config.actionSiteKey && req.method === "POST") {
       const recaptchaToken = await getTokenFromBody(req);
       if (recaptchaToken) {
         event.token = recaptchaToken;
         event.siteKey = context.config.actionSiteKey;
         event.wafTokenAssessment = true;
+        context.debug_trace.site_key_used = "action";
+        context.log("debug", "siteKind: action-regular");
       } else {
         // (TODO): Handle the case where the token is not found or malformed.
         context.log("error", "g-recaptcha-response not found in the request body.");
       }
+    } else if (context.config.expressSiteKey) {
+      event.siteKey = context.config.expressSiteKey;
+      event.express = true;
+      context.debug_trace.site_key_used = "express";
+      context.log("debug", "siteKind: express");
     } else {
       context.debug_trace.site_key_used = "none";
       throw new error.RecaptchaError(
