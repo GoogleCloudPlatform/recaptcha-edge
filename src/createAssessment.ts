@@ -31,10 +31,10 @@ import { extractBoundary, parse } from "parse-multipart-form-data";
  */
 async function getTokenFromBody(request: Request): Promise<string | null> {
   const contentType = request.headers.get("content-type");
-
+  // The name of a regular token is `g-recaptcha-response` in POST parameteres (viewed in Playload).
   if (contentType && contentType.includes("application/json")) {
     try {
-      // Clone to avoid consuming the original body
+      // Clone to avoid consuming the original body.
       const body = await request.clone().json();
       return body["g-recaptcha-response"] || null;
     } catch (error) {
@@ -58,7 +58,7 @@ async function getTokenFromBody(request: Request): Promise<string | null> {
       const parts = parse(body, boundary);
 
       for (const part of parts) {
-        // Check filename directly, or a custom header if you control the upload
+        // Check filename directly, or a custom header if controlling the upload.
         if (part.filename === "g-recaptcha-response" || (part.type && part.type.includes("text/plain") && part.data)) {
           return part.data.toString("utf-8");
         }
@@ -81,8 +81,7 @@ async function getTokenFromBody(request: Request): Promise<string | null> {
 export async function createPartialEventWithSiteInfo(context: RecaptchaContext, req: Request): Promise<Event> {
   const event: Event = {};
   const actionToken = req.headers.get("X-Recaptcha-Token");
-  // The name of a regular token is `g-recaptcha-response` in POST parameteres (viewed in Playload).
-  const clonedRequest = req.clone();
+
   if (context.config.actionSiteKey && actionToken) {
     // WAF action token in the header.
     event.token = actionToken;
@@ -147,10 +146,12 @@ export async function createPartialEventWithSiteInfo(context: RecaptchaContext, 
       event.express = true;
       context.debug_trace.site_key_used = "express";
       context.log("debug", "siteKind: express");
-    } else if (context.config.actionSiteKey && req.method === "POST" && clonedRequest.body) {
+    } else if (context.config.actionSiteKey && req.method === "POST") {
       const recaptchaToken = await getTokenFromBody(req);
       if (recaptchaToken) {
         event.token = recaptchaToken;
+        event.siteKey = context.config.actionSiteKey;
+        event.wafTokenAssessment = true;
       } else {
         // (TODO): Handle the case where the token is not found or malformed.
         context.log("error", "g-recaptcha-response not found in the request body.");
@@ -176,7 +177,7 @@ export async function callCreateAssessment(
   additionalParams?: Event,
 ): Promise<Assessment> {
   // TODO: this should use a builder pattern. with a CreateAssessmentRequest type.
-  const site_info = createPartialEventWithSiteInfo(context, req);
+  const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(context.buildEvent(req));
   const event = {
     ...site_info,

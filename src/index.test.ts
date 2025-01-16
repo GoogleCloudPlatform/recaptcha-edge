@@ -969,8 +969,6 @@ test("createPartialEventWithSiteInfo-regularActionToken", () => {
   const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/teste2e", {
     body: JSON.stringify({
-      username: "testuser",
-      password: "securepassword",
       "g-recaptcha-response": "regular-action-token",
     }),
     headers: {
