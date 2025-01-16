@@ -23,15 +23,17 @@ import { Assessment, AssessmentSchema, Event, EventSchema, RpcErrorSchema } from
 import * as error from "./error";
 import { RecaptchaContext } from "./index";
 import picomatch from "picomatch";
+import { extractBoundary, parse } from "parse-multipart-form-data";
 
 /**
  * Adds reCAPTCHA specific values to an Event strucutre.
  * This includes, the siteKey, the token, cookies, and flags like express.
  */
-export function createPartialEventWithSiteInfo(context: RecaptchaContext, req: Request): Event {
+export async function createPartialEventWithSiteInfo(context: RecaptchaContext, req: Request): Promise<Event> {
   const event: Event = {};
   const actionToken = req.headers.get("X-Recaptcha-Token");
-  const clone_req = req.clone();
+  // The name of a regular token is `g-recaptcha-response` in POST parameteres (viewed in Playload).
+  const clonedRequest = req.clone();
   if (context.config.actionSiteKey && actionToken) {
     // WAF action token in the header.
     event.token = actionToken;
@@ -39,11 +41,6 @@ export function createPartialEventWithSiteInfo(context: RecaptchaContext, req: R
     event.wafTokenAssessment = true;
     context.debug_trace.site_key_used = "action";
     context.log("debug", "siteKind: action");
-  } else if (context.config.actionSiteKey && req.method === "POST" && clone_req.body) {
-    // New condition: Check for POST request and regularToken in body
-    event.siteKey = context.config.actionSiteKey;
-    context.debug_trace.site_key_used = "action";
-    context.log("debug", "siteKind: action-regular");
   } else {
     const cookieMap = new Map<string, string>();
     let challengeToken: string | undefined;
@@ -101,6 +98,40 @@ export function createPartialEventWithSiteInfo(context: RecaptchaContext, req: R
       event.express = true;
       context.debug_trace.site_key_used = "express";
       context.log("debug", "siteKind: express");
+    } else if (context.config.actionSiteKey && req.method === "POST" && clonedRequest.body) {
+      try {
+        const contentType = req.headers.get("content-type");
+        let recaptchaToken: string | undefined;
+
+        if (contentType && contentType.includes("application/json")) {
+          const body = await clonedRequest.json();
+          recaptchaToken = body["g-recaptcha-response"];
+          // } else if (contentType && contentType.includes("multipart/form-data")) {
+          //   const body = await clonedRequest.blob();
+          //   const boundary = extractBoundary(contentType);
+          //   const parts = parse(Buffer.from(req.body, "base64"), boundary);
+          //   for (const part of parts) {
+          //     if (part.name === "g-recaptcha-response") {
+          //       recaptchaToken = await part.data.text();
+          //     }
+          //   }
+        } else {
+          context.log("error", "Unsupported Content-Type or no Content-Type header found.");
+        }
+
+        if (recaptchaToken) {
+          event.token = recaptchaToken;
+          event.siteKey = context.config.actionSiteKey;
+          context.debug_trace.site_key_used = "action";
+          context.log("debug", "siteKind: action-g-recaptcha-response");
+        } else {
+          context.log("error", "g-recaptcha-response not found in the request body.");
+          // Handle the case where the token is not found (e.g., throw an error or set a default)
+        }
+      } catch (err: any) {
+        context.log("error", "Error processing request body: " + err.message);
+        // Handle errors during body parsing
+      }
     } else {
       context.debug_trace.site_key_used = "none";
       throw new error.RecaptchaError(

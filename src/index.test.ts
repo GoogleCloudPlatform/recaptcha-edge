@@ -965,6 +965,36 @@ test("createPartialEventWithSiteInfo-actionToken", () => {
   expect(context.debug_trace.site_key_used).toEqual("action");
 });
 
+test("createPartialEventWithSiteInfo-regularActionToken", () => {
+  const context = new TestContext(testConfig);
+  const req = new Request("https://www.example.com/teste2e", {
+    body: JSON.stringify({
+      username: "testuser",
+      password: "securepassword",
+      "g-recaptcha-response": "regularToken",
+      otherfield: "somevalue",
+    }),
+    headers: {
+      "content-type": "application/json;charset=UTF-8",
+    },
+    method: "POST",
+  });
+  const site_info = createPartialEventWithSiteInfo(context, req);
+  const site_features = EventSchema.parse(context.buildEvent(req));
+  const event = {
+    ...site_info,
+    ...site_features,
+  };
+  expect(event).toEqual({
+    token: "action-token",
+    siteKey: "action-site-key",
+    userAgent: "test-user-agent",
+    wafTokenAssessment: true,
+    userIpAddress: "1.2.3.4",
+  });
+  expect(context.debug_trace.site_key_used).toEqual("action");
+});
+
 test("createPartialEventWithSiteInfo-sessionToken", () => {
   const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/test", {
