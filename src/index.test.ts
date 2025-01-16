@@ -965,7 +965,7 @@ test("createPartialEventWithSiteInfo-actionToken", async () => {
   expect(context.debug_trace.site_key_used).toEqual("action");
 });
 
-test("createPartialEventWithSiteInfo-regularActionToken", async () => {
+test("createPartialEventWithSiteInfo-regularActionToken-json", async () => {
   const context = new TestContext(testConfig);
   const req = new Request("https://www.example.com/teste2e", {
     body: JSON.stringify({
@@ -984,6 +984,70 @@ test("createPartialEventWithSiteInfo-regularActionToken", async () => {
   };
   expect(event).toEqual({
     token: "regular-action-token",
+    siteKey: "action-site-key",
+    userAgent: "test-user-agent",
+    wafTokenAssessment: true,
+    userIpAddress: "1.2.3.4",
+  });
+  expect(context.debug_trace.site_key_used).toEqual("action");
+});
+
+test("createPartialEventWithSiteInfo-regularActionToken-form-urlencoded", async () => {
+  const context = new TestContext(testConfig);
+  const formData = new URLSearchParams();
+  formData.append("g-recaptcha-response", "regular-action-token-urlencoded");
+  const req = new Request("https://www.example.com/teste2e", {
+    body: formData.toString(),
+    headers: {
+      "content-type": "application/x-www-form-urlencoded",
+    },
+    method: "POST",
+  });
+
+  const site_info = await createPartialEventWithSiteInfo(context, req);
+  const site_features = EventSchema.parse(await context.buildEvent(req));
+  const event = {
+    ...site_info,
+    ...site_features,
+  };
+  expect(event).toEqual({
+    token: "regular-action-token-urlencoded",
+    siteKey: "action-site-key",
+    userAgent: "test-user-agent",
+    wafTokenAssessment: true,
+    userIpAddress: "1.2.3.4",
+  });
+  expect(context.debug_trace.site_key_used).toEqual("action");
+});
+
+test("createPartialEventWithSiteInfo-regularActionToken-multipart-form-data", async () => {
+  const context = new TestContext(testConfig);
+  // Create a mock multipart/form-data body.
+  const crlf = "\r\n";
+  const boundary = "----WebKitFormBoundary1234";
+  let body = "";
+  body += `--${boundary}${crlf}`;
+  body += `Content-Disposition: form-data; name="g-recaptcha-response"${crlf}`;
+  body += `Content-Type: text/plain${crlf}`;
+  body += `${crlf}regular-action-token-multipart`;
+  body += `--${boundary}--${crlf}`;
+
+  const req = new Request("https://www.example.com/teste2e", {
+    body: body,
+    headers: {
+      "content-type": `multipart/form-data; boundary=${boundary}`,
+    },
+    method: "POST",
+  });
+
+  const site_info = await createPartialEventWithSiteInfo(context, req);
+  const site_features = EventSchema.parse(await context.buildEvent(req));
+  const event = {
+    ...site_info,
+    ...site_features,
+  };
+  expect(event).toEqual({
+    token: "regular-action-token-multipart",
     siteKey: "action-site-key",
     userAgent: "test-user-agent",
     wafTokenAssessment: true,
