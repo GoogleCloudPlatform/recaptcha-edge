@@ -971,8 +971,7 @@ test("createPartialEventWithSiteInfo-regularActionToken", () => {
     body: JSON.stringify({
       username: "testuser",
       password: "securepassword",
-      "g-recaptcha-response": "regularToken",
-      otherfield: "somevalue",
+      "g-recaptcha-response": "regular-action-token",
     }),
     headers: {
       "content-type": "application/json;charset=UTF-8",
@@ -986,7 +985,7 @@ test("createPartialEventWithSiteInfo-regularActionToken", () => {
     ...site_features,
   };
   expect(event).toEqual({
-    token: "action-token",
+    token: "regular-action-token",
     siteKey: "action-site-key",
     userAgent: "test-user-agent",
     wafTokenAssessment: true,

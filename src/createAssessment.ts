@@ -26,6 +26,55 @@ import picomatch from "picomatch";
 import { extractBoundary, parse } from "parse-multipart-form-data";
 
 /**
+ * Get reCAPTCHA regular token from POST request body,
+ * which is a ReadableStream
+ */
+async function getTokenFromBody(request: Request): Promise<string | null> {
+  const contentType = request.headers.get("content-type");
+
+  if (contentType && contentType.includes("application/json")) {
+    try {
+      // Clone to avoid consuming the original body
+      const body = await request.clone().json();
+      return body["g-recaptcha-response"] || null;
+    } catch (error) {
+      console.error("Error parsing JSON body:", error);
+      return null;
+    }
+  } else if (contentType && contentType.includes("application/x-www-form-urlencoded")) {
+    try {
+      const bodyText = await request.clone().text();
+      const formData = new URLSearchParams(bodyText);
+      return formData.get("g-recaptcha-response");
+    } catch (error) {
+      console.error("Error parsing form data:", error);
+      return null;
+    }
+  } else if (contentType && contentType.includes("multipart/form-data")) {
+    try {
+      const boundary = extractBoundary(contentType);
+      const bodyText = await request.clone().text();
+      const body = Buffer.from(bodyText);
+      const parts = parse(body, boundary);
+
+      for (const part of parts) {
+        // Check filename directly, or a custom header if you control the upload
+        if (part.filename === "g-recaptcha-response" || (part.type && part.type.includes("text/plain") && part.data)) {
+          return part.data.toString("utf-8");
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error("Error parsing multipart form data:", error);
+      return null;
+    }
+  } else {
+    console.warn("Unsupported Content-Type or no Content-Type header found.");
+    return null;
+  }
+}
+
+/**
  * Adds reCAPTCHA specific values to an Event strucutre.
  * This includes, the siteKey, the token, cookies, and flags like express.
  */
@@ -99,38 +148,12 @@ export async function createPartialEventWithSiteInfo(context: RecaptchaContext, 
       context.debug_trace.site_key_used = "express";
       context.log("debug", "siteKind: express");
     } else if (context.config.actionSiteKey && req.method === "POST" && clonedRequest.body) {
-      try {
-        const contentType = req.headers.get("content-type");
-        let recaptchaToken: string | undefined;
-
-        if (contentType && contentType.includes("application/json")) {
-          const body = await clonedRequest.json();
-          recaptchaToken = body["g-recaptcha-response"];
-          // } else if (contentType && contentType.includes("multipart/form-data")) {
-          //   const body = await clonedRequest.blob();
-          //   const boundary = extractBoundary(contentType);
-          //   const parts = parse(Buffer.from(req.body, "base64"), boundary);
-          //   for (const part of parts) {
-          //     if (part.name === "g-recaptcha-response") {
-          //       recaptchaToken = await part.data.text();
-          //     }
-          //   }
-        } else {
-          context.log("error", "Unsupported Content-Type or no Content-Type header found.");
-        }
-
-        if (recaptchaToken) {
-          event.token = recaptchaToken;
-          event.siteKey = context.config.actionSiteKey;
-          context.debug_trace.site_key_used = "action";
-          context.log("debug", "siteKind: action-g-recaptcha-response");
-        } else {
-          context.log("error", "g-recaptcha-response not found in the request body.");
-          // Handle the case where the token is not found (e.g., throw an error or set a default)
-        }
-      } catch (err: any) {
-        context.log("error", "Error processing request body: " + err.message);
-        // Handle errors during body parsing
+      const recaptchaToken = await getTokenFromBody(req);
+      if (recaptchaToken) {
+        event.token = recaptchaToken;
+      } else {
+        // (TODO): Handle the case where the token is not found or malformed.
+        context.log("error", "g-recaptcha-response not found in the request body.");
       }
     } else {
       context.debug_trace.site_key_used = "none";
