@@ -32,7 +32,7 @@ import { extractBoundary, parse } from "parse-multipart-form-data";
 async function getTokenFromBody(request: Request): Promise<string | null> {
   const contentType = request.headers.get("content-type");
   // The name of a regular token is `g-recaptcha-response` in POST parameteres (viewed in Playload).
-  if (contentType && contentType.includes("application/json;charset=UTF-8")) {
+  if (contentType && contentType.includes("application/json")) {
     try {
       // Clone to avoid consuming the original body.
       const body = await request.clone().json();
