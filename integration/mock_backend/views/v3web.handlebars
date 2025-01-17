@@ -3,37 +3,7 @@
 
 <head>
   <title>V3 Web Usage</title>
-  <script {% if nonce !=None %}nonce="{{ nonce }}" {% endif %}>
-    function showResponse(id, resp) {
-      const el = document.getElementById(id);
-      {% if secret %}
-      while (el.firstChild) {
-        el.removeChild(el.firstChild);
-      }
-      const a = document.createElement('a');
-      a.textContent = resp;
-      a.href = '{{ api_server }}/recaptcha/api/siteverify?secret={{ secret }}&response=' + resp;
-      el.appendChild(a);
-      {% else %}
-      el.textContent = resp;
-      {% endif %}
-    }
-    {% if skew_js_override %}
-    var insertBefore = document.head.insertBefore;
-    document.head.insertBefore = function (newNode, referenceNode) {
-      if (newNode.tagName == 'SCRIPT' && /recaptcha(__\w+)?\.js$/.test(newNode.src)) {
-        newNode.integrity = '';
-        newNode.src = '{{ skew_js_override }}';
-      }
-      insertBefore.call(document.head, newNode, referenceNode);
-    };
-    {% endif %}
-  </script>
-  <style {% if nonce !=None %}nonce="{{ nonce }}" {% endif %}>
-    .response {
-      background-color: #abebc6;
-    }
-  </style>
+  <script src="https://www.google.com/recaptcha/enterprise.js?render={{siteKey}}"></script>
 </head>
 
 <body>
@@ -43,27 +13,23 @@
     <input id="action-input" type="text" placeholder="Action" />
   </div>
   <br>
-  <div id="response-from-promise" class="response"></div>
-  <script src="{{ api_server }}/recaptcha/api.js?render={{ siteKey }}&trustedtypes={{ trustedtypes }}" {% if nonce
-    !=None %}nonce="{{ nonce }}" {% endif %}></script>
-  <script {% if nonce !=None %}nonce="{{ nonce }}" {% endif %}>
+  <script>
     function onSuccess(resp) {
       showResponse('response-from-promise', resp);
     }
     function onError(reason) {
       alert('Response promise rejected: ' + reason);
     }
-    grecaptcha.ready(function () {
+    grecaptcha.enterprise.ready(function () {
       document.querySelector('#execute-button').disabled = false;
-      grecaptcha.execute(
-        '{{ siteKey }}', {}).then(
-          onSuccess, onError);
+      grecaptcha.enterprise.execute(
+        '{{ siteKey }}', {}).then(onSuccess, onError);
       });
     document.querySelector('#execute-button').addEventListener('click', function () {
       var input = document.querySelector('#action-input');
       var action = input.value;
       input.value = '';
-      grecaptcha.execute('{{ siteKey }}', {}).then(onSuccess).catch(onError);
+      grecaptcha.enterprise.execute('{{ siteKey }}', {}).then(onSuccess).catch(onError);
       });
   </script>
 </body>
