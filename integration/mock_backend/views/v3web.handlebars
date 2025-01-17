@@ -9,10 +9,12 @@
 <body>
   <h2>V3 Web Usage</h2>
   <div>
-    <button id="execute-button">execute()</button>
+    <button id="execute-button">Execute</button>
     <input id="action-input" type="text" placeholder="Action" />
   </div>
   <br>
+  <div id="response-from-promise"></div>
+
   <script>
     function showResponse(id, resp) {
       const el = document.getElementById(id);
@@ -25,16 +27,14 @@
       alert('Response promise rejected: ' + reason);
     }
     grecaptcha.enterprise.ready(function () {
-      document.querySelector('#execute-button').disabled = false;
-      grecaptcha.enterprise.execute(
-        '{{ siteKey }}', {}).then(onSuccess, onError);
+      document.querySelector('#execute-button').addEventListener('click', function () {
+        var input = document.querySelector('#action-input');
+        var action = input.value;
+        input.value = '';
+        grecaptcha.enterprise.execute('{{ siteKey }}', { action: action }).then(onSuccess).catch(onError);
       });
-    document.querySelector('#execute-button').addEventListener('click', function () {
-      var input = document.querySelector('#action-input');
-      var action = input.value;
-      input.value = '';
-      grecaptcha.enterprise.execute('{{ siteKey }}', {}).then(onSuccess).catch(onError);
-      });
+    });
+
   </script>
 </body>
 
