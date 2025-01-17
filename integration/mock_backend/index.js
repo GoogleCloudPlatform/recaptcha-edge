@@ -28,6 +28,10 @@ app.get("/token/session", (req, res) => {
   res.render("session", { siteKey: config.sessionSiteKey });
 });
 
+app.get("/token/v3web", (req, res) => {
+  res.render("v3web", { siteKey: config.v3SiteKey });
+});
+
 app.get("*", (req, res) => {
   res.send({
     url: req.url,
