@@ -14,6 +14,10 @@
   </div>
   <br>
   <script>
+    function showResponse(id, resp) {
+      const el = document.getElementById(id);
+      el.textContent = resp;
+    }
     function onSuccess(resp) {
       showResponse('response-from-promise', resp);
     }
