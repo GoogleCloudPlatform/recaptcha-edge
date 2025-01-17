@@ -2,7 +2,18 @@ const express = require("express");
 const handlebars = require("express-handlebars");
 const path = require("path");
 const config = require("./config");
+const https = require("https");
+const fs = require("fs");
 const app = express();
+var https_options = null;
+try {
+  var key = fs.readFileSync(__dirname + "/certs/selfsigned.key");
+  var cert = fs.readFileSync(__dirname + "/certs/selfsigned.crt");
+  https_options = {
+    key: key,
+    cert: cert,
+  };
+} catch {}
 
 app.engine("handlebars", handlebars.engine({ defaultLayout: false })); // No default layout here
 app.set("view engine", "handlebars");
@@ -28,6 +39,13 @@ app.get("*", (req, res) => {
   });
 });
 
-app.listen(config.port, () => {
-  console.log(`mock backend listening on port ${config.port}`);
+app.listen(config.http_port, () => {
+  console.log(`mock backend listening on port ${config.http_port}`);
 });
+
+if (config.https_port > 0 && https_options) {
+  var server = https.createServer(options, app);
+  server.listen(config.https_port, () => {
+    console.log(`mock backend https starting on port " ${config.https_port}`);
+  });
+}
