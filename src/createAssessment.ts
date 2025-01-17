@@ -21,7 +21,7 @@
 import * as action from "./action";
 import { Assessment, AssessmentSchema, Event, EventSchema, RpcErrorSchema } from "./assessment";
 import * as error from "./error";
-import { EdgeRequest, RecaptchaContext } from "./index";
+import { EdgeRequest, EdgeResponse, RecaptchaContext } from "./index";
 import picomatch from "picomatch";
 
 /**
@@ -30,7 +30,7 @@ import picomatch from "picomatch";
  */
 export function createPartialEventWithSiteInfo(context: RecaptchaContext, req: EdgeRequest): Event {
   const event: Event = {};
-  const actionToken = req.headers.get("X-Recaptcha-Token");
+  const actionToken = req.getHeader("X-Recaptcha-Token");
   if (context.config.actionSiteKey && actionToken) {
     event.token = actionToken;
     event.siteKey = context.config.actionSiteKey;
@@ -41,7 +41,7 @@ export function createPartialEventWithSiteInfo(context: RecaptchaContext, req: E
     const cookieMap = new Map<string, string>();
     let challengeToken: string | undefined;
     let sessionToken: string | undefined;
-    for (const cookie of req.headers.get("cookie")?.split(";") ?? []) {
+    for (const cookie of req.getHeader("cookie")?.split(";") ?? []) {
       const [key, value] = cookie.split("=");
       cookieMap.set(key.trim(), value.trim());
 

@@ -18,7 +18,6 @@
  * @fileoverview reCAPTCHA Enterprise TypeScript Library.
  */
 export { InitError, NetworkError, ParseError, RecaptchaError } from "./error";
-
 export {
   AllowAction,
   AllowActionSchema,
@@ -38,6 +37,8 @@ export { Assessment, AssessmentSchema, Event, EventSchema, FirewallPolicy, Firew
 
 export { callCreateAssessment, createPartialEventWithSiteInfo } from "./createAssessment";
 
+export {FetchApiRequest, FetchApiResponse} from "./fetchApi";
+
 export {
   ListFirewallPoliciesResponse,
   ListFirewallPoliciesResponseSchema,
@@ -54,17 +55,24 @@ export {
 } from "./policy";
 
 export interface EdgeRequest {
-  clone(): EdgeRequest;
-  readonly headers: Headers;
   readonly method: string;
-  readonly url: string;
+  url: string;
+  addHeader(key: string, value: string): void;
+  getHeader(key: string): string | null;
+  getHeaders(): Map<string, string>;
 }
 export type EdgeRequestInfo = EdgeRequest | string;
+export type EdgeResponseInit = {
+  readonly status?: number;
+  readonly headers?: Record<string, string>
+}
+
 export interface EdgeResponse {
   text(): Promise<string>;
   json(): Promise<unknown>;
-  readonly headers: Headers;
-  readonly url: string;
+  addHeader(key: string, value: string): void;
+  getHeader(key: string): string | null;
+  getHeaders(): Map<string, string>;
   readonly status: number;
 }
 
@@ -171,23 +179,8 @@ export abstract class RecaptchaContext {
     this.debug_trace = new DebugTrace(this);
   }
 
-  replacePath(req: EdgeRequest, new_path: string): EdgeRequest {
-    return new Request(new_path, req);
-  }
-
-  addRequestHeader(req: EdgeRequest, key: string, value: string): EdgeRequest {
-    let headers = new Headers(req.headers);
-    headers.append(key, value);
-    return new Request(req.url, { ...req, headers });
-  }
-
-  createResponse(body: string, options?: ResponseInit): EdgeResponse {
-    return new Response(body, options);
-  }
-
-  async fetch(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse> {
-    return fetch(req as Request, options);
-  }
+  abstract createResponse(body: string, options?: EdgeResponseInit): EdgeResponse;
+  abstract fetch(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse>;
 
   /**
    * Fetch from the customer's origin.
@@ -221,10 +214,10 @@ export abstract class RecaptchaContext {
   async fetch_challenge_page(path: string, soz_base64: string): Promise<EdgeResponse> {
     return this.fetch(path, {
       method: "POST",
-      headers: new Headers({
+      headers: {
         "content-type": "application/json;charset=UTF-8",
         "X-ReCaptcha-Soz": soz_base64,
-      }),
+      },
     });
   }
 

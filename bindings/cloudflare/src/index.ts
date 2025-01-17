@@ -25,7 +25,17 @@ const RECAPTCHA_JS = "https://www.google.com/recaptcha/enterprise.js";
 const DEFAULT_RECAPTCHA_ENDPOINT = "https://public-preview-recaptchaenterprise.googleapis.com";
 
 // eslint-disable-next-line  @typescript-eslint/no-unused-vars
-import { processRequest, RecaptchaConfig, RecaptchaContext } from "@google-cloud/recaptcha";
+import {
+  processRequest,
+  RecaptchaConfig,
+  RecaptchaContext,
+  EdgeRequest,
+  EdgeResponse,
+  FetchApiRequest,
+  FetchApiResponse,
+  EdgeRequestInfo,
+  EdgeResponseInit,
+} from "@google-cloud/recaptcha";
 import pkg from "../package.json";
 
 export {
@@ -67,35 +77,52 @@ export class CloudflareContext extends RecaptchaContext {
     }
   }
 
-  buildEvent(req: Request): object {
+  buildEvent(req: EdgeRequest): object {
+    let base_req = (req as FetchApiRequest).req;
     return {
       // extracting common signals
-      userIpAddress: req.headers.get("CF-Connecting-IP"),
-      headers: Array.from(req.headers.entries()).map(([k, v]) => `${k}:${v}`),
-      ja3: (req as any)?.["cf"]?.["bot_management"]?.["ja3_hash"] ?? undefined,
+      userIpAddress: req.getHeader("CF-Connecting-IP"),
+      headers: req.getHeaders().forEach(([k, v]) => `${k}:${v}`),
+      ja3: (base_req as any)?.["cf"]?.["bot_management"]?.["ja3_hash"] ?? undefined,
       requestedUri: req.url,
-      userAgent: req.headers.get("user-agent"),
+      userAgent: req.getHeader("user-agent"),
     };
   }
 
-  injectRecaptchaJs(resp: Response): Promise<Response> {
-    const sessionKey = this.config.sessionSiteKey;
+  injectRecaptchaJs(resp: EdgeResponse): Promise<EdgeResponse> {
+    let base = (resp as FetchApiResponse).asResponse();
+    const sessionKey = this.config.sessionSiteKey ?? "";
     const recaptchaJsUrl = new URL(RECAPTCHA_JS);
     recaptchaJsUrl.searchParams.set("render", sessionKey);
     recaptchaJsUrl.searchParams.set("waf", "session");
     const RECAPTCHA_JS_SCRIPT = `<script src="${recaptchaJsUrl.toString()}" async defer></script>`;
     return Promise.resolve(
-      new HTMLRewriter()
-        .on("head", {
-          element(element: any) {
-            element.append(RECAPTCHA_JS_SCRIPT, { html: true });
-          },
-        })
-        .transform(new Response(resp.body, resp)),
+      new FetchApiResponse(
+        new HTMLRewriter()
+          .on("head", {
+            element(element: any) {
+              element.append(RECAPTCHA_JS_SCRIPT, { html: true });
+            },
+          })
+          .transform((resp as FetchApiResponse).asResponse()),
+      ),
     );
   }
 
-  async fetch_list_firewall_policies(req: RequestInfo, options?: RequestInit): Promise<Response> {
+  createResponse(body: string, options?: EdgeResponseInit): EdgeResponse {
+    return new FetchApiResponse(body, options?.status, options?.headers)
+  }
+
+  async fetch(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse> {
+    let base_req = req as string | FetchApiRequest;
+    if (typeof base_req === "string") {
+      return fetch(base_req, options).then((v) => new FetchApiResponse(v));
+    } else {
+      return fetch(base_req.req, options).then((v) => new FetchApiResponse(v));
+    }
+  }
+
+  async fetch_list_firewall_policies(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse> {
     return this.fetch(req, {
       ...options,
       cf: {

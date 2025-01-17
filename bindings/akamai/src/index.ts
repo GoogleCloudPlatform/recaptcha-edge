@@ -15,28 +15,30 @@
  * limitations under the License.
  */
 
-import { RecaptchaConfig, RecaptchaContext, EdgeRequest, EdgeRequestInfo, EdgeResponse } from "@google-cloud/recaptcha";
+import {
+  RecaptchaConfig,
+  RecaptchaContext,
+  EdgeRequest,
+  EdgeRequestInfo,
+  EdgeResponse,
+  LogLevel,
+  EdgeResponseInit,
+} from "@google-cloud/recaptcha";
 import { HtmlRewritingStream } from "html-rewriter";
-import { httpRequest } from "http-request";
-import { createResponse as akamaiCreateResponse } from "create-response";
+import { httpRequest, HttpResponse } from "http-request";
 import { logger } from "log";
 import { ReadableStream } from "streams";
 import pkg from "../package.json";
 
+function isHeaderRecord(obj: unknown): obj is Record<string, string | string[]> {
+  return true;
+}
+
 function headersGuard(
-  headers: Headers | Record<string, string | readonly string[]> | string[][] | undefined,
+  headers: Record<string, string | readonly string[]> | string[][] | object | undefined,
 ): Record<string, string | string[]> {
   if (headers === undefined) {
     return {};
-  }
-
-  // We have Headers
-  if (headers instanceof Headers) {
-    const headerObj: Record<string, string> = {};
-    headers.forEach((value, key) => {
-      headerObj[key] = value;
-    });
-    return headerObj;
   }
 
   // We have string[][]
@@ -50,12 +52,16 @@ function headersGuard(
     return headerMap;
   }
 
-  // We have Record<string, string | readonly string[]>
-  // remove readonly attribute
   const headerMap: Record<string, string | string[]> = {};
-  for (const key in headers) {
-    const value = headers[key];
-    headerMap[key] = value.length === 1 ? value[0] : [...value];
+  if (isHeaderRecord(headers)) {
+    // We have Record<string, string | readonly string[]>
+    // remove readonly attribute
+    for (const key in headers) {
+      const value = headers[key];
+      headerMap[key] = value.length === 1 ? value[0] : [...value];
+    }
+  } else {
+    throw "Invalid header";
   }
 
   return headerMap;
@@ -69,6 +75,19 @@ function bodyGuard(body: any | null): string | ReadableStream | undefined {
     return body as string | ReadableStream;
   }
   throw "Invalid request body";
+}
+
+function relativePath(req: EdgeRequestInfo): string {
+  let s;
+  if (typeof req === "string") {
+    let noprotocol = req.replace(/.*:\/\//, "");
+    let path_index = noprotocol.indexOf("/");
+    if (path_index < 0) {
+      path_index = 0;
+    }
+    return noprotocol.slice(path_index);
+  }
+  return req.url; // the .url property is already relative in Akamai requests.
 }
 
 const RECAPTCHA_JS = "https://www.google.com/recaptcha/enterprise.js";
@@ -103,11 +122,112 @@ export {
   RecaptchaError,
 } from "@google-cloud/recaptcha";
 
-export class AkamaiContext extends RecaptchaContext {
-  // eslint-disable-next-line  @typescript-eslint/no-unused-vars
-  static injectRecaptchaJs(inputResponse: object) {
-    throw new Error("Method not implemented.");
+export class AkamaiRequest implements EdgeRequest {
+  req: EW.ResponseProviderRequest;
+  override_path: string;
+  headers: Map<string, string>;
+
+  constructor(req: EW.ResponseProviderRequest) {
+    this.req = req;
+    this.override_path = `${this.req.host}/${this.req.path}`;
+    this.headers = new Map();
+    let headers = req.getHeaders();
+    for (const [key, value] of Object.entries(headers)) {
+      this.headers.set(key, value.join(","));
+    }
   }
+
+  get url() {
+    return this.override_path ?? `${this.req.host}/${this.req.path}`;
+  }
+
+  set url(url: string) {
+    this.override_path = url;
+  }
+
+  get method() {
+    return this.req.method;
+  }
+
+  addHeader(key: string, value: string): void {
+    this.headers.set(key, value);
+  }
+
+  getHeader(key: string): string | null {
+    return this.headers.get(key) ?? null;
+  }
+
+  getHeaders(): Map<string, string> {
+    return this.headers;
+  }
+}
+
+export class AkamaiResponse implements EdgeResponse {
+  resp?: HttpResponse;
+  _body?: string;
+  _status: number;
+  headers: Map<string, string[]>;
+
+  constructor(base: string | HttpResponse, status?: number, headers?: Record<string, string>) {
+    if (typeof base === "string") {
+      this._body = base;
+      this._status = status ?? 200;
+      this.headers = new Map();
+      for (const [key, value] of Object.entries(headers ?? {})) {
+        if (Array.isArray(value)) {
+          this.headers.set(key, value);
+        } else {
+          this.headers.set(key, [value]);
+        }
+      }
+    } else {
+      // base type is HttpResponse
+      this.resp = base;
+      this._status = status ?? base.status;
+      this.headers = new Map();
+      let rh = base.getHeaders();
+      for (const key in rh) {
+        this.headers.set(key, rh[key]);
+      }
+    }
+  }
+
+  get status(): number {
+    return this._status;
+  }
+
+  get body(): ReadableStream<any> | string {
+    return this.resp?.body ?? this._body ?? "";
+  }
+
+  text(): Promise<string> {
+    return this.resp?.text() ?? Promise.resolve(this._body ?? "");
+  }
+
+  json(): Promise<unknown> {
+    return this.resp?.json() ?? Promise.resolve(JSON.parse(this._body ?? "{}"));
+  }
+
+  addHeader(key: string, value: string): void {
+    let v = this.headers.get(key) ?? [];
+    v.push(value);
+    this.headers.set(key, v);
+  }
+
+  getHeader(key: string): string | null {
+    return this.headers.get(key)?.join(",") ?? null;
+  }
+
+  getHeaders(): Map<string, string> {
+    let ret = new Map();
+    for (const [k, v] of this.headers.entries()) {
+      ret.set(k, v.join(","));
+    }
+    return ret;
+  }
+}
+
+export class AkamaiContext extends RecaptchaContext {
   readonly sessionPageCookie = "recaptcha-akam-t";
   readonly challengePageCookie = "recaptcha-akam-e";
   readonly environment: [string, string] = [pkg.name, pkg.version];
@@ -132,30 +252,64 @@ export class AkamaiContext extends RecaptchaContext {
     }
   }
 
+  /**
+   * Log an exception.
+   *
+   * For Akamai, these messages can be dumped with CURL using enhanced debug headers.
+   * see: https://techdocs.akamai.com/edgeworkers/docs/enable-enhanced-debug-headers
+   */
+  logException(e: any) {
+    super.logException(e);
+    logger.error("Exception: " + JSON.stringify(e, Object.getOwnPropertyNames(e)));
+  }
+
+  /**
+   * Log a message.
+   *
+   * For Akamai, these messages can be dumped with CURL using enhanced debug headers.
+   * see: https://techdocs.akamai.com/edgeworkers/docs/enable-enhanced-debug-headers
+   */
+  log(level: LogLevel, msg: string) {
+    super.log(level, msg);
+    switch (level) {
+      case "debug":
+        logger.debug(msg);
+        break;
+      case "info":
+        logger.info(msg);
+        break;
+      case "warning":
+        logger.warn(msg);
+        break;
+      case "error":
+        logger.error(msg);
+        break;
+    }
+  }
+
   buildEvent(req: EdgeRequest): object {
     return {
       // extracting common signals
-      userIpAddress: req.headers.get("True-Client-IP"),
-      headers: Array.from(req.headers.entries()).map(([k, v]) => `${k}:${v}`),
+      userIpAddress: req.getHeader("True-Client-IP"),
+      headers: Array.from(req.getHeaders()).map(([k, v]) => `${k}:${v}`),
       ja3: (req as any)?.akamai?.bot_management?.ja3_hash ?? undefined,
       requestedUri: req.url,
-      userAgent: req.headers.get("user-agent"),
+      userAgent: req.getHeader("user-agent"),
     };
-  }
-
-  createResponse(body: string, options?: ResponseInit): EdgeResponse {
-    return akamaiCreateResponse(options?.status || 200, options?.headers, body);
   }
 
   async fetch(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse> {
     // Convert RequestInfo to string if it's not already
-    const url = typeof req === "string" ? req : req.url;
-    return httpRequest(url, {
+    return httpRequest(relativePath(req), {
       method: options?.method ?? undefined,
       headers: headersGuard(options?.headers),
       body: bodyGuard(options?.body ?? null),
       /* there is no timeout in a Fetch API request. Consider making it a member of the Context */
-    });
+    }).then((v) => new AkamaiResponse(v));
+  }
+
+  createResponse(body: string, options?: EdgeResponseInit): EdgeResponse {
+    return new AkamaiResponse(body, options?.status, options?.headers);
   }
 
   getSafeResponseHeaders(headers: any) {
@@ -168,54 +322,17 @@ export class AkamaiContext extends RecaptchaContext {
     return headers;
   }
 
-  injectRecaptchaJs(resp: Response): Promise<Response> {
-    const sessionKey = this.config.sessionSiteKey;
-    const RECAPTCHA_JS_SCRIPT = `<script src="${RECAPTCHA_JS}?render=${sessionKey}&waf=session" async defer></script>`;
-
-    const rewriter = new HtmlRewritingStream();
-
-    // Adds a <script> tag to the <head>
-    rewriter.onElement("head", (el) => {
-      el.append(`${RECAPTCHA_JS_SCRIPT}`);
-    });
-
-    let readableBody: ReadableStream<Uint8Array>;
-    if (resp.body) {
-      // Double check why it's NULL
-      const reader = resp.body.getReader();
-      readableBody = new ReadableStream({
-        async pull(controller) {
-          const { done, value } = await reader.read();
-          if (done) {
-            controller.close();
-          } else {
-            controller.enqueue(value);
-          }
-        },
-      });
-    } else {
-      // Create an empty ReadableStream if resp.body is null
-      logger.log("Request body is NULL");
-      readableBody = new ReadableStream();
-    }
-
-    return Promise.resolve(
-      new Response(readableBody.pipeThrough(rewriter) as any, {
-        status: resp.status,
-        headers: this.getSafeResponseHeaders(resp.headers),
-      }),
-    );
+  injectRecaptchaJs(resp: EdgeResponse): Promise<EdgeResponse> {
+    throw new Error("JavaScript Injection is not yet implemented on Akamai.");
   }
 
   async fetch_origin(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse> {
-    // Convert RequestInfo to string if it's not already
-    const url = typeof req === "string" ? req : req.url;
-    return httpRequest(url, {
-      //method: options?.method ?? undefined,
-      //headers: headersGuard(options?.headers),
-      //body: bodyGuard(options?.body ?? null),
+    return httpRequest(relativePath(req), {
+      method: options?.method ?? undefined,
+      headers: headersGuard(options?.headers),
+      body: bodyGuard(options?.body ?? null),
       /* there is no timeout in a Fetch API request. Consider making it a member of the Context */
-    });
+    }).then((v) => new AkamaiResponse(v));
   }
 
   // Fetch the firewall lists.
@@ -223,14 +340,34 @@ export class AkamaiContext extends RecaptchaContext {
   // https://techdocs.akamai.com/api-definitions/docs/caching
   // https://techdocs.akamai.com/property-mgr/docs/caching-2#how-it-works
   async fetch_list_firewall_policies(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse> {
-    return this.fetch(req, {
-      ...options,
+    return this.fetch(relativePath(req), options);
+  }
+
+  /**
+   * Call fetch for CreateAssessment
+   * Parameters and outputs are the same as the 'fetch' function.
+   */
+  async fetch_create_assessment(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse> {
+    return this.fetch(relativePath(req), options);
+  }
+
+  /**
+   * Call fetch for getting the ChallengePage
+   * @param path: the URL to fetch the challenge page from.
+   * @param soz_base64: the base64 encoded soz.
+   */
+  async fetch_challenge_page(path: string, soz_base64: string): Promise<EdgeResponse> {
+    return this.fetch(relativePath(path), {
+      method: "POST",
+      headers: {
+        "content-type": "application/json;charset=UTF-8",
+        "X-ReCaptcha-Soz": soz_base64,
+      },
     });
   }
 }
 
-export function recaptchaConfigFromRequest(request: EW.IngressClientRequest): RecaptchaConfig {
-  logger.log(request.getVariable("PMUSER_RECAPTCHAACTIONSITEKEY") || "");
+export function recaptchaConfigFromRequest(request: EW.ResponseProviderRequest): RecaptchaConfig {
   return {
     projectNumber: parseInt(request.getVariable("PMUSER_GCPPROJECTNUMBER") || "0", 10),
     apiKey: request.getVariable("PMUSER_GCPAPIKEY") || "",

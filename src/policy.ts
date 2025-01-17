@@ -26,6 +26,7 @@ import * as error from "./error";
 import { RecaptchaContext, EdgeRequest, EdgeResponse } from "./index";
 import { callListFirewallPolicies } from "./listFirewallPolicies";
 import { createSoz } from "./proto/soz";
+import URL from 'url-parse';
 
 type LocalAssessment = action.Action[] | "recaptcha-required";
 
@@ -199,12 +200,12 @@ export async function applyActions(
   for (const action of reqNonterminalActions) {
     context.log("debug", "reqNonterminal action: " + action.type);
     if (action.type === "setHeader") {
-      req = context.addRequestHeader(req, action.setHeader.key, action.setHeader.value);
+      req.addHeader(action.setHeader.key, action.setHeader.value);
       continue;
     }
     if (action.type === "substitute") {
       const url = new URL(req.url);
-      req = context.replacePath(req, `${url.origin}${action.substitute.path}`);
+      req.url = `${url.origin}${action.substitute.path}`;
       continue;
     }
     /* v8 ignore next 2 lines */
@@ -240,17 +241,15 @@ export async function applyActions(
  * Process reCAPTCHA request.
  */
 export async function processRequest(context: RecaptchaContext, req: EdgeRequest): Promise<EdgeResponse> {
-  return context.fetch_origin(req);
   let actions: action.Action[] = [];
   try {
-    throw "dodge local policy";
     const localAssessment = await localPolicyAssessment(context, req);
     if (localAssessment === "recaptcha-required") {
       context.log("debug", "no local match, calling reCAPTCHA");
       actions = await evaluatePolicyAssessment(context, req);
     } else {
       context.log("debug", "local assessment succeeded");
-      //actions = await localAssessment;
+      actions = localAssessment;
     }
   } catch (reason) {
     context.logException(reason);
@@ -287,7 +286,6 @@ export async function processRequest(context: RecaptchaContext, req: EdgeRequest
           {
             logs: context.log_messages,
             exceptions: context.exceptions,
-            request_headers: Object.fromEntries(req.headers.entries()),
           },
           null,
           2,
@@ -300,7 +298,7 @@ export async function processRequest(context: RecaptchaContext, req: EdgeRequest
   if (context.config.debug) {
     let resolved_resp = await resp;
     context.debug_trace.exception_count = context.exceptions.length;
-    resolved_resp.headers.append("X-RECAPTCHA-DEBUG", context.debug_trace.formatAsHeaderValue());
+    resolved_resp.addHeader("X-RECAPTCHA-DEBUG", context.debug_trace.formatAsHeaderValue());
     resp = Promise.resolve(resolved_resp);
   }
 

@@ -21,7 +21,7 @@
 import { z } from "zod";
 import { FirewallPolicySchema, RpcErrorSchema } from "./assessment";
 import * as error from "./error";
-import { RecaptchaContext } from "./index";
+import { EdgeResponse, RecaptchaContext } from "./index";
 
 /** Zod Schema for ListFirewallPoliciesResponse */
 export const ListFirewallPoliciesResponseSchema = z.object({
