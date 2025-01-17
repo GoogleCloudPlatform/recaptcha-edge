@@ -47,6 +47,7 @@ const testConfig: RecaptchaConfig = {
   expressSiteKey: "express-site-key",
   sessionSiteKey: "session-site-key",
   challengePageSiteKey: "challenge-page-site-key",
+  v3SiteKey: "v3-site-key",
 };
 
 class TestContext extends RecaptchaContext {
@@ -984,7 +985,7 @@ test("createPartialEventWithSiteInfo-regularActionToken-json", async () => {
   };
   expect(event).toEqual({
     token: "regular-action-token",
-    siteKey: "action-site-key",
+    siteKey: "v3-site-key",
     userAgent: "test-user-agent",
     wafTokenAssessment: true,
     userIpAddress: "1.2.3.4",
@@ -1012,7 +1013,7 @@ test("createPartialEventWithSiteInfo-regularActionToken-form-urlencoded", async 
   };
   expect(event).toEqual({
     token: "regular-action-token-urlencoded",
-    siteKey: "action-site-key",
+    siteKey: "v3-site-key",
     userAgent: "test-user-agent",
     wafTokenAssessment: true,
     userIpAddress: "1.2.3.4",
@@ -1048,7 +1049,7 @@ test("createPartialEventWithSiteInfo-regularActionToken-multipart-form-data", as
   };
   expect(event).toEqual({
     token: "regular-action-token-multipart",
-    siteKey: "action-site-key",
+    siteKey: "v3-site-key",
     userAgent: "test-user-agent",
     wafTokenAssessment: true,
     userIpAddress: "1.2.3.4",

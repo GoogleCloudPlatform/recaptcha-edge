@@ -196,6 +196,7 @@ export function recaptchaConfigFromConfigStore(name: string): RecaptchaConfig {
     expressSiteKey: cfg.get("express_site_key") ?? undefined,
     sessionSiteKey: cfg.get("session_site_key") ?? undefined,
     challengePageSiteKey: cfg.get("challengepage_site_key") ?? undefined,
+    v3SiteKey: cfg.get("v3_site_key") ?? undefined,
     recaptchaEndpoint: cfg.get("recaptcha_endpoint") ?? DEFAULT_RECAPTCHA_ENDPOINT,
     sessionJsInjectPath: cfg.get("session_js_install_path") ?? undefined,
     debug: (cfg.get("debug") ?? "false") == "true",

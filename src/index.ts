@@ -63,6 +63,7 @@ export interface RecaptchaConfig {
   expressSiteKey?: string;
   sessionSiteKey?: string;
   challengePageSiteKey?: string;
+  v3SiteKey?: string;
   sessionJsInjectPath?: string;
   recaptchaEndpoint: string;
   debug?: boolean;

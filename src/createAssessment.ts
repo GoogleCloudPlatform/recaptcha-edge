@@ -141,11 +141,11 @@ export async function createPartialEventWithSiteInfo(context: RecaptchaContext, 
       event.wafTokenAssessment = true;
       context.debug_trace.site_key_used = "session";
       context.log("debug", "siteKind: session");
-    } else if (context.config.actionSiteKey && req.method === "POST") {
+    } else if (context.config.v3SiteKey && req.method === "POST") {
       const recaptchaToken = await getTokenFromBody(req);
       if (recaptchaToken) {
         event.token = recaptchaToken;
-        event.siteKey = context.config.actionSiteKey;
+        event.siteKey = context.config.v3SiteKey;
         event.wafTokenAssessment = true;
         context.debug_trace.site_key_used = "action";
         context.log("debug", "siteKind: action-regular");
