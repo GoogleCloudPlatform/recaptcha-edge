@@ -31,7 +31,7 @@
         var input = document.querySelector('#action-input');
         var action = input.value;
         input.value = '';
-        grecaptcha.enterprise.execute('{{ siteKey }}', { action: action }).then(onSuccess).catch(onError);
+        const token = await grecaptcha.enterprise.execute('{{ siteKey }}', { action: action }).then(onSuccess).catch(onError);
       });
     });
 

@@ -88,6 +88,33 @@ test("should generate an action token after execute() by clicking the button", a
   await expect(page.getByText("x-recaptcha-test")).toBeVisible({ timeout: 3000 });
 });
 
+test("should generate a regular v3 token after execute() by clicking the button", async ({ page }) => {
+  const endpointUrl = process.env.ENDPOINT as string;
+  // Go to the page with the reCAPTCHA.
+  await page.goto(`${endpointUrl}/token/v3web`);
+
+  // Intercept the request triggered by the button click.
+  const responsePromise = page.waitForResponse(
+    (response) =>
+      response.url().includes("/token/v3web") &&
+      response.request().method() === "POST"
+  );
+  await page.click("#execute-button");
+
+  // Wait for the response and extract the token from the header.
+  const response = await responsePromise;
+  const v3Token = response.request().postDataJSON()["g-recaptcha-response"];
+
+  // Assert that the token is not empty.
+  expect(v3Token).toBeTruthy();
+
+  // Call CreateAsessment by visit condition matching pages.
+  await page.goto(`${endpointUrl}/condition/1`);
+  await expect(page).toHaveURL(`${endpointUrl}/condition/1`);
+  // Match the expected value from the firewall rule.
+  await expect(page.getByText("x-recaptcha-test")).toBeVisible({ timeout: 3000 });
+});
+
 test("should get session token after visiting the intended injectJS path", async ({ page }) => {
   const endpointUrl = process.env.ENDPOINT as string;
 
