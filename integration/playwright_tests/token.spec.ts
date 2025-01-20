@@ -95,9 +95,7 @@ test("should generate a regular v3 token after execute() by clicking the button"
 
   // Intercept the request triggered by the button click.
   const responsePromise = page.waitForResponse(
-    (response) =>
-      response.url().includes("/token/v3web") &&
-      response.request().method() === "POST"
+    (response) => response.url().includes("/token/v3web") && response.request().method() === "GET",
   );
   await page.click("#execute-button");
 
