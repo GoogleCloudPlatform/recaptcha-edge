@@ -31,7 +31,7 @@ import { extractBoundary, parse } from "parse-multipart-form-data";
  */
 async function getTokenFromBody(request: Request): Promise<string | null> {
   const contentType = request.headers.get("content-type");
-  // The name of a regular token is `g-recaptcha-response` in POST parameteres (viewed in Playload).
+  // The name of a regular token is `g-recaptcha-response` in POST parameteres (viewed in Request Playload).
   if (contentType && contentType.includes("application/json")) {
     try {
       // Clone to avoid consuming the original body.
@@ -146,7 +146,7 @@ export async function createPartialEventWithSiteInfo(context: RecaptchaContext, 
       if (recaptchaToken) {
         event.token = recaptchaToken;
         event.siteKey = context.config.v3SiteKey;
-        event.wafTokenAssessment = true;
+        event.wafTokenAssessment = false;
         context.debug_trace.site_key_used = "action";
         context.log("debug", "siteKind: action-regular");
       } else {

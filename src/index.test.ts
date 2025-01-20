@@ -987,7 +987,7 @@ test("createPartialEventWithSiteInfo-regularActionToken-json", async () => {
     token: "regular-action-token",
     siteKey: "v3-site-key",
     userAgent: "test-user-agent",
-    wafTokenAssessment: true,
+    wafTokenAssessment: false,
     userIpAddress: "1.2.3.4",
   });
   expect(context.debug_trace.site_key_used).toEqual("action");
@@ -1015,7 +1015,7 @@ test("createPartialEventWithSiteInfo-regularActionToken-form-urlencoded", async 
     token: "regular-action-token-urlencoded",
     siteKey: "v3-site-key",
     userAgent: "test-user-agent",
-    wafTokenAssessment: true,
+    wafTokenAssessment: false,
     userIpAddress: "1.2.3.4",
   });
   expect(context.debug_trace.site_key_used).toEqual("action");
@@ -1051,7 +1051,7 @@ test("createPartialEventWithSiteInfo-regularActionToken-multipart-form-data", as
     token: "regular-action-token-multipart",
     siteKey: "v3-site-key",
     userAgent: "test-user-agent",
-    wafTokenAssessment: true,
+    wafTokenAssessment: false,
     userIpAddress: "1.2.3.4",
   });
   expect(context.debug_trace.site_key_used).toEqual("action");
