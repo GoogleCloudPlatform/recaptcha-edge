@@ -19,6 +19,7 @@ import assert from "node:assert";
 import path from "node:path";
 import url from "node:url";
 import express from "express";
+import { JSDOM } from "jsdom";
 
 import { ComputeApplication } from "@fastly/compute-testing";
 
@@ -130,9 +131,16 @@ describe("Run local Viceroy", function () {
 
   test("js injection", async function () {
     const response = await app.fetch("/inject");
-    //assert.equal(response.ok, true);
-    assert.equal(response.status, 200);
-    assert.equal(await response.text(), "<html>challengepage!</html>");
+
+    const html = await response.text();
+    const dom = new JSDOM(html);
+    const document = dom.window.document;
+
+    // Check if the script tag with the specific src exists
+    const scriptTag = document.querySelector("script");
+
+    assert.ok(scriptTag, "Script tag not found");
+    assert.equal(scriptTag.src, "https://www.google.com/recaptcha/enterprise.js?render=sessionkey&waf=session");
   });
 
   afterAll(async function () {
