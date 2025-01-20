@@ -37,7 +37,11 @@ import {
   DebugTrace,
   EdgeRequest,
   EdgeResponse,
+  EdgeRequestInfo,
+  EdgeResponseInit,
 } from "./index";
+
+import { FetchApiRequest, FetchApiResponse } from "./fetchApi";
 
 import { Action, ActionSchema, createBlockAction } from "./action";
 
@@ -62,6 +66,18 @@ class TestContext extends RecaptchaContext {
     super(config);
   }
 
+  createResponse(body: string, options?: EdgeResponseInit): EdgeResponse {
+    return new FetchApiResponse(body, options?.status, options?.headers)
+  }
+
+  async fetch(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse> {
+    let base_req = req as string | FetchApiRequest;
+    if (typeof base_req === "string") {
+      return fetch(base_req, options).then((v) => new FetchApiResponse(v));
+    } else {
+      return fetch(base_req.req, options).then((v) => new FetchApiResponse(v));
+    }
+  }
   logException = (e: any) => {
     this.exceptions.push(e);
   };
@@ -75,13 +91,14 @@ class TestContext extends RecaptchaContext {
       userAgent: "test-user-agent",
     });
   };
+  /*
   replacePath(req: EdgeRequest, new_path: string): EdgeRequest {
     return new Request(new_path, req);
-  }
+  }*/
   injectRecaptchaJs = async (resp: EdgeResponse) => {
     let html = await resp.text();
     html = html.replace("<HTML>", '<HTML><script src="test.js"/>');
-    return new Response(html, resp);
+    return new FetchApiResponse(new Response(html, resp));
   };
 }
 
@@ -110,30 +127,16 @@ test("callCreateAssessment-ok", async () => {
     buildEvent: (req: Request) => {
       return baseEvent;
     },
-    fetch: (req, options) => fetch(req, options),
     fetch_create_assessment: (req, options) => fetch(req, options),
-    replacePath(req: EdgeRequest, new_path: string): EdgeRequest {
-      return new Request(new_path, req);
-    },
-
-    addRequestHeader(req: EdgeRequest, key: string, value: string): EdgeRequest {
-      let headers = new Headers(req.headers);
-      headers.append(key, value);
-      return new Request(req.url, { ...req, headers });
-    },
-
-    createResponse(body: string, options?: ResponseInit): EdgeResponse {
-      return new Response(body, options);
-    },
   };
 
   const resp = await callCreateAssessment(
     testContext as RecaptchaContext,
-    new Request("https://www.google.com", {
+    new FetchApiRequest(new Request("https://www.google.com", {
       headers: {
         "X-Recaptcha-Token": "test-token",
       },
-    }),
+    })),
     ["test-env", "test-version"],
   );
   expect(fetch).toHaveBeenCalledWith(
