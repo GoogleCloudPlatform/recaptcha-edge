@@ -22,6 +22,10 @@
     }
     function onSuccess(resp) {
       showResponse('response-from-promise', resp);
+      const xhr = new XMLHttpRequest();
+      let url = document.getElementById("action-input").value;
+      xhr.open('GET', url, false);
+      xhr.send(null);
     }
     function onError(reason) {
       alert('Response promise rejected: ' + reason);
@@ -31,7 +35,7 @@
         var input = document.querySelector('#action-input');
         var action = input.value;
         input.value = '';
-        const token = await grecaptcha.enterprise.execute('{{ siteKey }}', { action: action }).then(onSuccess).catch(onError);
+        grecaptcha.enterprise.execute('{{ siteKey }}', { action: action }).then(onSuccess).catch(onError);
       });
     });
 
