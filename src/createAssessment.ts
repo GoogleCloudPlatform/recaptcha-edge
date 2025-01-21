@@ -147,7 +147,7 @@ export async function createPartialEventWithSiteInfo(context: RecaptchaContext, 
         event.token = recaptchaToken;
         event.siteKey = context.config.v3SiteKey;
         event.wafTokenAssessment = false;
-        context.debug_trace.site_key_used = "action";
+        context.debug_trace.site_key_used = "regularV3";
         context.log("debug", "siteKind: action-regular");
       } else {
         // (TODO): Handle the case where the token is not found or malformed.

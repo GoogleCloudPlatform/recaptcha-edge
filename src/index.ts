@@ -78,7 +78,7 @@ export class DebugTrace {
   policy_count?: number;
   policy_match?: boolean;
   inject_js_match?: boolean;
-  site_key_used?: "action" | "session" | "challenge" | "express" | "none";
+  site_key_used?: "action" | "session" | "challenge" | "express" | "none" | "regularV3";
   site_keys_present?: string;
   version?: string;
   empty_config?: string;

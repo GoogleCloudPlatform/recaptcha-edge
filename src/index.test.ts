@@ -990,7 +990,7 @@ test("createPartialEventWithSiteInfo-regularActionToken-json", async () => {
     wafTokenAssessment: false,
     userIpAddress: "1.2.3.4",
   });
-  expect(context.debug_trace.site_key_used).toEqual("action");
+  expect(context.debug_trace.site_key_used).toEqual("regularV3");
 });
 
 test("createPartialEventWithSiteInfo-regularActionToken-form-urlencoded", async () => {
