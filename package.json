@@ -27,7 +27,7 @@
     "test": "vitest",
     "devbuild": "npm install && npm run build",
     "devclean": "rm -rf dist && rm -rf pkg && rm -rf node_modules && rm -rf coverage && rm package-lock.json",
-    "coverage": "vitest run --coverage",
+    "coverage": "vitest run --coverage"
   },
   "dependencies": {
     "ipaddr.js": "^2.2.0",
