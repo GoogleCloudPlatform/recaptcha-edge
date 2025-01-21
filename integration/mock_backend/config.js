@@ -3,4 +3,5 @@ module.exports = {
   https_port: process.env.HTTPS_PORT || 8443,
   sessionSiteKey: "TODO",
   actionSiteKey: "TODO",
+  v3SiteKey: "TODO",
 };
