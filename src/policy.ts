@@ -25,7 +25,7 @@ import { callCreateAssessment } from "./createAssessment";
 import * as error from "./error";
 import { RecaptchaContext } from "./index";
 import { callListFirewallPolicies } from "./listFirewallPolicies";
-import { createSoz } from "./proto/soz";
+import { createSoz } from "./soz";
 
 type LocalAssessment = action.Action[] | "recaptcha-required";
 

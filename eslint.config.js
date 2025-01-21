@@ -5,7 +5,7 @@ import tseslint from "typescript-eslint";
 /** @type {import('eslint').Linter.Config[]} */
 export default [
   { files: ["**/*.{js,mjs,cjs,ts}"] },
-  { ignores: ["src/generated", "dist", "**/dist", "**/*.d.ts"] },
+  { ignores: ["dist", "**/dist", "**/*.d.ts"] },
   {
     rules: {
       "@typescript-eslint/no-explicit-any": "off",

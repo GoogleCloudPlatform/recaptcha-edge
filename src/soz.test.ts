@@ -22,7 +22,7 @@ import { expect, test } from "vitest";
 import { createSoz } from "./soz";
 
 test("createSoz-ok", async () => {
-  expect(createSoz("example.com", "192.168.0.1", 12345, "challengeSiteKey")).toEqual(
-    "CgTAqAABKgtleGFtcGxlLmNvbRoQY2hhbGxlbmdlU2l0ZUtleTi5YA",
+  expect(createSoz("example.com", "1.2.3.4", 12345, "challengeSiteKey")).toEqual(
+    "eyJob3N0IjoiZXhhbXBsZS5jb20iLCJwcm9qZWN0TnVtYmVyIjoxMjM0NSwic2l0ZUtleSI6ImNoYWxsZW5nZVNpdGVLZXkiLCJ1c2VySXAiOiJBUUlEQkEifQ",
   );
 });
