@@ -29,7 +29,7 @@ import { extractBoundary, parse } from "parse-multipart-form-data";
  * Get reCAPTCHA regular token from POST request body,
  * which is a ReadableStream
  */
-async function getTokenFromBody(request: Request): Promise<string | null> {
+async function getTokenFromBody(context: RecaptchaContext, request: Request): Promise<string | null> {
   const contentType = request.headers.get("content-type");
   // The name of a regular token is `g-recaptcha-response` in POST parameteres (viewed in Request Playload).
   if (contentType && contentType.includes("application/json")) {
@@ -38,7 +38,7 @@ async function getTokenFromBody(request: Request): Promise<string | null> {
       const body = await request.clone().json();
       return body["g-recaptcha-response"] || null;
     } catch (error) {
-      console.error("Error parsing JSON body:", error);
+      context.log("error", "Error parsing data");
       return null;
     }
   } else if (contentType && contentType.includes("application/x-www-form-urlencoded")) {
@@ -47,7 +47,7 @@ async function getTokenFromBody(request: Request): Promise<string | null> {
       const formData = new URLSearchParams(bodyText);
       return formData.get("g-recaptcha-response");
     } catch (error) {
-      console.error("Error parsing form data:", error);
+      context.log("error", "Error parsing data");
       return null;
     }
   } else if (contentType && contentType.includes("multipart/form-data")) {
@@ -65,11 +65,16 @@ async function getTokenFromBody(request: Request): Promise<string | null> {
       }
       return null;
     } catch (error) {
-      console.error("Error parsing multipart form data:", error);
-      return null;
+      if (error instanceof TypeError) {
+        context.log("error", "Unsupported operations");
+        return null; // Or throw a custom error with a more informative message
+      } else {
+        context.log("error", "Error parsing data");
+        return null;
+      }
     }
   } else {
-    console.warn("Unsupported Content-Type or no Content-Type header found.");
+    context.log("error", "Unsupported Content-Type or no Content-Type header found.");
     return null;
   }
 }
@@ -129,7 +134,19 @@ export async function createPartialEventWithSiteInfo(context: RecaptchaContext, 
       }
     }
 
-    if (context.config.challengePageSiteKey && challengeToken) {
+    if (context.config.enterpriseSiteKey && req.method === "POST") {
+      const recaptchaToken = await getTokenFromBody(context, req);
+      if (recaptchaToken) {
+        event.token = recaptchaToken;
+        event.siteKey = context.config.enterpriseSiteKey;
+        event.wafTokenAssessment = false;
+        context.debug_trace.site_key_used = "enterprise";
+        context.log("debug", "siteKind: action-regular");
+      } else {
+        // (TODO): Handle the case where the token is not found or malformed.
+        context.log("error", "g-recaptcha-response not found in the request body.");
+      }
+    } else if (context.config.challengePageSiteKey && challengeToken) {
       event.token = challengeToken;
       event.siteKey = context.config.challengePageSiteKey;
       event.wafTokenAssessment = true;
@@ -141,18 +158,6 @@ export async function createPartialEventWithSiteInfo(context: RecaptchaContext, 
       event.wafTokenAssessment = true;
       context.debug_trace.site_key_used = "session";
       context.log("debug", "siteKind: session");
-    } else if (context.config.v3SiteKey && req.method === "POST") {
-      const recaptchaToken = await getTokenFromBody(req);
-      if (recaptchaToken) {
-        event.token = recaptchaToken;
-        event.siteKey = context.config.v3SiteKey;
-        event.wafTokenAssessment = false;
-        context.debug_trace.site_key_used = "regularV3";
-        context.log("debug", "siteKind: action-regular");
-      } else {
-        // (TODO): Handle the case where the token is not found or malformed.
-        context.log("error", "g-recaptcha-response not found in the request body.");
-      }
     } else if (context.config.expressSiteKey) {
       event.siteKey = context.config.expressSiteKey;
       event.express = true;

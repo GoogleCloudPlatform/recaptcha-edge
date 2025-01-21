@@ -26,10 +26,6 @@
       xhr.open('POST', '/server', false);
       xhr.setRequestHeader('Content-Type', 'application/json');
       xhr.send(JSON.stringify({ 'g-recaptcha-response': token }));
-
-      // (TODO): Other example for form.
-      // xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-      // xhr.send(`g-recaptcha-response=${encodeURIComponent(token)}`);
     }
     function onError(reason) {
       alert('Response promise rejected: ' + reason);

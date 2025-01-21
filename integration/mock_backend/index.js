@@ -29,7 +29,7 @@ app.get("/token/session", (req, res) => {
 });
 
 app.get("/token/v3web", (req, res) => {
-  res.render("v3web", { siteKey: config.v3SiteKey });
+  res.render("v3web", { siteKey: config.enterpriseSiteKey });
 });
 
 app.get("*", (req, res) => {

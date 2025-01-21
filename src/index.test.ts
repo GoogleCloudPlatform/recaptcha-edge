@@ -47,7 +47,7 @@ const testConfig: RecaptchaConfig = {
   expressSiteKey: "express-site-key",
   sessionSiteKey: "session-site-key",
   challengePageSiteKey: "challenge-page-site-key",
-  v3SiteKey: "v3-site-key",
+  enterpriseSiteKey: "enterprise-site-key",
 };
 
 class TestContext extends RecaptchaContext {
@@ -985,12 +985,12 @@ test("createPartialEventWithSiteInfo-regularActionToken-json", async () => {
   };
   expect(event).toEqual({
     token: "regular-action-token",
-    siteKey: "v3-site-key",
+    siteKey: "enterprise-site-key",
     userAgent: "test-user-agent",
     wafTokenAssessment: false,
     userIpAddress: "1.2.3.4",
   });
-  expect(context.debug_trace.site_key_used).toEqual("regularV3");
+  expect(context.debug_trace.site_key_used).toEqual("enterprise");
 });
 
 test("createPartialEventWithSiteInfo-regularActionToken-form-urlencoded", async () => {
@@ -1013,12 +1013,12 @@ test("createPartialEventWithSiteInfo-regularActionToken-form-urlencoded", async 
   };
   expect(event).toEqual({
     token: "regular-action-token-urlencoded",
-    siteKey: "v3-site-key",
+    siteKey: "enterprise-site-key",
     userAgent: "test-user-agent",
     wafTokenAssessment: false,
     userIpAddress: "1.2.3.4",
   });
-  expect(context.debug_trace.site_key_used).toEqual("regularV3");
+  expect(context.debug_trace.site_key_used).toEqual("enterprise");
 });
 
 test("createPartialEventWithSiteInfo-regularActionToken-multipart-form-data", async () => {
@@ -1049,12 +1049,12 @@ test("createPartialEventWithSiteInfo-regularActionToken-multipart-form-data", as
   };
   expect(event).toEqual({
     token: "regular-action-token-multipart",
-    siteKey: "v3-site-key",
+    siteKey: "enterprise-site-key",
     userAgent: "test-user-agent",
     wafTokenAssessment: false,
     userIpAddress: "1.2.3.4",
   });
-  expect(context.debug_trace.site_key_used).toEqual("regularV3");
+  expect(context.debug_trace.site_key_used).toEqual("enterprise");
 });
 
 test("createPartialEventWithSiteInfo-sessionToken", async () => {

@@ -88,7 +88,7 @@ test("should generate an action token after execute() by clicking the button", a
   await expect(page.getByText("x-recaptcha-test")).toBeVisible({ timeout: 3000 });
 });
 
-test("should generate a regular v3 token after execute() by clicking the button", async ({ page }) => {
+test("should generate an enterprise token after execute() by clicking the button", async ({ page }) => {
   const endpointUrl = process.env.ENDPOINT as string;
   // Go to the page with the reCAPTCHA.
   await page.goto(`${endpointUrl}/token/v3web`);
@@ -101,10 +101,10 @@ test("should generate a regular v3 token after execute() by clicking the button"
 
   // Wait for the response and extract the token from the header.
   const response = await responsePromise;
-  const v3Token = response.request().postDataJSON()["g-recaptcha-response"];
+  const enterpriseToken = response.request().postDataJSON()["g-recaptcha-response"];
 
   // Assert that the token is not empty.
-  expect(v3Token).toBeTruthy();
+  expect(enterpriseToken).toBeTruthy();
 
   // Call CreateAsessment by visit condition matching pages.
   await page.goto(`${endpointUrl}/condition/1`);
