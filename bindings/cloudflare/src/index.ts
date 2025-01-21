@@ -114,7 +114,7 @@ export function recaptchaConfigFromEnv(env: Env): RecaptchaConfig {
     expressSiteKey: env.EXPRESS_SITE_KEY,
     sessionSiteKey: env.SESSION_SITE_KEY,
     challengePageSiteKey: env.CHALLENGE_PAGE_SITE_KEY,
-    enterpriseSiteKey: env.V3_SITE_KEY,
+    enterpriseSiteKey: env.ENTERPRISE_SITE_KEY,
     recaptchaEndpoint: env.RECAPTCHA_ENDPOINT ?? DEFAULT_RECAPTCHA_ENDPOINT,
     sessionJsInjectPath: env.SESSION_JS_INSTALL_PATH,
     debug: env.DEBUG ?? false,
