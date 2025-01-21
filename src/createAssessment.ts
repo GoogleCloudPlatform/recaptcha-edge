@@ -67,7 +67,7 @@ async function getTokenFromBody(context: RecaptchaContext, request: Request): Pr
     } catch (error) {
       if (error instanceof TypeError) {
         context.log("error", "Unsupported operations");
-        return null; // Or throw a custom error with a more informative message
+        return null;
       } else {
         context.log("error", "Error parsing data");
         return null;
@@ -143,7 +143,7 @@ export async function createPartialEventWithSiteInfo(context: RecaptchaContext, 
         context.debug_trace.site_key_used = "enterprise";
         context.log("debug", "siteKind: action-regular");
       } else {
-        // (TODO): Handle the case where the token is not found or malformed.
+        // TODO: Handle the case where the token is not found or malformed.
         context.log("error", "g-recaptcha-response not found in the request body.");
       }
     } else if (context.config.challengePageSiteKey && challengeToken) {
