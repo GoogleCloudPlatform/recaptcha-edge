@@ -20,7 +20,6 @@
  */
 
 import ipaddr from "ipaddr.js";
-import { ReCaptchaSoz } from "../generated/soz";
 
 function base64UrlEncode(bytes: Uint8Array) {
   let base64 = "";
@@ -53,25 +52,22 @@ function base64UrlEncode(bytes: Uint8Array) {
  * @return {string} - The base64 encoded reCaptchaSoz message.
  */
 export function createSoz(host: string, userIp: string, projectNumber: number, siteKey: string): string {
+  let ip = undefined;
   try {
-    const message: ReCaptchaSoz = {
-      host,
-      projectNumber: BigInt(projectNumber),
-      siteKey,
-    };
-    try {
-      message.userIp = new Uint8Array(ipaddr.parse(userIp).toByteArray());
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (e) {
-      // Invalid IP address. Ignore it.
-    }
-    const bytes = ReCaptchaSoz.toBinary(message);
-    return base64UrlEncode(bytes);
+    ip = base64UrlEncode(new Uint8Array(ipaddr.parse(userIp).toByteArray()));
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (e) {
-    // Temporary workaround for Akamai, that can't use this protobuf library.
-    if (e instanceof ReferenceError) {
-      return "";
-    }
-    throw e;
+    // Invalid IP address. Ignore it.
   }
+
+  let encoder = new TextEncoder();
+  const bytes = encoder.encode(
+    JSON.stringify({
+      host,
+      projectNumber,
+      siteKey,
+      userIp: ip,
+    }),
+  );
+  return base64UrlEncode(bytes);
 }

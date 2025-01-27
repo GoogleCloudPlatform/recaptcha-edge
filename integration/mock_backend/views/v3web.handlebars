@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>V3 Web Usage</title>
+  <script src="https://www.google.com/recaptcha/enterprise.js?render={{siteKey}}"></script>
+</head>
+
+<body>
+  <h2>V3 Web Usage</h2>
+  <div>
+    <button id="execute-button">Execute</button>
+    <input id="action-input" type="text" placeholder="Action" />
+  </div>
+  <br>
+  <div id="response-from-promise"></div>
+
+  <script>
+    function showToken(id, token) {
+      const el = document.getElementById(id);
+      el.textContent = token;
+    }
+    function onSuccess(token) {
+      showToken('response-from-promise', token);
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/server', false);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.send(JSON.stringify({ 'g-recaptcha-response': token }));
+    }
+    function onError(reason) {
+      alert('Response promise rejected: ' + reason);
+    }
+    grecaptcha.enterprise.ready(function () {
+      document.querySelector('#execute-button').addEventListener('click', function () {
+        var input = document.querySelector('#action-input');
+        var action = input.value;
+        input.value = '';
+        grecaptcha.enterprise.execute('{{ siteKey }}', { action: action }).then(onSuccess).catch(onError);
+      });
+    });
+
+  </script>
+</body>
+
+</html>
