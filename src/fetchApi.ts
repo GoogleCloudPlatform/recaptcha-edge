@@ -2,18 +2,28 @@ import { EdgeRequest, EdgeResponse, RecaptchaContext } from "./index";
 
 export class FetchApiRequest implements EdgeRequest {
   req: Request;
-  constructor(req: Request) {
+  constructor(req: Request | string) {
+    if (typeof req == "string") {
+      this.req = new Request(req);
+    } else {
     this.req = req;
+    }
   }
 
   get url() {
     return this.req.url;
   }
 
+  set url(new_url: string) {
+    // path is immutable within a Request, so we must create a new one.
+    this.req = new Request(new_url, this.req);
+  }
+
   get method() {
     return this.req.method;
   }
 
+  /*
   get path() {
     return this.req.url;
   }
@@ -21,7 +31,7 @@ export class FetchApiRequest implements EdgeRequest {
   set path(new_path: string) {
     // path is immutable within a Request, so we must create a new one.
     this.req = new Request(new_path, this.req);
-  }
+  } */
 
   addHeader(key: string, value: string): void {
     let headers = new Headers(this.req.headers);
