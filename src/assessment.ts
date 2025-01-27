@@ -81,7 +81,12 @@ export type Event = z.infer<typeof EventSchema>;
 
 /** Zod schema for Assessment type. */
 export const AssessmentSchema = z.object({
-  name: z.string().optional(),
+  name: z
+    .object({
+      projectId: z.string().optional(),
+      assessmentId: z.string().optional(),
+    })
+    .optional(),
   event: EventSchema.optional(),
   riskAnalysis: z
     .object({

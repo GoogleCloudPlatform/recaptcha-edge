@@ -32,6 +32,10 @@ app.get("/token/v3web", (req, res) => {
   res.render("v3web", { siteKey: config.enterpriseSiteKey });
 });
 
+app.get("/token/credentials", (req, res) => {
+  res.render("credentials", { siteKey: config.enterpriseSiteKey });
+});
+
 app.get("*", (req, res) => {
   res.send({
     url: req.url,
