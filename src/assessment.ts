@@ -104,3 +104,11 @@ export const AssessmentSchema = z.object({
 
 /** Assessment type used in CreateAssessment RPCs. */
 export type Assessment = z.infer<typeof AssessmentSchema>;
+
+/** Zod schema for Account Defender Annotation type. */
+export const AnnotationSchema = z.object({
+  accountId: z.string().optional(),
+  assessmentId: z.string().optional(),
+  annotation: z.string().optional(),
+  reasons: z.array(z.string()).optional(),
+});
