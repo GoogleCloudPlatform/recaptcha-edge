@@ -107,8 +107,15 @@ export type Assessment = z.infer<typeof AssessmentSchema>;
 
 /** Zod schema for Account Defender Annotation type. */
 export const AnnotationSchema = z.object({
+  name: z
+    .object({
+      projectId: z.string().optional(),
+      assessmentId: z.string().optional(),
+    })
+    .optional(),
   accountId: z.string().optional(),
-  assessmentId: z.string().optional(),
   annotation: z.string().optional(),
   reasons: z.array(z.string()).optional(),
 });
+
+export type Annotation = z.infer<typeof AnnotationSchema>;
