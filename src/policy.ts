@@ -25,7 +25,7 @@ import { callCreateAssessment } from "./createAssessment";
 import * as error from "./error";
 import { RecaptchaContext } from "./index";
 import { callListFirewallPolicies } from "./listFirewallPolicies";
-import { createSoz } from "./proto/soz";
+import { createSoz } from "./soz";
 
 type LocalAssessment = action.Action[] | "recaptcha-required";
 
@@ -307,6 +307,8 @@ export async function processRequest(context: RecaptchaContext, req: Request): P
   if (context.config.debug) {
     let resolved_resp = await resp;
     context.debug_trace.exception_count = context.exceptions.length;
+    // Clone the response so that it's no longer immutable.
+    resolved_resp = new Response(resolved_resp.body, resolved_resp);
     resolved_resp.headers.append("X-RECAPTCHA-DEBUG", context.debug_trace.formatAsHeaderValue());
     resp = Promise.resolve(resolved_resp);
   }

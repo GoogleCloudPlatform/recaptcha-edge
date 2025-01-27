@@ -247,7 +247,7 @@ test("ApplyActions-redirect", async () => {
       expect(req.url).toEqual("https://www.google.com/recaptcha/challengepage");
       expect(req.headers.get("test-key")).toEqual(null);
       expect(req.headers.get("X-ReCaptcha-Soz")).toEqual(
-        "CgQBAgMEKg93d3cuZXhhbXBsZS5jb20aF2NoYWxsZW5nZS1wYWdlLXNpdGUta2V5OLlg",
+        "eyJob3N0Ijoid3d3LmV4YW1wbGUuY29tIiwicHJvamVjdE51bWJlciI6MTIzNDUsInNpdGVLZXkiOiJjaGFsbGVuZ2UtcGFnZS1zaXRlLWtleSIsInVzZXJJcCI6IkFRSURCQSJ9",
       );
       return Promise.resolve({
         status: 200,
