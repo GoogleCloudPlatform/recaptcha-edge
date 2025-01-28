@@ -160,6 +160,13 @@ export class AkamaiRequest implements EdgeRequest {
   getHeaders(): Map<string, string> {
     return this.headers;
   }
+
+  getBodyText(): Promise<string> {
+    throw "unimplemented";
+  }
+  getBodyJson(): Promise<any> {
+    throw "unimplemented";
+  }
 }
 
 export class AkamaiResponse implements EdgeResponse {
