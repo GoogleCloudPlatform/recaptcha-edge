@@ -68,7 +68,7 @@ class TestContext extends RecaptchaContext {
   }
 
   createResponse(body: string, options?: EdgeResponseInit): EdgeResponse {
-    return new FetchApiResponse(body, options?.status, options?.headers)
+    return new FetchApiResponse(body, options?.status, options?.headers);
   }
 
   async fetch(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse> {
@@ -126,17 +126,15 @@ test("callCreateAssessment-ok", async () => {
   testContext.buildEvent = (req: EdgeRequest) => {
     return baseEvent;
   };
-  testContext.fetch_create_assessment = (req: EdgeRequest, options) => { 
-    return fetch(req.url, options).then((v) => { return new FetchApiResponse(v); }) 
+  testContext.fetch_create_assessment = (url: string, options) => {
+    return fetch(url, options).then((v) => {
+      return new FetchApiResponse(v);
+    });
   };
-  
+
   const req = new FetchApiRequest("https://www.google.com");
   req.addHeader("X-Recaptcha-Token", "test-token");
-  const resp = await callCreateAssessment(
-    testContext as RecaptchaContext,
-    req,
-    ["test-env", "test-version"],
-  );
+  const resp = await callCreateAssessment(testContext as RecaptchaContext, req, ["test-env", "test-version"]);
   expect(fetch).toHaveBeenCalledWith(
     "https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123",
     {
@@ -261,10 +259,10 @@ test("ApplyActions-redirect", async () => {
   req.addHeader("test-key", "test-value");
   vi.stubGlobal(
     "fetch",
-    vi.fn((req) => {
-      expect(req.url).toEqual("https://www.google.com/recaptcha/challengepage");
-      expect(req.headers.get("test-key")).toEqual(null);
-      expect(req.headers.get("X-ReCaptcha-Soz")).toEqual(
+    vi.fn((url, options) => {
+      expect(url).toEqual("https://www.google.com/recaptcha/challengepage");
+      expect(options.headers["test-key"]).toEqual(undefined);
+      expect(options.headers["X-ReCaptcha-Soz"]).toEqual(
         "eyJob3N0Ijoid3d3LmV4YW1wbGUuY29tIiwicHJvamVjdE51bWJlciI6MTIzNDUsInNpdGVLZXkiOiJjaGFsbGVuZ2UtcGFnZS1zaXRlLWtleSIsInVzZXJJcCI6IkFRSURCQSJ9",
       );
       return Promise.resolve({
@@ -923,6 +921,12 @@ test("processRequest-dump", async () => {
       json: () => Promise.resolve({ firewallPolicies: testPolicies }),
     }),
   );
+  (fetch as Mock).mockImplementationOnce(() =>
+    Promise.resolve({
+      status: 200,
+      text: () => Promise.resolve("<HTML>Hello World</HTML>"),
+    }),
+  );
   const resp = await processRequest(context, req);
   expect(await resp.json()).toEqual({
     logs: [
@@ -931,10 +935,6 @@ test("processRequest-dump", async () => {
       ["debug", ["terminalAction: allow"]],
     ],
     exceptions: [],
-    request_headers: {
-      "content-type": "application/json",
-      hello: "World",
-    },
   });
 });
 
@@ -982,15 +982,17 @@ test("createPartialEventWithSiteInfo-actionToken", async () => {
 
 test("createPartialEventWithSiteInfo-regularActionToken-json", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/teste2e", {
-    body: JSON.stringify({
-      "g-recaptcha-response": "regular-action-token",
+  const req = new FetchApiRequest(
+    new Request("https://www.example.com/teste2e", {
+      body: JSON.stringify({
+        "g-recaptcha-response": "regular-action-token",
+      }),
+      headers: {
+        "content-type": "application/json;charset=UTF-8",
+      },
+      method: "POST",
     }),
-    headers: {
-      "content-type": "application/json;charset=UTF-8",
-    },
-    method: "POST",
-  });
+  );
   const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(context.buildEvent(req));
   const event = {
@@ -1011,13 +1013,15 @@ test("createPartialEventWithSiteInfo-regularActionToken-form-urlencoded", async 
   const context = new TestContext(testConfig);
   const formData = new URLSearchParams();
   formData.append("g-recaptcha-response", "regular-action-token-urlencoded");
-  const req = new Request("https://www.example.com/teste2e", {
-    body: formData.toString(),
-    headers: {
-      "content-type": "application/x-www-form-urlencoded",
-    },
-    method: "POST",
-  });
+  const req = new FetchApiRequest(
+    new Request("https://www.example.com/teste2e", {
+      body: formData.toString(),
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      method: "POST",
+    }),
+  );
 
   const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(await context.buildEvent(req));
@@ -1047,13 +1051,15 @@ test("createPartialEventWithSiteInfo-regularActionToken-multipart-form-data", as
   body += `${crlf}regular-action-token-multipart`;
   body += `--${boundary}--${crlf}`;
 
-  const req = new Request("https://www.example.com/teste2e", {
-    body: body,
-    headers: {
-      "content-type": `multipart/form-data; boundary=${boundary}`,
-    },
-    method: "POST",
-  });
+  const req = new FetchApiRequest(
+    new Request("https://www.example.com/teste2e", {
+      body: body,
+      headers: {
+        "content-type": `multipart/form-data; boundary=${boundary}`,
+      },
+      method: "POST",
+    }),
+  );
 
   const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(await context.buildEvent(req));
@@ -1075,7 +1081,7 @@ test("createPartialEventWithSiteInfo-sessionToken", async () => {
   const context = new TestContext(testConfig);
   const req = new FetchApiRequest("https://www.example.com/test");
   req.addHeader("cookie", "recaptcha-test-t=session-token");
-  const site_info = createPartialEventWithSiteInfo(context, req);
+  const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(context.buildEvent(req));
   const event = {
     ...site_info,
@@ -1116,7 +1122,7 @@ test("createPartialEventWithSiteInfo-nonStrictSessionToken", async () => {
   context.config.strict_cookie = false;
   const req = new FetchApiRequest("https://www.example.com/test");
   req.addHeader("cookie", "recaptcha-example-t=session-token");
-  const site_info = createPartialEventWithSiteInfo(context, req);
+  const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(context.buildEvent(req));
   const event = {
     ...site_info,
@@ -1136,7 +1142,7 @@ test("createPartialEventWithSiteInfo-challengeToken", async () => {
   const context = new TestContext(testConfig);
   const req = new FetchApiRequest("https://www.example.com/test");
   req.addHeader("cookie", "recaptcha-test-e=challenge-token");
-  const site_info = createPartialEventWithSiteInfo(context, req);
+  const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(context.buildEvent(req));
   const event = {
     ...site_info,
@@ -1157,7 +1163,7 @@ test("createPartialEventWithSiteInfo-nonStrictChallengeToken", async () => {
   context.config.strict_cookie = false;
   const req = new FetchApiRequest("https://www.example.com/test");
   req.addHeader("cookie", "recaptcha-example-e=challenge-token");
-  const site_info = createPartialEventWithSiteInfo(context, req);
+  const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(context.buildEvent(req));
   const event = {
     ...site_info,

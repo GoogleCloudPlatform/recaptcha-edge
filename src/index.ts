@@ -60,6 +60,8 @@ export interface EdgeRequest {
   addHeader(key: string, value: string): void;
   getHeader(key: string): string | null;
   getHeaders(): Map<string, string>;
+  getBodyText(): Promise<string>;
+  getBodyJson(): Promise<any>;
 }
 export type EdgeRequestInfo = EdgeRequest | string;
 export type EdgeResponseInit = {

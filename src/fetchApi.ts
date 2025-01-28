@@ -23,16 +23,6 @@ export class FetchApiRequest implements EdgeRequest {
     return this.req.method;
   }
 
-  /*
-  get path() {
-    return this.req.url;
-  }
-
-  set path(new_path: string) {
-    // path is immutable within a Request, so we must create a new one.
-    this.req = new Request(new_path, this.req);
-  } */
-
   addHeader(key: string, value: string): void {
     let headers = new Headers(this.req.headers);
     headers.append(key, value);
@@ -50,6 +40,14 @@ export class FetchApiRequest implements EdgeRequest {
         ret.set(k, v);
     });
     return ret;
+  }
+
+  async getBodyText(): Promise<string> {
+    return this.req.clone().text();
+  }
+
+  async getBodyJson(): Promise<unknown> {
+    return this.req.clone().json();
   }
 }
 

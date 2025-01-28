@@ -298,7 +298,7 @@ export async function processRequest(context: RecaptchaContext, req: EdgeRequest
   if (context.config.debug) {
     let resolved_resp = await resp;
     context.debug_trace.exception_count = context.exceptions.length;
-    resolved_resp.headers.append("X-RECAPTCHA-DEBUG", context.debug_trace.formatAsHeaderValue());
+    resolved_resp.addHeader("X-RECAPTCHA-DEBUG", context.debug_trace.formatAsHeaderValue());
     resp = Promise.resolve(resolved_resp);
   }
 
