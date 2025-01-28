@@ -38,7 +38,7 @@ const userInfoSchema = z.object({
       phoneNumber: z.string().optional(),
       username: z.string().optional(),
     }),
-  ),
+  ).optional(),
 });
 
 type UserInfo = z.infer<typeof userInfoSchema>;
@@ -92,8 +92,7 @@ export class CloudflareContext extends RecaptchaContext {
 
         if (username) {
           userInfo = {
-            accountId: "cfAccountId",
-            userIds: [{ username: username }],
+            accountId: username,
           };
         }
       } catch (error) {

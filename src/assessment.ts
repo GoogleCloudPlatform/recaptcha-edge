@@ -63,7 +63,7 @@ export const EventSchema = z.object({
           phoneNumber: z.string().optional(),
           username: z.string().optional(),
         }),
-      ),
+      ).optional(),
     })
     .optional(),
   additionalTokens: z
