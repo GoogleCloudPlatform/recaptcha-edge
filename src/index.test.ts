@@ -69,10 +69,12 @@ class TestContext extends RecaptchaContext {
   };
   // eslint-disable-next-line  @typescript-eslint/no-unused-vars
   buildEvent = async (req: Request) => {
-    return EventSchema.parse({
+    const partialEvent = await createPartialEventWithSiteInfo(this, req);
+    const baseEvent = EventSchema.parse({
       userIpAddress: "1.2.3.4",
       userAgent: "test-user-agent",
     });
+    return { ...baseEvent, ...partialEvent };
   };
   injectRecaptchaJs = async (resp: Response) => {
     let html = await resp.text();
@@ -103,7 +105,7 @@ test("callCreateAssessment-ok", async () => {
   const testContext = {
     ...new TestContext(testConfig),
     // eslint-disable-next-line  @typescript-eslint/no-unused-vars
-    buildEvent: async (req: Request) => {
+    buildEvent: (req: Request) => {
       return baseEvent;
     },
     fetch: (req, options) => fetch(req, options),

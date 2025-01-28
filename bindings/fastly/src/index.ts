@@ -116,7 +116,7 @@ export class FastlyContext extends RecaptchaContext {
     }
   }
 
-  buildEvent(req: Request): object {
+  async buildEvent(req: Request): Promise<object> {
     return {
       // extracting common signals
       userIpAddress: this.event.client.address ?? undefined,

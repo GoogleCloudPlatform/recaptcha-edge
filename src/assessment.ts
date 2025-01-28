@@ -57,13 +57,15 @@ export const EventSchema = z.object({
   userInfo: z
     .object({
       accountId: z.string().optional(),
-      userIds: z.array(
-        z.object({
-          email: z.string().optional(),
-          phoneNumber: z.string().optional(),
-          username: z.string().optional(),
-        }),
-      ).optional(),
+      userIds: z
+        .array(
+          z.object({
+            email: z.string().optional(),
+            phoneNumber: z.string().optional(),
+            username: z.string().optional(),
+          }),
+        )
+        .optional(),
     })
     .optional(),
   additionalTokens: z
@@ -81,12 +83,7 @@ export type Event = z.infer<typeof EventSchema>;
 
 /** Zod schema for Assessment type. */
 export const AssessmentSchema = z.object({
-  name: z
-    .object({
-      projectId: z.string().optional(),
-      assessmentId: z.string().optional(),
-    })
-    .optional(),
+  name: z.string().optional(),
   event: EventSchema.optional(),
   riskAnalysis: z
     .object({

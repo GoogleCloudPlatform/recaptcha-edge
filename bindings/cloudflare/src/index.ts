@@ -27,18 +27,20 @@ const DEFAULT_RECAPTCHA_ENDPOINT = "https://public-preview-recaptchaenterprise.g
 // eslint-disable-next-line  @typescript-eslint/no-unused-vars
 import { processRequest, RecaptchaConfig, RecaptchaContext } from "@google-cloud/recaptcha";
 import pkg from "../package.json";
-import { z } from "zod"; // Import Zod
+import { z } from "zod";
 
-// Customize the Zod schema for Cloudflare userInfo
+// Customize the Cloudflare UserInfo schema
 const userInfoSchema = z.object({
   accountId: z.string().optional(),
-  userIds: z.array(
-    z.object({
-      email: z.string().optional(),
-      phoneNumber: z.string().optional(),
-      username: z.string().optional(),
-    }),
-  ).optional(),
+  userIds: z
+    .array(
+      z.object({
+        email: z.string().optional(),
+        phoneNumber: z.string().optional(),
+        username: z.string().optional(),
+      }),
+    )
+    .optional(),
 });
 
 type UserInfo = z.infer<typeof userInfoSchema>;
@@ -87,8 +89,7 @@ export class CloudflareContext extends RecaptchaContext {
     if (req.method === "POST" && new URL(req.url).pathname === "/login") {
       try {
         const body = await req.clone().json();
-        const username = body.username;
-        const password = body.password;
+        const username = body["username"];
 
         if (username) {
           userInfo = {
@@ -97,7 +98,7 @@ export class CloudflareContext extends RecaptchaContext {
         }
       } catch (error) {
         console.error("getUserInfo error:", error);
-        return userInfo; // Return the default empty object on error
+        return userInfo;
       }
     }
     return userInfo;
@@ -112,7 +113,7 @@ export class CloudflareContext extends RecaptchaContext {
       ja3: (req as any)?.["cf"]?.["bot_management"]?.["ja3_hash"] ?? undefined,
       requestedUri: req.url,
       userAgent: req.headers.get("user-agent"),
-      userInfo: userInfo,
+      // userInfo: userInfo, // TODO: check why the field cause CreateAssessment Error
     };
   }
 
