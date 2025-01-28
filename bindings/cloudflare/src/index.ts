@@ -27,6 +27,21 @@ const DEFAULT_RECAPTCHA_ENDPOINT = "https://public-preview-recaptchaenterprise.g
 // eslint-disable-next-line  @typescript-eslint/no-unused-vars
 import { processRequest, RecaptchaConfig, RecaptchaContext } from "@google-cloud/recaptcha";
 import pkg from "../package.json";
+import { z } from "zod"; // Import Zod
+
+// Customize the Zod schema for Cloudflare userInfo
+const userInfoSchema = z.object({
+  accountId: z.string().optional(),
+  userIds: z.array(
+    z.object({
+      email: z.string().optional(),
+      phoneNumber: z.string().optional(),
+      username: z.string().optional(),
+    }),
+  ),
+});
+
+type UserInfo = z.infer<typeof userInfoSchema>;
 
 export {
   callCreateAssessment,
@@ -67,7 +82,30 @@ export class CloudflareContext extends RecaptchaContext {
     }
   }
 
-  buildEvent(req: Request): object {
+  async getUserInfo(req: Request): Promise<UserInfo> {
+    let userInfo: UserInfo = { accountId: undefined, userIds: [] };
+    if (req.method === "POST" && new URL(req.url).pathname === "/login") {
+      try {
+        const body = await req.clone().json();
+        const username = body.username;
+        const password = body.password;
+
+        if (username) {
+          userInfo = {
+            accountId: "cfAccountId",
+            userIds: [{ username: username }],
+          };
+        }
+      } catch (error) {
+        console.error("getUserInfo error:", error);
+        return userInfo; // Return the default empty object on error
+      }
+    }
+    return userInfo;
+  }
+
+  async buildEvent(req: Request): Promise<object> {
+    const userInfo = await this.getUserInfo(req);
     return {
       // extracting common signals
       userIpAddress: req.headers.get("CF-Connecting-IP"),
@@ -75,6 +113,7 @@ export class CloudflareContext extends RecaptchaContext {
       ja3: (req as any)?.["cf"]?.["bot_management"]?.["ja3_hash"] ?? undefined,
       requestedUri: req.url,
       userAgent: req.headers.get("user-agent"),
+      userInfo: userInfo,
     };
   }
 

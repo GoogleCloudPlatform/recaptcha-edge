@@ -185,7 +185,7 @@ export async function callCreateAssessment(
 ): Promise<Assessment> {
   // TODO: this should use a builder pattern. with a CreateAssessmentRequest type.
   const site_info = await createPartialEventWithSiteInfo(context, req);
-  const site_features = EventSchema.parse(context.buildEvent(req));
+  const site_features = EventSchema.parse(await context.buildEvent(req));
   const event = {
     ...site_info,
     ...site_features,

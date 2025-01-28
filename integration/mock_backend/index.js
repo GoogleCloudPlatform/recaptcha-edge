@@ -52,7 +52,7 @@ app.listen(config.http_port, () => {
 });
 
 if (config.https_port > 0 && https_options) {
-  var server = https.createServer(options, app);
+  var server = https.createServer(https_options, app);
   server.listen(config.https_port, () => {
     console.log(`mock backend https starting on port " ${config.https_port}`);
   });
