@@ -6,7 +6,7 @@ export class FetchApiRequest implements EdgeRequest {
     if (typeof req == "string") {
       this.req = new Request(req);
     } else {
-    this.req = req;
+      this.req = req;
     }
   }
 
@@ -37,7 +37,7 @@ export class FetchApiRequest implements EdgeRequest {
   getHeaders(): Map<string, string> {
     let ret = new Map();
     this.req.headers.forEach((k, v) => {
-        ret.set(k, v);
+      ret.set(k, v);
     });
     return ret;
   }
@@ -63,7 +63,7 @@ export class FetchApiResponse implements EdgeResponse {
       this._status = status ?? 200;
       this.headers = new Map();
       for (const [key, value] of Object.entries(headers ?? {})) {
-          this.headers.set(key, value);
+        this.headers.set(key, value);
       }
     } else {
       this.resp = resp;

@@ -48,7 +48,9 @@ async function fetchHasRequest(o: Request): Promise<boolean> {
   let calls = (fetch as Mock).mock.calls;
   expect(calls.length).equals(1);
   let req = calls[0][0] as Request;
-  return req.url == o.url && req.headers == o.headers && req.method == o.method && await req.text() == await o.text();
+  return (
+    req.url == o.url && req.headers == o.headers && req.method == o.method && (await req.text()) == (await o.text())
+  );
 }
 
 const testConfig: RecaptchaConfig = {
@@ -83,7 +85,7 @@ class TestContext extends RecaptchaContext {
 
   async fetch(req: EdgeRequest): Promise<EdgeResponse> {
     let base_req = req as FetchApiRequest;
-      return fetch(base_req.req).then((v) => new FetchApiResponse(v));
+    return fetch(base_req.req).then((v) => new FetchApiResponse(v));
   }
   logException = (e: any) => {
     this.exceptions.push(e);
@@ -136,20 +138,20 @@ test("callCreateAssessment-ok", async () => {
   const req = new FetchApiRequest("https://www.google.com");
   req.addHeader("X-Recaptcha-Token", "test-token");
   const resp = await callCreateAssessment(testContext as RecaptchaContext, req, ["test-env", "test-version"]);
-  expect(await fetchHasRequest(
-  new Request(
-    "https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123",
-    {
-      body: JSON.stringify({
-        event: testEvent,
-        assessmentEnvironment: { client: "test-env", version: "test-version" },
+  expect(
+    await fetchHasRequest(
+      new Request("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123", {
+        body: JSON.stringify({
+          event: testEvent,
+          assessmentEnvironment: { client: "test-env", version: "test-version" },
+        }),
+        headers: {
+          "content-type": "application/json;charset=UTF-8",
+        },
+        method: "POST",
       }),
-      headers: {
-        "content-type": "application/json;charset=UTF-8",
-      },
-      method: "POST",
-    },
-  )));
+    ),
+  );
   expect(resp).toEqual(testAssessment);
 });
 
@@ -184,15 +186,19 @@ test("callListFirewallPolicies-ok", async () => {
   );
 
   const resp = await callListFirewallPolicies(new TestContext(testConfig));
-  expect(await fetchHasRequest(new Request(
-    "https://recaptchaenterprise.googleapis.com/v1/projects/12345/firewallpolicies?key=abc123&page_size=1000",
-    {
-      headers: {
-        "content-type": "application/json;charset=UTF-8",
-      },
-      method: "GET",
-    },
-  )));
+  expect(
+    await fetchHasRequest(
+      new Request(
+        "https://recaptchaenterprise.googleapis.com/v1/projects/12345/firewallpolicies?key=abc123&page_size=1000",
+        {
+          headers: {
+            "content-type": "application/json;charset=UTF-8",
+          },
+          method: "GET",
+        },
+      ),
+    ),
+  );
   expect(resp).toEqual({
     firewallPolicies: testPolicies,
   });

@@ -26,7 +26,7 @@ import * as error from "./error";
 import { RecaptchaContext, EdgeRequest, EdgeResponse } from "./index";
 import { callListFirewallPolicies } from "./listFirewallPolicies";
 import { createSoz } from "./soz";
-import URL from 'url-parse';
+import URL from "url-parse";
 
 type LocalAssessment = action.Action[] | "recaptcha-required";
 
@@ -199,7 +199,7 @@ export async function applyActions(
         "content-type": "application/json;charset=UTF-8",
         "X-ReCaptcha-Soz": soz,
       },
-    })
+    });
     return context.fetch_challenge_page(cp_req);
   }
 

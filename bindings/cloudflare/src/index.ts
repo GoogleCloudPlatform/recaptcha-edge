@@ -114,7 +114,7 @@ export class CloudflareContext extends RecaptchaContext {
   }
 
   createResponse(body: string, options?: EdgeResponseInit): EdgeResponse {
-    return new FetchApiResponse(body, options?.status, options?.headers)
+    return new FetchApiResponse(body, options?.status, options?.headers);
   }
 
   async fetch(req: EdgeRequest, options?: RequestInit): Promise<EdgeResponse> {

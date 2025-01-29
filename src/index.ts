@@ -37,7 +37,7 @@ export { Assessment, AssessmentSchema, Event, EventSchema, FirewallPolicy, Firew
 
 export { callCreateAssessment, createPartialEventWithSiteInfo } from "./createAssessment";
 
-export {FetchApiRequest, FetchApiResponse} from "./fetchApi";
+export { FetchApiRequest, FetchApiResponse } from "./fetchApi";
 
 export {
   ListFirewallPoliciesResponse,
@@ -65,8 +65,8 @@ export interface EdgeRequest {
 }
 export type EdgeResponseInit = {
   readonly status?: number;
-  readonly headers?: Record<string, string>
-}
+  readonly headers?: Record<string, string>;
+};
 
 export interface EdgeResponse {
   text(): Promise<string>;
