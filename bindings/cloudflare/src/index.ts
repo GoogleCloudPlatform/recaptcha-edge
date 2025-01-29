@@ -85,7 +85,7 @@ export class CloudflareContext extends RecaptchaContext {
   }
 
   async getUserInfo(req: Request): Promise<UserInfo> {
-    let userInfo: UserInfo = { accountId: undefined, userIds: [] };
+    let userInfo: UserInfo = { accountId: "", userIds: [] };
     if (req.method === "POST" && new URL(req.url).pathname === "/login") {
       try {
         const body = await req.clone().json();
