@@ -63,7 +63,6 @@ export interface EdgeRequest {
   getBodyText(): Promise<string>;
   getBodyJson(): Promise<any>;
 }
-export type EdgeRequestInfo = EdgeRequest | string;
 export type EdgeResponseInit = {
   readonly status?: number;
   readonly headers?: Record<string, string>
@@ -182,31 +181,32 @@ export abstract class RecaptchaContext {
     this.debug_trace = new DebugTrace(this);
   }
 
+  abstract createRequest(url: string, options: any): EdgeRequest;
   abstract createResponse(body: string, options?: EdgeResponseInit): EdgeResponse;
-  abstract fetch(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse>;
+  abstract fetch(req: EdgeRequest): Promise<EdgeResponse>;
 
   /**
    * Fetch from the customer's origin.
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_origin(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse> {
-    return this.fetch(req, options);
+  async fetch_origin(req: EdgeRequest): Promise<EdgeResponse> {
+    return this.fetch(req);
   }
 
   /**
    * Call fetch for ListFirewallPolicies.
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_list_firewall_policies(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse> {
-    return this.fetch(req, options);
+  async fetch_list_firewall_policies(req: EdgeRequest): Promise<EdgeResponse> {
+    return this.fetch(req);
   }
 
   /**
    * Call fetch for CreateAssessment
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_create_assessment(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse> {
-    return this.fetch(req, options);
+  async fetch_create_assessment(req: EdgeRequest): Promise<EdgeResponse> {
+    return this.fetch(req);
   }
 
   /**
@@ -214,14 +214,8 @@ export abstract class RecaptchaContext {
    * @param path: the URL to fetch the challenge page from.
    * @param soz_base64: the base64 encoded soz.
    */
-  async fetch_challenge_page(path: string, soz_base64: string): Promise<EdgeResponse> {
-    return this.fetch(path, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json;charset=UTF-8",
-        "X-ReCaptcha-Soz": soz_base64,
-      },
-    });
+  async fetch_challenge_page(req: EdgeRequest): Promise<EdgeResponse> {
+    return this.fetch(req);
   }
 
   /**

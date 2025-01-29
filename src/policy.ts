@@ -193,7 +193,14 @@ export async function applyActions(
       context.config.projectNumber,
       context.config.challengePageSiteKey ?? "", // TODO: default site key?
     );
-    return context.fetch_challenge_page(CHALLENGE_PAGE_URL, soz);
+    let cp_req = context.createRequest(CHALLENGE_PAGE_URL, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json;charset=UTF-8",
+        "X-ReCaptcha-Soz": soz,
+      },
+    })
+    return context.fetch_challenge_page(cp_req);
   }
 
   // Handle Pre-Request actions.

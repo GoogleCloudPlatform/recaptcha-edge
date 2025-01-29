@@ -37,13 +37,19 @@ import {
   DebugTrace,
   EdgeRequest,
   EdgeResponse,
-  EdgeRequestInfo,
   EdgeResponseInit,
 } from "./index";
 
 import { FetchApiRequest, FetchApiResponse } from "./fetchApi";
 
 import { Action, ActionSchema, createBlockAction } from "./action";
+
+async function fetchHasRequest(o: Request): Promise<boolean> {
+  let calls = (fetch as Mock).mock.calls;
+  expect(calls.length).equals(1);
+  let req = calls[0][0] as Request;
+  return req.url == o.url && req.headers == o.headers && req.method == o.method && await req.text() == await o.text();
+}
 
 const testConfig: RecaptchaConfig = {
   recaptchaEndpoint: "https://recaptchaenterprise.googleapis.com",
@@ -67,17 +73,17 @@ class TestContext extends RecaptchaContext {
     super(config);
   }
 
+  createRequest(url: string, options: any): EdgeRequest {
+    return new FetchApiRequest(new Request(url, options));
+  }
+
   createResponse(body: string, options?: EdgeResponseInit): EdgeResponse {
     return new FetchApiResponse(body, options?.status, options?.headers);
   }
 
-  async fetch(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse> {
-    let base_req = req as string | FetchApiRequest;
-    if (typeof base_req === "string") {
-      return fetch(base_req, options).then((v) => new FetchApiResponse(v));
-    } else {
-      return fetch(base_req.req, options).then((v) => new FetchApiResponse(v));
-    }
+  async fetch(req: EdgeRequest): Promise<EdgeResponse> {
+    let base_req = req as FetchApiRequest;
+      return fetch(base_req.req).then((v) => new FetchApiResponse(v));
   }
   logException = (e: any) => {
     this.exceptions.push(e);
@@ -126,16 +132,12 @@ test("callCreateAssessment-ok", async () => {
   testContext.buildEvent = (req: EdgeRequest) => {
     return baseEvent;
   };
-  testContext.fetch_create_assessment = (url: string, options) => {
-    return fetch(url, options).then((v) => {
-      return new FetchApiResponse(v);
-    });
-  };
 
   const req = new FetchApiRequest("https://www.google.com");
   req.addHeader("X-Recaptcha-Token", "test-token");
   const resp = await callCreateAssessment(testContext as RecaptchaContext, req, ["test-env", "test-version"]);
-  expect(fetch).toHaveBeenCalledWith(
+  expect(await fetchHasRequest(
+  new Request(
     "https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123",
     {
       body: JSON.stringify({
@@ -147,7 +149,7 @@ test("callCreateAssessment-ok", async () => {
       },
       method: "POST",
     },
-  );
+  )));
   expect(resp).toEqual(testAssessment);
 });
 
@@ -182,7 +184,7 @@ test("callListFirewallPolicies-ok", async () => {
   );
 
   const resp = await callListFirewallPolicies(new TestContext(testConfig));
-  expect(fetch).toHaveBeenCalledWith(
+  expect(await fetchHasRequest(new Request(
     "https://recaptchaenterprise.googleapis.com/v1/projects/12345/firewallpolicies?key=abc123&page_size=1000",
     {
       headers: {
@@ -190,7 +192,7 @@ test("callListFirewallPolicies-ok", async () => {
       },
       method: "GET",
     },
-  );
+  )));
   expect(resp).toEqual({
     firewallPolicies: testPolicies,
   });
@@ -259,10 +261,10 @@ test("ApplyActions-redirect", async () => {
   req.addHeader("test-key", "test-value");
   vi.stubGlobal(
     "fetch",
-    vi.fn((url, options) => {
-      expect(url).toEqual("https://www.google.com/recaptcha/challengepage");
-      expect(options.headers["test-key"]).toEqual(undefined);
-      expect(options.headers["X-ReCaptcha-Soz"]).toEqual(
+    vi.fn((req) => {
+      expect(req.url).toEqual("https://www.google.com/recaptcha/challengepage");
+      expect(req.headers.get("test-key")).toEqual(null);
+      expect(req.headers.get("X-ReCaptcha-Soz")).toEqual(
         "eyJob3N0Ijoid3d3LmV4YW1wbGUuY29tIiwicHJvamVjdE51bWJlciI6MTIzNDUsInNpdGVLZXkiOiJjaGFsbGVuZ2UtcGFnZS1zaXRlLWtleSIsInVzZXJJcCI6IkFRSURCQSJ9",
       );
       return Promise.resolve({
@@ -360,8 +362,8 @@ test("localPolicyAssessment-matchTrivialCondition", async () => {
   ];
   vi.stubGlobal(
     "fetch",
-    vi.fn((url) => {
-      expect(url).toEqual(
+    vi.fn((req) => {
+      expect(req.url).toEqual(
         "https://recaptchaenterprise.googleapis.com/v1/projects/12345/firewallpolicies?key=abc123&page_size=1000",
       );
       return Promise.resolve({
@@ -400,8 +402,8 @@ test("localPolicyAssessment-noMatch", async () => {
   ];
   vi.stubGlobal(
     "fetch",
-    vi.fn((url) => {
-      expect(url).toEqual(
+    vi.fn((req) => {
+      expect(req.url).toEqual(
         "https://recaptchaenterprise.googleapis.com/v1/projects/12345/firewallpolicies?key=abc123&page_size=1000",
       );
       return Promise.resolve({
@@ -601,8 +603,8 @@ test("localPolicyAssessment-errJson", async () => {
   const req = new FetchApiRequest("https://www.example.com/testlocal");
   vi.stubGlobal(
     "fetch",
-    vi.fn((url) => {
-      expect(url).toEqual(
+    vi.fn((req) => {
+      expect(req.url).toEqual(
         "https://recaptchaenterprise.googleapis.com/v1/projects/12345/firewallpolicies?key=abc123&page_size=1000",
       );
       return Promise.resolve({
@@ -622,8 +624,8 @@ test("evaluatePolicyAssessment-ok", async () => {
   const req = new FetchApiRequest("https://www.example.com/testlocal");
   vi.stubGlobal(
     "fetch",
-    vi.fn((url) => {
-      expect(url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123");
+    vi.fn((req) => {
+      expect(req.url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123");
       return Promise.resolve({
         status: 200,
         json: () =>
@@ -648,8 +650,8 @@ test("evaluatePolicyAssessment-failedRpc", async () => {
   const req = new FetchApiRequest("https://www.example.com/testlocal");
   vi.stubGlobal(
     "fetch",
-    vi.fn((url) => {
-      expect(url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123");
+    vi.fn((req) => {
+      expect(req.url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123");
       return Promise.reject(new Error("test-error"));
     }),
   );
@@ -681,8 +683,8 @@ test("evaluatePolicyAssessment-errJson", async () => {
   const req = new FetchApiRequest("https://www.example.com/testlocal");
   vi.stubGlobal(
     "fetch",
-    vi.fn((url) => {
-      expect(url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123");
+    vi.fn((req) => {
+      expect(req.url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123");
       return Promise.resolve({
         status: 200,
         json: () => Promise.resolve({ error: { message: "bad", code: 400, status: "INVALID_ARGUMENT" } }),

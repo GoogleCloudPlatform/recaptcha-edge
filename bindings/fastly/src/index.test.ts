@@ -108,6 +108,7 @@ describe("Run local Viceroy", function () {
   test("Response status code is 200", async function () {
     // Make a fetch request to the app. Returns a Promise that resolves to a Response.
     const response = await app.fetch("/helloworld");
+    assert.equal(await response.text(), "<html><head><title>hello</title></head>helloworld</html>");
     assert.equal(response.status, 200);
   });
 
@@ -116,6 +117,7 @@ describe("Run local Viceroy", function () {
     const contentTypeHeaders = (response.headers.get("content-type") ?? "")
       .split(",")
       .map((value) => value.trim().split(";")[0]);
+    assert.equal(response.headers, "");
     assert.ok(contentTypeHeaders.includes("text/html"));
   });
 

@@ -80,6 +80,9 @@ export class FetchApiResponse implements EdgeResponse {
     for (const [key, value] of this.headers) {
       headers.append(key, value);
     }
+    for (const [key, value] of this.resp?.headers ?? []) {
+      headers.append(key, value);
+    }
     return new Response(this.resp?.body ?? this._body, { ...this.resp, headers });
   }
 

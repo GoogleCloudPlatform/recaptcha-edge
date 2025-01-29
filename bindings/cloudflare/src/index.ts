@@ -109,20 +109,20 @@ export class CloudflareContext extends RecaptchaContext {
     );
   }
 
+  createRequest(url: string, options: any): EdgeRequest {
+    return new FetchApiRequest(new Request(url, options));
+  }
+
   createResponse(body: string, options?: EdgeResponseInit): EdgeResponse {
     return new FetchApiResponse(body, options?.status, options?.headers)
   }
 
-  async fetch(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse> {
-    let base_req = req as string | FetchApiRequest;
-    if (typeof base_req === "string") {
-      return fetch(base_req, options).then((v) => new FetchApiResponse(v));
-    } else {
-      return fetch(base_req.req, options).then((v) => new FetchApiResponse(v));
-    }
+  async fetch(req: EdgeRequest, options?: RequestInit): Promise<EdgeResponse> {
+    let base_req = req as FetchApiRequest;
+    return fetch(base_req.req, options).then((v) => new FetchApiResponse(v));
   }
 
-  async fetch_list_firewall_policies(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse> {
+  async fetch_list_firewall_policies(req: EdgeRequest, options?: RequestInit): Promise<EdgeResponse> {
     return this.fetch(req, {
       ...options,
       cf: {
