@@ -17,5 +17,5 @@
   },
   "include": ["src"],
   "exclude": ["node_modules", "vite.config.ts", "**/**.test.ts"],
-  "types": ["vitest/globals, src/generated/", "node_modules/@types"]
+  "types": ["vitest/globals", "node_modules/@types"]
 }
