@@ -68,6 +68,7 @@ test("nomatch-ok", async () => {
           userIpAddress: "1.2.3.4",
           requestedUri: "http://example.com/teste2e",
           headers: ["cf-connecting-ip:1.2.3.4", "user-agent:test-user-agent", "x-recaptcha-token:action-token"],
+          userInfo: { accountId: "", userIds: [] },
           firewallPolicyEvaluation: true,
         },
         assessmentEnvironment: {

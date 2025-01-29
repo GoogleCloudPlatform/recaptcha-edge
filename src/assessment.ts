@@ -56,11 +56,12 @@ export const EventSchema = z.object({
   firewallPolicyEvaluation: z.boolean().optional(),
   userInfo: z
     .object({
+      createAccountTime: z.string().datetime().optional(),
       accountId: z.string().optional(),
       userIds: z
         .array(
           z.object({
-            email: z.string().optional(),
+            email: z.string().email().optional(),
             phoneNumber: z.string().optional(),
             username: z.string().optional(),
           }),

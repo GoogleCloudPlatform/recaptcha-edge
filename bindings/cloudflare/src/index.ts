@@ -113,7 +113,7 @@ export class CloudflareContext extends RecaptchaContext {
       ja3: (req as any)?.["cf"]?.["bot_management"]?.["ja3_hash"] ?? undefined,
       requestedUri: req.url,
       userAgent: req.headers.get("user-agent"),
-      // userInfo: userInfo, // TODO: check why the field cause CreateAssessment Error
+      userInfo: userInfo,
     };
   }
 
