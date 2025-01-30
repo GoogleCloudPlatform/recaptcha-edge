@@ -122,7 +122,7 @@ test("callCreateAssessment-ok", async () => {
     vi.fn(() =>
       Promise.resolve({
         json: () => Promise.resolve(testAssessment),
-        headers: new Headers()
+        headers: new Headers(),
       }),
     ),
   );
@@ -178,7 +178,7 @@ test("callListFirewallPolicies-ok", async () => {
           Promise.resolve({
             firewallPolicies: testPolicies,
           }),
-        headers: new Headers()
+        headers: new Headers(),
       }),
     ),
   );
