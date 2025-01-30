@@ -80,7 +80,7 @@ class TestContext extends RecaptchaContext {
   }
 
   createResponse(body: string, options?: EdgeResponseInit): EdgeResponse {
-    return new FetchApiResponse(body, options?.status, options?.headers);
+    return new FetchApiResponse(body, options);
   }
 
   async fetch(req: EdgeRequest): Promise<EdgeResponse> {
@@ -100,10 +100,6 @@ class TestContext extends RecaptchaContext {
       userAgent: "test-user-agent",
     });
   };
-  /*
-  replacePath(req: EdgeRequest, new_path: string): EdgeRequest {
-    return new Request(new_path, req);
-  }*/
   injectRecaptchaJs = async (resp: EdgeResponse) => {
     let html = await resp.text();
     html = html.replace("<HTML>", '<HTML><script src="test.js"/>');
@@ -126,6 +122,7 @@ test("callCreateAssessment-ok", async () => {
     vi.fn(() =>
       Promise.resolve({
         json: () => Promise.resolve(testAssessment),
+        headers: new Headers()
       }),
     ),
   );
@@ -181,6 +178,7 @@ test("callListFirewallPolicies-ok", async () => {
           Promise.resolve({
             firewallPolicies: testPolicies,
           }),
+        headers: new Headers()
       }),
     ),
   );
@@ -219,7 +217,7 @@ test("ApplyActions-allow", async () => {
   const req = new FetchApiRequest("https://www.example.com/doallow");
   vi.stubGlobal(
     "fetch",
-    vi.fn(() => Promise.resolve({ status: 200, text: () => "<HTML>Hello World</HTML>" })),
+    vi.fn(() => Promise.resolve({ status: 200, headers: new Headers(), text: () => "<HTML>Hello World</HTML>" })),
   );
   const resp = await applyActions(context, req, [ActionSchema.parse({ allow: {} })]);
   expect(resp.status).toEqual(200);
@@ -250,6 +248,7 @@ test("ApplyActions-setHeader", async () => {
       expect(req.headers.get("test-key")).toEqual("test-value");
       return Promise.resolve({
         status: 200,
+        headers: new Headers(),
         text: () => "<HTML>Hello World</HTML>",
       });
     }),
@@ -275,6 +274,7 @@ test("ApplyActions-redirect", async () => {
       );
       return Promise.resolve({
         status: 200,
+        headers: new Headers(),
         text: () => "<HTML>Hello World</HTML>",
       });
     }),
@@ -293,6 +293,7 @@ test("ApplyActions-substitute", async () => {
       expect(req.url).toEqual("https://www.example.com/newdest");
       return Promise.resolve({
         status: 200,
+        headers: new Headers(),
         text: () => "<HTML>Hello World</HTML>",
       });
     }),
@@ -312,6 +313,7 @@ test("ApplyActions-injectJs", async () => {
       expect(req.url).toEqual("https://www.example.com/testinject");
       return Promise.resolve({
         status: 200,
+        headers: new Headers(),
         text: () => "<HTML>Hello World</HTML>",
       });
     }),
@@ -332,6 +334,7 @@ test("ApplyActions-injectJsOnlyOnce", async () => {
       expect(req.url).toEqual("https://www.example.com/testinject");
       return Promise.resolve({
         status: 200,
+        headers: new Headers(),
         text: () => "<HTML>Hello World</HTML>",
       });
     }),
@@ -374,6 +377,7 @@ test("localPolicyAssessment-matchTrivialCondition", async () => {
       );
       return Promise.resolve({
         status: 200,
+        headers: new Headers(),
         json: () =>
           Promise.resolve({
             firewallPolicies: testPolicies,
@@ -414,6 +418,7 @@ test("localPolicyAssessment-noMatch", async () => {
       );
       return Promise.resolve({
         status: 200,
+        headers: new Headers(),
         json: () =>
           Promise.resolve({
             firewallPolicies: testPolicies,
@@ -615,6 +620,7 @@ test("localPolicyAssessment-errJson", async () => {
       );
       return Promise.resolve({
         status: 200,
+        headers: new Headers(),
         json: () => Promise.resolve({ error: { message: "bad", code: 400, status: "INVALID_ARGUMENT" } }),
       });
     }),
@@ -634,6 +640,7 @@ test("evaluatePolicyAssessment-ok", async () => {
       expect(req.url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123");
       return Promise.resolve({
         status: 200,
+        headers: new Headers(),
         json: () =>
           Promise.resolve({
             name: "projects/12345/assessments/1234567890",
@@ -693,6 +700,7 @@ test("evaluatePolicyAssessment-errJson", async () => {
       expect(req.url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123");
       return Promise.resolve({
         status: 200,
+        headers: new Headers(),
         json: () => Promise.resolve({ error: { message: "bad", code: 400, status: "INVALID_ARGUMENT" } }),
       });
     }),
@@ -726,6 +734,7 @@ test("processRequest-ok", async () => {
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
+      headers: new Headers(),
       json: () => Promise.resolve({ firewallPolicies: testPolicies }),
     }),
   );
@@ -746,6 +755,7 @@ test("processRequest-ok", async () => {
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
+      headers: new Headers(),
       text: () => Promise.resolve("<HTML>Hello World</HTML>"),
     }),
   );
@@ -778,12 +788,14 @@ test("processRequest-nomatch", async () => {
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
+      headers: new Headers(),
       json: () => Promise.resolve({ firewallPolicies: testPolicies }),
     }),
   );
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
+      headers: new Headers(),
       text: () => Promise.resolve("<HTML>Hello World</HTML>"),
     }),
   );
@@ -817,12 +829,14 @@ test("processRequest-inject", async () => {
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
+      headers: new Headers(),
       json: () => Promise.resolve({ firewallPolicies: testPolicies }),
     }),
   );
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
+      headers: new Headers(),
       text: () => Promise.resolve("<HTML>Hello World</HTML>"),
     }),
   );
@@ -856,12 +870,14 @@ test("processRequest-noinject", async () => {
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
+      headers: new Headers(),
       json: () => Promise.resolve({ firewallPolicies: testPolicies }),
     }),
   );
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
+      headers: new Headers(),
       text: () => Promise.resolve("<HTML>Hello World</HTML>"),
     }),
   );
@@ -893,6 +909,7 @@ test("processRequest-block", async () => {
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
+      headers: new Headers(),
       json: () => Promise.resolve({ firewallPolicies: testPolicies }),
     }),
   );
@@ -926,12 +943,14 @@ test("processRequest-dump", async () => {
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
+      headers: new Headers(),
       json: () => Promise.resolve({ firewallPolicies: testPolicies }),
     }),
   );
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
+      headers: new Headers(),
       text: () => Promise.resolve("<HTML>Hello World</HTML>"),
     }),
   );
@@ -959,6 +978,7 @@ test("processRequest-raise", async () => {
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
+      headers: new Headers(),
       text: () => Promise.resolve("<HTML>Hello World</HTML>"),
     }),
   );

@@ -1,9 +1,9 @@
-import { EdgeRequest, EdgeResponse, RecaptchaContext } from "./index";
+import { EdgeRequest, EdgeResponse, EdgeResponseInit, RecaptchaContext } from "./index";
 
 export class FetchApiRequest implements EdgeRequest {
   req: Request;
   constructor(req: Request | string) {
-    if (typeof req == "string") {
+    if (typeof req === "string") {
       this.req = new Request(req);
     } else {
       this.req = req;
@@ -36,7 +36,7 @@ export class FetchApiRequest implements EdgeRequest {
 
   getHeaders(): Map<string, string> {
     let ret = new Map();
-    this.req.headers.forEach((k, v) => {
+    this.req.headers.forEach((v, k) => {
       ret.set(k, v);
     });
     return ret;
@@ -52,59 +52,53 @@ export class FetchApiRequest implements EdgeRequest {
 }
 
 export class FetchApiResponse implements EdgeResponse {
-  resp?: Response;
-  _body?: string;
-  _status: number;
+  resp: Response;
   headers: Map<string, string>;
 
-  constructor(resp: Response | string, status?: number, headers?: Record<string, string>) {
+  constructor(resp: Response | string, options?: EdgeResponseInit) {
     if (typeof resp === "string") {
-      this._body = resp;
-      this._status = status ?? 200;
+      const resp_headers = new Headers();
       this.headers = new Map();
-      for (const [key, value] of Object.entries(headers ?? {})) {
+      for (const [key, value] of Object.entries(options?.headers ?? {})) {
         this.headers.set(key, value);
+        resp_headers.append(key, value);
       }
+      this.resp = new Response(resp, { status: options?.status ?? 200, headers: resp_headers });
     } else {
       this.resp = resp;
-      this._status = resp.status;
       this.headers = new Map();
-      for (const [key, value] of Object.entries(resp.headers ?? {})) {
-        this.headers.set(key, value);
-      }
+      resp.headers.forEach((v, k) => {
+        this.headers.set(k.toLowerCase(), v);
+      });
     }
   }
 
   asResponse(): Response {
     let headers = new Headers();
-    for (const [key, value] of this.headers) {
-      headers.append(key, value);
+    for (const [key, value] of this.headers.entries()) {
+      headers.append(key.toLowerCase(), value);
     }
-    for (const [key, value] of this.resp?.headers ?? []) {
-      headers.append(key, value);
-    }
-    return new Response(this.resp?.body ?? this._body, { ...this.resp, headers });
+    return new Response(this.resp?.body, { status: this.resp?.status, statusText: this.resp?.statusText, headers });
   }
 
   get status() {
-    return this._status;
+    return this.resp?.status;
   }
 
   text(): Promise<string> {
-    return this.resp?.text() ?? Promise.resolve(this._body ?? "");
+    return this.resp?.text();
   }
 
   json(): Promise<unknown> {
-    return this.resp?.json() ?? JSON.parse(this._body ?? "{}");
+    return this.resp?.json();
   }
 
   addHeader(key: string, value: string): void {
-    this.headers.set(key, value);
-    //this.resp = new Response(this.resp.body, { ...this, headers });
+    this.headers.set(key.toLowerCase(), value);
   }
 
   getHeader(key: string): string | null {
-    return this.headers.get(key) ?? null;
+    return this.headers.get(key.toLowerCase()) ?? null;
   }
 
   getHeaders(): Map<string, string> {

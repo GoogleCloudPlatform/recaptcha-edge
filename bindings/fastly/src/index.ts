@@ -131,7 +131,7 @@ export class FastlyContext extends RecaptchaContext {
     return {
       // extracting common signals
       userIpAddress: this.event.client.address ?? undefined,
-      headers: req.getHeaders().forEach(([k, v]) => `${k}:${v}`),
+      headers: req.getHeaders().forEach(([v, k]) => `${k}:${v}`),
       ja3: this.event.client.tlsJA3MD5 ?? undefined,
       requestedUri: req.url,
       userAgent: req.getHeader("user-agent") ?? undefined,
@@ -145,7 +145,7 @@ export class FastlyContext extends RecaptchaContext {
     // rewrite the response
     if (resp.getHeader("Content-Type")?.startsWith("text/html")) {
       const newRespStream = streamReplace(base_resp.body!, "</head>", RECAPTCHA_JS_SCRIPT + "</head>");
-      resp = new FetchApiResponse(new Response(newRespStream, resp));
+      resp = new FetchApiResponse(new Response(newRespStream, base_resp));
     }
     return Promise.resolve(resp);
   }
@@ -160,12 +160,14 @@ export class FastlyContext extends RecaptchaContext {
   }
 
   createResponse(body: string, options?: EdgeResponseInit): EdgeResponse {
-    return new FetchApiResponse(body, options?.status, options?.headers);
+    return new FetchApiResponse(body, options);
   }
 
   async fetch(req: EdgeRequest, options?: RequestInit): Promise<EdgeResponse> {
     let base_req = req as FetchApiRequest;
-    return fetch(base_req.req, options).then((v) => new FetchApiResponse(v));
+    return fetch(base_req.req, options).then((v) => {
+      return new FetchApiResponse(v);
+    });
   }
 
   /**

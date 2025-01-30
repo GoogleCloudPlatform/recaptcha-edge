@@ -117,7 +117,6 @@ describe("Run local Viceroy", function () {
     const contentTypeHeaders = (response.headers.get("content-type") ?? "")
       .split(",")
       .map((value) => value.trim().split(";")[0]);
-    assert.equal(response.headers, "");
     assert.ok(contentTypeHeaders.includes("text/html"));
   });
 

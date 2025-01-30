@@ -23,7 +23,7 @@ import * as action from "./action";
 import { FirewallPolicy } from "./assessment";
 import { callCreateAssessment } from "./createAssessment";
 import * as error from "./error";
-import { RecaptchaContext, EdgeRequest, EdgeResponse } from "./index";
+import { RecaptchaContext, EdgeRequest, EdgeResponse, FetchApiResponse } from "./index";
 import { callListFirewallPolicies } from "./listFirewallPolicies";
 import { createSoz } from "./soz";
 import URL from "url-parse";
