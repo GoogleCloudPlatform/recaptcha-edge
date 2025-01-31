@@ -19,16 +19,18 @@ import {
   RecaptchaConfig,
   RecaptchaContext,
   EdgeRequest,
-  EdgeRequestInfo,
   EdgeResponse,
   LogLevel,
   EdgeResponseInit,
+  EdgeRequestInit,
 } from "@google-cloud/recaptcha";
 import { HtmlRewritingStream } from "html-rewriter";
 import { httpRequest, HttpResponse } from "http-request";
+import { createResponse } from "create-response";
 import { logger } from "log";
 import { ReadableStream } from "streams";
 import pkg from "../package.json";
+import URL from "url-parse";
 
 function isHeaderRecord(obj: unknown): obj is Record<string, string | string[]> {
   return true;
@@ -77,15 +79,10 @@ function bodyGuard(body: any | null): string | ReadableStream | undefined {
   throw "Invalid request body";
 }
 
-function relativePath(req: EdgeRequestInfo): string {
+function relativePath(req: EdgeRequest | string): string {
   let s;
   if (typeof req === "string") {
-    let noprotocol = req.replace(/.*:\/\//, "");
-    let path_index = noprotocol.indexOf("/");
-    if (path_index < 0) {
-      path_index = 0;
-    }
-    return noprotocol.slice(path_index);
+    return new URL(req).pathname;
   }
   return req.url; // the .url property is already relative in Akamai requests.
 }
@@ -122,31 +119,50 @@ export {
   RecaptchaError,
 } from "@google-cloud/recaptcha";
 
+type AkamaiRequestInit = {
+  method?: string;
+  headers?: {
+    [others: string]: string | string[];
+  };
+  body?: string;
+  timeout?: number;
+};
+
 export class AkamaiRequest implements EdgeRequest {
-  req: EW.ResponseProviderRequest;
-  override_path: string;
+  req?: EW.ResponseProviderRequest;
+  method_: string;
+  url_: string;
+  body_?: string;
   headers: Map<string, string>;
 
-  constructor(req: EW.ResponseProviderRequest) {
-    this.req = req;
-    this.override_path = `${this.req.host}/${this.req.path}`;
-    this.headers = new Map();
-    let headers = req.getHeaders();
-    for (const [key, value] of Object.entries(headers)) {
-      this.headers.set(key, value.join(","));
+  constructor(req: EW.ResponseProviderRequest | string, options?: AkamaiRequestInit) {
+    if (typeof req === "string") {
+      this.url_ = req;
+      this.method_ = options?.method ?? "GET";
+      this.body_ = options?.body ?? "";
+      this.headers = new Map(); // TODO: headers
+    } else {
+      this.req = req;
+      this.url_ = `${this.req.scheme}://${this.req.host}${this.req.path}`;
+      this.method_ = this.req.method;
+      this.headers = new Map();
+      let headers = req.getHeaders();
+      for (const [key, value] of Object.entries(headers)) {
+        this.headers.set(key, value.join(","));
+      }
     }
   }
 
   get url() {
-    return this.override_path ?? `${this.req.host}/${this.req.path}`;
+    return this.url_;
   }
 
   set url(url: string) {
-    this.override_path = url;
+    this.url_ = url;
   }
 
   get method() {
-    return this.req.method;
+    return this.method_;
   }
 
   addHeader(key: string, value: string): void {
@@ -162,10 +178,16 @@ export class AkamaiRequest implements EdgeRequest {
   }
 
   getBodyText(): Promise<string> {
-    throw "unimplemented";
+    if (this.req) {
+      return this.req.text();
+    }
+    return Promise.resolve(this.body_ || "");
   }
   getBodyJson(): Promise<any> {
-    throw "unimplemented";
+    if (this.req) {
+      return this.req.json();
+    }
+    return Promise.resolve(JSON.parse(this.body_ || "{}"));
   }
 }
 
@@ -231,6 +253,10 @@ export class AkamaiResponse implements EdgeResponse {
       ret.set(k, v.join(","));
     }
     return ret;
+  }
+
+  asResponse(): object {
+    return createResponse(this.status, Object.fromEntries(this.headers.entries()), this.body);
   }
 }
 
@@ -305,7 +331,7 @@ export class AkamaiContext extends RecaptchaContext {
     };
   }
 
-  async fetch(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse> {
+  async fetch(req: EdgeRequest, options?: RequestInit): Promise<EdgeResponse> {
     // Convert RequestInfo to string if it's not already
     return httpRequest(relativePath(req), {
       method: options?.method ?? undefined,
@@ -313,6 +339,10 @@ export class AkamaiContext extends RecaptchaContext {
       body: bodyGuard(options?.body ?? null),
       /* there is no timeout in a Fetch API request. Consider making it a member of the Context */
     }).then((v) => new AkamaiResponse(v));
+  }
+
+  createRequest(url: string, options: EdgeRequestInit): EdgeRequest {
+    return new AkamaiRequest(url, options);
   }
 
   createResponse(body: string, options?: EdgeResponseInit): EdgeResponse {
@@ -333,29 +363,24 @@ export class AkamaiContext extends RecaptchaContext {
     throw new Error("JavaScript Injection is not yet implemented on Akamai.");
   }
 
-  async fetch_origin(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse> {
-    return httpRequest(relativePath(req), {
-      method: options?.method ?? undefined,
-      headers: headersGuard(options?.headers),
-      body: bodyGuard(options?.body ?? null),
-      /* there is no timeout in a Fetch API request. Consider making it a member of the Context */
-    }).then((v) => new AkamaiResponse(v));
+  async fetch_origin(req: EdgeRequest): Promise<EdgeResponse> {
+    return this.fetch(req);
   }
 
   // Fetch the firewall lists.
   // TODO: Cache the firewall policies.
   // https://techdocs.akamai.com/api-definitions/docs/caching
   // https://techdocs.akamai.com/property-mgr/docs/caching-2#how-it-works
-  async fetch_list_firewall_policies(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse> {
-    return this.fetch(relativePath(req), options);
+  async fetch_list_firewall_policies(req: EdgeRequest): Promise<EdgeResponse> {
+    return this.fetch(req);
   }
 
   /**
    * Call fetch for CreateAssessment
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_create_assessment(req: EdgeRequestInfo, options?: RequestInit): Promise<EdgeResponse> {
-    return this.fetch(relativePath(req), options);
+  async fetch_create_assessment(req: EdgeRequest): Promise<EdgeResponse> {
+    return this.fetch(req);
   }
 
   /**
@@ -363,14 +388,8 @@ export class AkamaiContext extends RecaptchaContext {
    * @param path: the URL to fetch the challenge page from.
    * @param soz_base64: the base64 encoded soz.
    */
-  async fetch_challenge_page(path: string, soz_base64: string): Promise<EdgeResponse> {
-    return this.fetch(relativePath(path), {
-      method: "POST",
-      headers: {
-        "content-type": "application/json;charset=UTF-8",
-        "X-ReCaptcha-Soz": soz_base64,
-      },
-    });
+  async fetch_challenge_page(req: EdgeRequest): Promise<EdgeResponse> {
+    return this.fetch(req);
   }
 }
 

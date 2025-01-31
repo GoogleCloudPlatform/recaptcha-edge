@@ -54,6 +54,12 @@ export {
   processRequest,
 } from "./policy";
 
+export type EdgeRequestInit = {
+  method?: string;
+  headers?: Record<string, string>;
+  body?: string;
+};
+
 export interface EdgeRequest {
   readonly method: string;
   url: string;
@@ -181,7 +187,7 @@ export abstract class RecaptchaContext {
     this.debug_trace = new DebugTrace(this);
   }
 
-  abstract createRequest(url: string, options: any): EdgeRequest;
+  abstract createRequest(url: string, options: EdgeRequestInit): EdgeRequest;
   abstract createResponse(body: string, options?: EdgeResponseInit): EdgeResponse;
   abstract fetch(req: EdgeRequest): Promise<EdgeResponse>;
 

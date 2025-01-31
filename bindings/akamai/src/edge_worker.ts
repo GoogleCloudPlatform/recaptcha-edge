@@ -24,9 +24,8 @@ import { AkamaiContext, AkamaiRequest, AkamaiResponse, processRequest, recaptcha
  * creates an AkamaiContext object and then calls the processRequest function
  * to handle the request.
  */
-import { createResponse } from "create-response";
 export async function responseProvider(inreq: EW.ResponseProviderRequest) {
   const akamaiContext = new AkamaiContext(recaptchaConfigFromRequest(inreq));
   let resp = await processRequest(akamaiContext, new AkamaiRequest(inreq));
-  return createResponse(resp.status, Object.fromEntries(resp.getHeaders()), (resp as AkamaiResponse).body);
+  return (resp as AkamaiResponse).asResponse();
 }

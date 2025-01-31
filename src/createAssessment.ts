@@ -21,7 +21,7 @@
 import * as action from "./action";
 import { Assessment, AssessmentSchema, Event, EventSchema, RpcErrorSchema } from "./assessment";
 import * as error from "./error";
-import { EdgeRequest, EdgeResponse, RecaptchaContext } from "./index";
+import { EdgeRequest, EdgeRequestInit, EdgeResponse, RecaptchaContext } from "./index";
 import picomatch from "picomatch";
 import { extractBoundary, parse } from "parse-multipart-form-data";
 
@@ -197,7 +197,7 @@ export async function callCreateAssessment(
       version: environment[1],
     };
   }
-  const options: RequestInit = {
+  const options: EdgeRequestInit = {
     method: "POST",
     body: JSON.stringify(assessment),
     headers: {

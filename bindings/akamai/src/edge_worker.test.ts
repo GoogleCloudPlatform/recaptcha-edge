@@ -91,7 +91,7 @@ const MockRequest = {
     throw "unimplemented";
   },
   getHeaders: () => {
-    throw "unimplemented";
+    return {};
   },
   setHeader: () => {
     throw "unimplemented";
@@ -115,6 +115,12 @@ beforeAll(() => {
     return {
       logger: {
         log: vi.fn(() => {
+          return {};
+        }),
+        error: vi.fn(() => {
+          return {};
+        }),
+        debug: vi.fn(() => {
           return {};
         }),
       },
@@ -194,6 +200,17 @@ test("localmatch-ok", async () => {
       actions: [{ block: {}, type: "block" }],
     },
   ];
+
+  mockHttpRequest.mockImplementationOnce(() => {
+    return Promise.resolve({
+      body: JSON.stringify({ firewallPolicies: testPolicies }),
+      json: () => Promise.resolve({ firewallPolicies: testPolicies }),
+      ok: true,
+      status: 200,
+      getHeader: () => undefined,
+      getHeaders: () => [],
+    });
+  });
 
   mockHttpRequest.mockImplementationOnce(() => {
     return Promise.resolve({
