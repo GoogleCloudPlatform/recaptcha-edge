@@ -84,7 +84,7 @@ export class CloudflareContext extends RecaptchaContext {
     }
   }
 
-  // Example Wordpress login event.
+  // Get UserInfo from the default login event.
   async getUserInfo(req: Request): Promise<UserInfo> {
     let userInfo: UserInfo = { accountId: "", userIds: [] };
     if (req.method === "POST" && new URL(req.url).pathname === this.config.credentialPath) {
