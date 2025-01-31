@@ -87,11 +87,11 @@ export class CloudflareContext extends RecaptchaContext {
   // Example Wordpress login event.
   async getUserInfo(req: Request): Promise<UserInfo> {
     let userInfo: UserInfo = { accountId: "", userIds: [] };
-    if (req.method === "POST" && new URL(req.url).pathname === "/wp-login.php?action=login-endpoint") {
+    if (req.method === "POST" && new URL(req.url).pathname === this.config.credentialPath) {
       try {
         const body = await req.clone().json();
-        const username = body["username"];
-        const clientId = body["client_id"];
+        const username = body[this.config.username];
+        const clientId = body[this.config.accountId];
 
         if (username) {
           userInfo = {
@@ -159,6 +159,9 @@ export function recaptchaConfigFromEnv(env: Env): RecaptchaConfig {
     enterpriseSiteKey: env.ENTERPRISE_SITE_KEY,
     recaptchaEndpoint: env.RECAPTCHA_ENDPOINT ?? DEFAULT_RECAPTCHA_ENDPOINT,
     sessionJsInjectPath: env.SESSION_JS_INSTALL_PATH,
+    credentialPath: env.CREDENTIAL_PATH,
+    accountId: env.ACCOUNT_ID,
+    username: env.USERNAME,
     debug: env.DEBUG ?? false,
     unsafe_debug_dump_logs: env.UNSAFE_DEBUG_DUMP_LOGS ?? false,
   };
