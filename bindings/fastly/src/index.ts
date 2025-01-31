@@ -131,7 +131,7 @@ export class FastlyContext extends RecaptchaContext {
     return {
       // extracting common signals
       userIpAddress: this.event.client.address ?? undefined,
-      headers: req.getHeaders().forEach(([v, k]) => `${k}:${v}`),
+      headers: Array.from(req.getHeaders().entries()).map(([k, v]) => `${k}:${v}`),
       ja3: this.event.client.tlsJA3MD5 ?? undefined,
       requestedUri: req.url,
       userAgent: req.getHeader("user-agent") ?? undefined,
@@ -165,7 +165,7 @@ export class FastlyContext extends RecaptchaContext {
 
   async fetch(req: EdgeRequest, options?: RequestInit): Promise<EdgeResponse> {
     let base_req = req as FetchApiRequest;
-    return fetch(base_req.req, options).then((v) => {
+    return fetch(base_req.asRequest(), options).then((v) => {
       return new FetchApiResponse(v);
     });
   }

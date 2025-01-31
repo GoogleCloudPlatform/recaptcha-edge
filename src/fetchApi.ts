@@ -27,7 +27,15 @@ export class FetchApiRequest implements EdgeRequest {
     let headers = new Headers(this.req.headers);
     headers.append(key, value);
     // uses Request constructor
-    this.req = new Request(this.req.url, { ...this.req, headers });
+    this.req = new Request(this.req.url, {
+      method: this.req.method,
+      headers,
+      body: this.req.body,
+      credentials: this.req.credentials,
+      mode: this.req.mode,
+      redirect: this.req.redirect,
+      cache: this.req.cache,
+    });
   }
 
   getHeader(key: string): string | null {
@@ -48,6 +56,10 @@ export class FetchApiRequest implements EdgeRequest {
 
   async getBodyJson(): Promise<unknown> {
     return this.req.clone().json();
+  }
+
+  asRequest(): Request {
+    return this.req;
   }
 }
 

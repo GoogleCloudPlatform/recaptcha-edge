@@ -84,8 +84,8 @@ class TestContext extends RecaptchaContext {
   }
 
   async fetch(req: EdgeRequest): Promise<EdgeResponse> {
-    let base_req = req as FetchApiRequest;
-    return fetch(base_req.req).then((v) => new FetchApiResponse(v));
+    let base_req = (req as FetchApiRequest).asRequest();
+    return fetch(base_req).then((v) => new FetchApiResponse(v));
   }
   logException = (e: any) => {
     this.exceptions.push(e);

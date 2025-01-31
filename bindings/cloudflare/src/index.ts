@@ -77,11 +77,11 @@ export class CloudflareContext extends RecaptchaContext {
   }
 
   buildEvent(req: EdgeRequest): object {
-    let base_req = (req as FetchApiRequest).req;
+    let base_req = (req as FetchApiRequest).asRequest();
     return {
       // extracting common signals
       userIpAddress: req.getHeader("CF-Connecting-IP"),
-      headers: req.getHeaders().forEach(([v, k]) => `${k}:${v}`),
+      headers: Array.from(req.getHeaders().entries()).map(([k, v]) => `${k}:${v}`),
       ja3: (base_req as any)?.["cf"]?.["bot_management"]?.["ja3_hash"] ?? undefined,
       requestedUri: req.url,
       userAgent: req.getHeader("user-agent"),
@@ -117,8 +117,8 @@ export class CloudflareContext extends RecaptchaContext {
   }
 
   async fetch(req: EdgeRequest, options?: RequestInit): Promise<EdgeResponse> {
-    let base_req = req as FetchApiRequest;
-    return fetch(base_req.req, options).then((v) => new FetchApiResponse(v));
+    let base_req = (req as FetchApiRequest).asRequest();
+    return fetch(base_req, options).then((v) => new FetchApiResponse(v));
   }
 
   async fetch_list_firewall_policies(req: EdgeRequest, options?: RequestInit): Promise<EdgeResponse> {
