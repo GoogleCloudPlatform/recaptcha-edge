@@ -84,16 +84,19 @@ export class CloudflareContext extends RecaptchaContext {
     }
   }
 
+  // Example Wordpress login event.
   async getUserInfo(req: Request): Promise<UserInfo> {
     let userInfo: UserInfo = { accountId: "", userIds: [] };
-    if (req.method === "POST" && new URL(req.url).pathname === "/login") {
+    if (req.method === "POST" && new URL(req.url).pathname === "/wp-login.php?action=login-endpoint") {
       try {
         const body = await req.clone().json();
         const username = body["username"];
+        const clientId = body["client_id"];
 
         if (username) {
           userInfo = {
-            accountId: username,
+            accountId: clientId,
+            userIds: [{ username: username }],
           };
         }
       } catch (error) {

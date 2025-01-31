@@ -137,6 +137,78 @@ test("callCreateAssessment-ok", async () => {
   expect(resp).toEqual(testAssessment);
 });
 
+test("callCreateAssessmentWithUserInfo-ok", async () => {
+  const baseEvent = {};
+  const testEvent = {
+    token: "test-token",
+    siteKey: "enterprise-site-key",
+    wafTokenAssessment: false,
+    userInfo: {
+      accountId: "testuser",
+      userIds: [
+        {
+          email: "testing@google.com",
+        },
+        {
+          phoneNumber: "123456789",
+        },
+        {
+          username: "test",
+        },
+      ],
+    },
+  };
+  const testAssessment = {
+    event: testEvent,
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(() =>
+      Promise.resolve({
+        json: () => Promise.resolve(testAssessment),
+      }),
+    ),
+  );
+
+  const testContext = {
+    ...new TestContext(testConfig),
+    // eslint-disable-next-line  @typescript-eslint/no-unused-vars
+    buildEvent: (req: Request) => {
+      return testEvent;
+    },
+    fetch: (req, options) => fetch(req, options),
+    fetch_create_assessment: (req, options) => fetch(req, options),
+  };
+
+  const resp = await callCreateAssessment(
+    testContext as RecaptchaContext,
+    new Request("https://www.google.com", {
+      body: JSON.stringify({
+        "g-recaptcha-response": "test-token",
+      }),
+      headers: {
+        "content-type": "application/json;charset=UTF-8",
+      },
+      method: "POST",
+    }),
+    ["test-env", "test-version"],
+  );
+  expect(fetch).toHaveBeenCalledWith(
+    "https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123",
+    {
+      body: JSON.stringify({
+        event: testEvent,
+        assessmentEnvironment: { client: "test-env", version: "test-version" },
+      }),
+      headers: {
+        "content-type": "application/json;charset=UTF-8",
+      },
+      method: "POST",
+    },
+  );
+  expect(resp).toEqual(testAssessment);
+});
+
 test("callListFirewallPolicies-ok", async () => {
   const testPolicies = [
     {
