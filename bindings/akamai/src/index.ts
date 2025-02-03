@@ -24,13 +24,90 @@ import {
   EdgeResponseInit,
   EdgeRequestInit,
 } from "@google-cloud/recaptcha";
-import { HtmlRewritingStream } from "html-rewriter";
+import {TextDecoder, TextEncoder} from 'encoding';
 import { httpRequest, HttpResponse } from "http-request";
 import { createResponse } from "create-response";
 import { logger } from "log";
 import { ReadableStream } from "streams";
 import pkg from "../package.json";
 import URL from "url-parse";
+
+export function streamReplace(
+  inputStream: ReadableStream<Uint8Array>,
+  targetStr: string,
+  replacementStr: string,
+): ReadableStream<Uint8Array> {
+  let buffer = "";
+  const decoder = new TextDecoder("utf-8");
+  const encoder = new TextEncoder();
+  const inputReader = inputStream.getReader();
+  let found = false; // Flag to track if replacement has been made.
+
+  const outputStream = new ReadableStream<Uint8Array>({
+    start() {
+      buffer = "";
+      found = false;
+    },
+    async pull(controller) {
+      const { value: chunk, done: readerDone } = await inputReader.read();
+
+      if (chunk) {
+        buffer += decoder.decode(chunk);
+      }
+
+      if (!found) {
+        // Only perform replacement if not already found.
+        let targetIndex = buffer.indexOf(targetStr);
+        if (targetIndex !== -1) {
+          const beforeTarget = buffer.slice(0, targetIndex);
+          const afterTarget = buffer.slice(targetIndex + targetStr.length);
+          controller.enqueue(encoder.encode(beforeTarget + replacementStr));
+          buffer = afterTarget;
+          targetIndex = -1;
+          found = true;
+        }
+      }
+
+      if (readerDone) {
+        controller.enqueue(encoder.encode(buffer));
+        controller.close();
+      } else if (buffer.length > targetStr.length && !found) {
+        const safeChunk = buffer.slice(0, buffer.length - targetStr.length);
+        controller.enqueue(encoder.encode(safeChunk));
+        buffer = buffer.slice(buffer.length - targetStr.length);
+      }
+    },
+    cancel() {
+      inputReader.cancel();
+    },
+  });
+
+  return outputStream;
+};
+
+export function stringToStream(str: string): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder();
+  const encodedString = encoder.encode(str);
+
+  return new ReadableStream({
+    start(controller) {
+      controller.enqueue(encodedString);
+      controller.close();
+    },
+  });
+}
+
+export async function readStream(stream: ReadableStream<Uint8Array>): Promise<string> {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let result = await reader.read();
+  let out = "";
+  while (!result.done) {
+    out += decoder.decode(new Uint8Array(result.value).buffer);
+    result = await reader.read();
+  }
+  return out;
+}
 
 function isHeaderRecord(obj: unknown): obj is Record<string, string | string[]> {
   return true;
@@ -77,14 +154,6 @@ function bodyGuard(body: any | null): string | ReadableStream | undefined {
     return body as string | ReadableStream;
   }
   throw "Invalid request body";
-}
-
-function relativePath(req: EdgeRequest | string): string {
-  let s;
-  if (typeof req === "string") {
-    return new URL(req).pathname;
-  }
-  return req.url; // the .url property is already relative in Akamai requests.
 }
 
 const RECAPTCHA_JS = "https://www.google.com/recaptcha/enterprise.js";
@@ -192,8 +261,8 @@ export class AkamaiRequest implements EdgeRequest {
 }
 
 export class AkamaiResponse implements EdgeResponse {
-  resp?: HttpResponse;
-  _body?: string;
+  //resp?: HttpResponse;
+  _body?: string | ReadableStream<Uint8Array>;
   _status: number;
   headers: Map<string, string[]>;
 
@@ -211,7 +280,7 @@ export class AkamaiResponse implements EdgeResponse {
       }
     } else {
       // base type is HttpResponse
-      this.resp = base;
+      this._body = base.body;
       this._status = status ?? base.status;
       this.headers = new Map();
       let rh = base.getHeaders();
@@ -225,16 +294,22 @@ export class AkamaiResponse implements EdgeResponse {
     return this._status;
   }
 
-  get body(): ReadableStream<any> | string {
-    return this.resp?.body ?? this._body ?? "";
+  get body(): ReadableStream<Uint8Array> | string {
+    return this._body ?? "";
   }
 
   text(): Promise<string> {
-    return this.resp?.text() ?? Promise.resolve(this._body ?? "");
+    if (!this._body) {
+      return Promise.resolve("");
+    }
+    if (typeof this._body === "string") {
+      return Promise.resolve(this._body);
+    }
+    return readStream(this._body);
   }
 
-  json(): Promise<unknown> {
-    return this.resp?.json() ?? Promise.resolve(JSON.parse(this._body ?? "{}"));
+  async json(): Promise<unknown> {
+    return Promise.resolve(JSON.parse(await this.text()));
   }
 
   addHeader(key: string, value: string): void {
@@ -332,11 +407,13 @@ export class AkamaiContext extends RecaptchaContext {
   }
 
   async fetch(req: EdgeRequest, options?: RequestInit): Promise<EdgeResponse> {
-    // Convert RequestInfo to string if it's not already
-    return httpRequest(relativePath(req), {
-      method: options?.method ?? undefined,
-      headers: headersGuard(options?.headers),
-      body: bodyGuard(options?.body ?? null),
+    // Use a relative path, since this is the method for origin redirection used 
+    // on Akamai.
+    let url = new URL(req.url);
+    return httpRequest(url.pathname + url.query, {
+      method: options?.method ?? req.method,
+      headers: headersGuard(options?.headers ?? req.getHeaders()),
+      body: bodyGuard(options?.body ?? (req as AkamaiRequest).body_ ?? null),
       /* there is no timeout in a Fetch API request. Consider making it a member of the Context */
     }).then((v) => new AkamaiResponse(v));
   }
@@ -347,6 +424,11 @@ export class AkamaiContext extends RecaptchaContext {
 
   createResponse(body: string, options?: EdgeResponseInit): EdgeResponse {
     return new AkamaiResponse(body, options?.status, options?.headers);
+  }
+
+  // Overwritten because the TextEncoder object is different from the builtin NodeJS TextEncoder.
+  encodeString(st: string): Uint8Array {
+    return new TextEncoder().encode(st);
   }
 
   getSafeResponseHeaders(headers: any) {
@@ -360,7 +442,20 @@ export class AkamaiContext extends RecaptchaContext {
   }
 
   injectRecaptchaJs(resp: EdgeResponse): Promise<EdgeResponse> {
-    throw new Error("JavaScript Injection is not yet implemented on Akamai.");
+    let base_resp = (resp as AkamaiResponse);
+    const sessionKey = this.config.sessionSiteKey;
+    const RECAPTCHA_JS_SCRIPT = `<script src="${RECAPTCHA_JS}?render=${sessionKey}&waf=session" async defer></script>`;
+    // rewrite the response
+    if (resp.getHeader("Content-Type")?.startsWith("text/html")) {
+      let body = base_resp.body;
+      if (typeof body === "string") { 
+
+      } else {
+        const newRespStream = streamReplace(body, "</head>", RECAPTCHA_JS_SCRIPT + "</head>");
+        base_resp._body = newRespStream;
+      }
+    }
+    return Promise.resolve(resp);
   }
 
   async fetch_origin(req: EdgeRequest): Promise<EdgeResponse> {

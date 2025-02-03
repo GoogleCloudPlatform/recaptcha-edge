@@ -88,7 +88,7 @@ const MockRequest = {
     throw "unimplemented";
   },
   getHeader: () => {
-    throw "unimplemented";
+    return "";
   },
   getHeaders: () => {
     return {};
@@ -212,6 +212,26 @@ test("localmatch-ok", async () => {
     });
   });
 
+  const req = vi.mocked({
+    ...MockRequest,
+    url: "http://www.example.com/block",
+    path: "/block",
+  });
+  const resp = await responseProvider(req);
+  expect(resp.status).toEqual(403);
+});
+
+test("jsinject", async () => {
+  const testPolicies = [
+    {
+      name: "test-policy",
+      description: "test-description",
+      path: "/block",
+      // 'type' isn't a part of the interface, but is added for testing.
+      actions: [{ block: {}, type: "block" }],
+    },
+  ];
+
   mockHttpRequest.mockImplementationOnce(() => {
     return Promise.resolve({
       body: JSON.stringify({ firewallPolicies: testPolicies }),
@@ -221,11 +241,19 @@ test("localmatch-ok", async () => {
       getHeader: () => undefined,
       getHeaders: () => [],
     });
+  }).mockImplementationOnce(() => {
+    return Promise.resolve({
+      body: stringToStream("<HTML>HELLO WORLD!</HTML>"),
+      ok: true,
+      status: 200,
+      getHeader: () => undefined,
+      getHeaders: () => [],
+    });
   });
 
   const req = vi.mocked({
     ...MockRequest,
-    url: "http://www.example.com/block",
+    url: "http://www.example.com/injectjs",
     path: "/block",
   });
   const resp = await responseProvider(req);

@@ -189,6 +189,9 @@ export abstract class RecaptchaContext {
 
   abstract createRequest(url: string, options: EdgeRequestInit): EdgeRequest;
   abstract createResponse(body: string, options?: EdgeResponseInit): EdgeResponse;
+  encodeString(st: string): Uint8Array {
+    return new TextEncoder().encode(st);
+  }
   abstract fetch(req: EdgeRequest): Promise<EdgeResponse>;
 
   /**

@@ -22,7 +22,8 @@ import { expect, test } from "vitest";
 import { createSoz } from "./soz";
 
 test("createSoz-ok", async () => {
-  expect(createSoz("example.com", "1.2.3.4", 12345, "challengeSiteKey")).toEqual(
+  let context = {encodeString: (st) => {return new TextEncoder().encode(st)}}
+  expect(createSoz(context, "example.com", "1.2.3.4", 12345, "challengeSiteKey")).toEqual(
     "eyJob3N0IjoiZXhhbXBsZS5jb20iLCJwcm9qZWN0TnVtYmVyIjoxMjM0NSwic2l0ZUtleSI6ImNoYWxsZW5nZVNpdGVLZXkiLCJ1c2VySXAiOiJBUUlEQkEifQ",
   );
 });

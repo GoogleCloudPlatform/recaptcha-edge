@@ -97,7 +97,6 @@ export async function localPolicyAssessment(context: RecaptchaContext, req: Edge
     }
     const policies = resp.firewallPolicies ?? [];
     for (const policy of policies) {
-      context.log("debug", "check policy " + policy.path + " " + new URL(req.url).pathname);
       if (policyPathMatch(policy, req)) {
         const conditionMatch = policyConditionMatch(policy, req);
         if (conditionMatch === "unknown") {
@@ -189,6 +188,7 @@ export async function applyActions(
       context.log("error", "[!] attempt to redirect without challenge page site key!");
     }
     const soz = createSoz(
+      context,
       url.hostname,
       event.userIpAddress,
       context.config.projectNumber,
