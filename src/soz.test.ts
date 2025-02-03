@@ -20,9 +20,16 @@
 import { expect, test } from "vitest";
 
 import { createSoz } from "./soz";
+import { RecaptchaContext } from "../dist/index.esm";
 
 test("createSoz-ok", async () => {
-  let context = {encodeString: (st) => {return new TextEncoder().encode(st)}}
+  let context = {
+    encodeString: (st) => {
+      return new TextEncoder().encode(st);
+    },
+  };
+  // Ignore type-checking for context.
+  // @ts-expect-error
   expect(createSoz(context, "example.com", "1.2.3.4", 12345, "challengeSiteKey")).toEqual(
     "eyJob3N0IjoiZXhhbXBsZS5jb20iLCJwcm9qZWN0TnVtYmVyIjoxMjM0NSwic2l0ZUtleSI6ImNoYWxsZW5nZVNpdGVLZXkiLCJ1c2VySXAiOiJBUUlEQkEifQ",
   );

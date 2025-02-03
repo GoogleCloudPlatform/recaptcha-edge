@@ -24,7 +24,7 @@ import {
   EdgeResponseInit,
   EdgeRequestInit,
 } from "@google-cloud/recaptcha";
-import {TextDecoder, TextEncoder} from 'encoding';
+import { TextDecoder, TextEncoder } from "encoding";
 import { httpRequest, HttpResponse } from "http-request";
 import { createResponse } from "create-response";
 import { logger } from "log";
@@ -83,7 +83,7 @@ export function streamReplace(
   });
 
   return outputStream;
-};
+}
 
 export function stringToStream(str: string): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
@@ -407,7 +407,7 @@ export class AkamaiContext extends RecaptchaContext {
   }
 
   async fetch(req: EdgeRequest, options?: RequestInit): Promise<EdgeResponse> {
-    // Use a relative path, since this is the method for origin redirection used 
+    // Use a relative path, since this is the method for origin redirection used
     // on Akamai.
     let url = new URL(req.url);
     return httpRequest(url.pathname + url.query, {
@@ -442,14 +442,13 @@ export class AkamaiContext extends RecaptchaContext {
   }
 
   injectRecaptchaJs(resp: EdgeResponse): Promise<EdgeResponse> {
-    let base_resp = (resp as AkamaiResponse);
+    let base_resp = resp as AkamaiResponse;
     const sessionKey = this.config.sessionSiteKey;
     const RECAPTCHA_JS_SCRIPT = `<script src="${RECAPTCHA_JS}?render=${sessionKey}&waf=session" async defer></script>`;
     // rewrite the response
     if (resp.getHeader("Content-Type")?.startsWith("text/html")) {
       let body = base_resp.body;
-      if (typeof body === "string") { 
-
+      if (typeof body === "string") {
       } else {
         const newRespStream = streamReplace(body, "</head>", RECAPTCHA_JS_SCRIPT + "</head>");
         base_resp._body = newRespStream;
