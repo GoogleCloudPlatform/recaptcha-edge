@@ -421,7 +421,7 @@ export class AkamaiContext extends RecaptchaContext {
     return httpRequest(url.pathname + url.query, {
       method: options?.method ?? req.method,
       headers,
-      body: bodyGuard(options?.body) ?? (req as AkamaiRequest).body_ ?? undefined,
+      body: bodyGuard(options?.body ?? (req as AkamaiRequest).body_ ?? null),
       /* there is no timeout in a Fetch API request. Consider making it a member of the Context */
     }).then((v) => new AkamaiResponse(v));
   }
