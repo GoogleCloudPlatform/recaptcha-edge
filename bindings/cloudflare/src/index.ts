@@ -85,30 +85,30 @@ export class CloudflareContext extends RecaptchaContext {
   }
 
   // Get UserInfo from the default login event.
-  async getUserInfo(req: Request): Promise<UserInfo> {
+  async getUserInfo(req: Request, accountIdField: string, usernameField: string): Promise<UserInfo> {
     let userInfo: UserInfo = { accountId: "", userIds: [] };
-    if (req.method === "POST" && new URL(req.url).pathname === this.config.credentialPath) {
-      try {
-        const body = await req.clone().json();
-        const username = body[this.config.username];
-        const clientId = body[this.config.accountId];
+    try {
+      const body = await req.clone().json();
+      const accountId = body[accountIdField];
+      const username = body[usernameField];
 
-        if (username) {
-          userInfo = {
-            accountId: clientId,
-            userIds: [{ username: username }],
-          };
-        }
-      } catch (error) {
-        console.error("getUserInfo error:", error);
-        return userInfo;
+      if (accountId) {
+        userInfo = {
+          accountId,
+          userIds: [{ username: username }],
+        };
       }
+    } catch (error) {
+      console.error("getUserInfo error:", error);
     }
     return userInfo;
   }
 
   async buildEvent(req: Request): Promise<object> {
-    const userInfo = await this.getUserInfo(req);
+    let userInfo: UserInfo | undefined = undefined;
+    if (req.method === "POST" && new URL(req.url).pathname === this.config.credentialPath) {
+      userInfo = await this.getUserInfo(req, this.config.accountId, this.config.username);
+    }
     return {
       // extracting common signals
       userIpAddress: req.headers.get("CF-Connecting-IP"),
@@ -116,7 +116,7 @@ export class CloudflareContext extends RecaptchaContext {
       ja3: (req as any)?.["cf"]?.["bot_management"]?.["ja3_hash"] ?? undefined,
       requestedUri: req.url,
       userAgent: req.headers.get("user-agent"),
-      userInfo: userInfo,
+      userInfo,
     };
   }
 
