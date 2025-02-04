@@ -32,7 +32,7 @@ import { ReadableStream } from "streams";
 import pkg from "../package.json";
 import URL from "url-parse";
 
-export function streamReplace(
+function streamReplace(
   inputStream: ReadableStream<Uint8Array>,
   targetStr: string,
   replacementStr: string,
@@ -85,19 +85,7 @@ export function streamReplace(
   return outputStream;
 }
 
-export function stringToStream(str: string): ReadableStream<Uint8Array> {
-  const encoder = new TextEncoder();
-  const encodedString = encoder.encode(str);
-
-  return new ReadableStream({
-    start(controller) {
-      controller.enqueue(encodedString);
-      controller.close();
-    },
-  });
-}
-
-export async function readStream(stream: ReadableStream<Uint8Array>): Promise<string> {
+async function readStream(stream: ReadableStream<Uint8Array>): Promise<string> {
   const reader = stream.getReader();
   const decoder = new TextDecoder();
   let result = await reader.read();
@@ -107,53 +95,6 @@ export async function readStream(stream: ReadableStream<Uint8Array>): Promise<st
     result = await reader.read();
   }
   return out;
-}
-
-function isHeaderRecord(obj: unknown): obj is Record<string, string | string[]> {
-  return true;
-}
-
-function headersGuard(
-  headers: Record<string, string | readonly string[]> | string[][] | object | undefined,
-): Record<string, string | string[]> {
-  if (headers === undefined) {
-    return {};
-  }
-
-  // We have string[][]
-  if (Array.isArray(headers)) {
-    const headerMap: Record<string, string | string[]> = {};
-
-    headers.forEach(([key, ...values]) => {
-      headerMap[key] = values.length === 1 ? values[0] : values;
-    });
-
-    return headerMap;
-  }
-
-  const headerMap: Record<string, string | string[]> = {};
-  if (isHeaderRecord(headers)) {
-    // We have Record<string, string | readonly string[]>
-    // remove readonly attribute
-    for (const key in headers) {
-      const value = headers[key];
-      headerMap[key] = value.length === 1 ? value[0] : [...value];
-    }
-  } else {
-    throw "Invalid header";
-  }
-
-  return headerMap;
-}
-
-function bodyGuard(body: any | null): string | ReadableStream | undefined {
-  if (body === null) {
-    return undefined;
-  }
-  if (typeof body === "string" || body instanceof ReadableStream) {
-    return body as string | ReadableStream;
-  }
-  throw "Invalid request body";
 }
 
 const RECAPTCHA_JS = "https://www.google.com/recaptcha/enterprise.js";
