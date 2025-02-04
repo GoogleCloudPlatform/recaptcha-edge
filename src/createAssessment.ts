@@ -192,8 +192,6 @@ export async function callCreateAssessment(
     ...additionalParams,
   };
   const assessment: Assessment = { event };
-  console.log("Assessment: ");
-  console.log(assessment);
   if (environment) {
     assessment.assessmentEnvironment = {
       client: environment[0],
@@ -219,8 +217,6 @@ export async function callCreateAssessment(
       return response
         .json()
         .then((json) => {
-          console.log("Response.json");
-          console.log(json);
           const ret = AssessmentSchema.safeParse(json);
           if (ret.success && Object.keys(ret.data).length > 0) {
             context.debug_trace.create_assessment = "ok";
