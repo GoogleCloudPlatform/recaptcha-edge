@@ -21,7 +21,7 @@
     "directory": "bindings/akamai"
   },
   "scripts": {
-    "build": "node esbuild.config.js --config=esbuild.config.js && mv dist/edge_worker.js dist/main.js && cp src/bundle.json dist/",
+    "build": "node esbuild.config.js && mv dist/edge_worker.js dist/main.js && cp src/bundle.json dist/",
     "pack": "cd dist && tar -czvf akamai.tgz bundle.json main.js",
     "deploy": "",
     "devclean": "rm -rf node_nodules && rm -rf dist && rm package-lock.json",

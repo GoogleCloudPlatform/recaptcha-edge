@@ -410,10 +410,18 @@ export class AkamaiContext extends RecaptchaContext {
     // Use a relative path, since this is the method for origin redirection used
     // on Akamai.
     let url = new URL(req.url);
+    let headers = Object.fromEntries(req.getHeaders().entries());
+    for (const [k, v] of Object.entries(headersGuard(options?.headers))) {
+      if (typeof v === "string") {
+        headers[k] = v;
+      } else {
+        headers[k] = v.join(",");
+      }
+    }
     return httpRequest(url.pathname + url.query, {
       method: options?.method ?? req.method,
-      headers: headersGuard(options?.headers ?? req.getHeaders()),
-      body: bodyGuard(options?.body ?? (req as AkamaiRequest).body_ ?? null),
+      headers,
+      body: bodyGuard(options?.body) ?? (req as AkamaiRequest).body_ ?? undefined,
       /* there is no timeout in a Fetch API request. Consider making it a member of the Context */
     }).then((v) => new AkamaiResponse(v));
   }
