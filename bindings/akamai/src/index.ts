@@ -402,30 +402,24 @@ export class AkamaiContext extends RecaptchaContext {
   buildEvent(req: EdgeRequest): object {
     return {
       // extracting common signals
-      userIpAddress: req.getHeader("True-Client-IP"),
+      userIpAddress: (req as AkamaiRequest).req?.clientIp,
       headers: Array.from(req.getHeaders()).map(([k, v]) => `${k}:${v}`),
-      ja3: (req as any)?.akamai?.bot_management?.ja3_hash ?? undefined,
+      ja3: ((req as AkamaiRequest).req as any)?.akamai?.bot_management?.ja3_hash ?? undefined,
       requestedUri: req.url,
       userAgent: req.getHeader("user-agent"),
     };
   }
 
-  async fetch(req: EdgeRequest, options?: RequestInit): Promise<EdgeResponse> {
+  async fetch(req: EdgeRequest): Promise<EdgeResponse> {
     // Use a relative path, since this is the method for origin redirection used
     // on Akamai.
     let url = new URL(req.url);
     let headers = Object.fromEntries(req.getHeaders().entries());
-    for (const [k, v] of Object.entries(headersGuard(options?.headers))) {
-      if (typeof v === "string") {
-        headers[k] = v;
-      } else {
-        headers[k] = v.join(",");
-      }
-    }
+    let body = await req.getBodyText();
     return httpRequest(url.pathname + url.query, {
-      method: options?.method ?? req.method,
+      method: req.method,
       headers,
-      body: bodyGuard(options?.body ?? (req as AkamaiRequest).body_ ?? null),
+      body,
       /* there is no timeout in a Fetch API request. Consider making it a member of the Context */
     }).then((v) => new AkamaiResponse(v));
   }
