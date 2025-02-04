@@ -445,16 +445,6 @@ export class AkamaiContext extends RecaptchaContext {
     return new TextEncoder().encode(st);
   }
 
-  getSafeResponseHeaders(headers: any) {
-    for (const [headerKey] of Object.entries(headers)) {
-      if (UNSAFE_RESPONSE_HEADERS.has(headerKey)) {
-        headers.delete(headerKey);
-      }
-    }
-
-    return headers;
-  }
-
   injectRecaptchaJs(resp: EdgeResponse): Promise<EdgeResponse> {
     let base_resp = resp as AkamaiResponse;
     const sessionKey = this.config.sessionSiteKey;
