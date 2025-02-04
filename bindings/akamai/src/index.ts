@@ -332,10 +332,8 @@ export class AkamaiResponse implements EdgeResponse {
 
   asResponse(): object {
     let headers = new Map(this.headers);
-    for (const [key] of UNSAFE_RESPONSE_HEADERS) {
-      if (this.headers.has(key)) {
-        headers.delete(key);
-      }
+    for (const key of UNSAFE_RESPONSE_HEADERS) {
+      headers.delete(key);
     }
     return createResponse(this.status, Object.fromEntries(headers.entries()), this.body);
   }
