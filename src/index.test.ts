@@ -95,10 +95,12 @@ class TestContext extends RecaptchaContext {
   };
   // eslint-disable-next-line  @typescript-eslint/no-unused-vars
   buildEvent = (req: EdgeRequest) => {
-    return Promise.resolve(EventSchema.parse({
-      userIpAddress: "1.2.3.4",
-      userAgent: "test-user-agent",
-    }));
+    return Promise.resolve(
+      EventSchema.parse({
+        userIpAddress: "1.2.3.4",
+        userAgent: "test-user-agent",
+      }),
+    );
   };
   injectRecaptchaJs = async (resp: EdgeResponse) => {
     let html = await resp.text();
