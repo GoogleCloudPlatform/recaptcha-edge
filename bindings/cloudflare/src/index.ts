@@ -34,7 +34,7 @@ import {
   FetchApiRequest,
   FetchApiResponse,
   EdgeResponseInit,
-  UserInfo
+  UserInfo,
 } from "@google-cloud/recaptcha";
 import pkg from "../package.json";
 

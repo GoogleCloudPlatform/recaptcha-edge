@@ -1,4 +1,3 @@
-import { userInfoSchema } from "./assessment";
 /**
  * Copyright 2024 Google LLC
  *
