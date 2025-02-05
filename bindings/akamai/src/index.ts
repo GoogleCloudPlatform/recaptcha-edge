@@ -151,9 +151,9 @@ export class AkamaiRequest implements EdgeRequest {
       this.headers = new Map();
       for (const [key, value] of Object.entries(options?.headers ?? {})) {
         if (typeof value === "string") {
-          this.headers.set(key, value);
+          this.headers.set(key.toLowerCase(), value);
         } else {
-          this.headers.set(key, value.join(","));
+          this.headers.set(key.toLowerCase(), value.join(","));
         }
       }
     } else {
@@ -163,7 +163,7 @@ export class AkamaiRequest implements EdgeRequest {
       this.headers = new Map();
       let headers = req.getHeaders();
       for (const [key, value] of Object.entries(headers)) {
-        this.headers.set(key, value.join(","));
+        this.headers.set(key.toLowerCase(), value.join(","));
       }
     }
   }
@@ -181,11 +181,11 @@ export class AkamaiRequest implements EdgeRequest {
   }
 
   addHeader(key: string, value: string): void {
-    this.headers.set(key, value);
+    this.headers.set(key.toLowerCase(), value);
   }
 
   getHeader(key: string): string | null {
-    return this.headers.get(key) ?? null;
+    return this.headers.get(key.toLowerCase()) ?? null;
   }
 
   getHeaders(): Map<string, string> {
@@ -219,9 +219,9 @@ export class AkamaiResponse implements EdgeResponse {
       this.headers = new Map();
       for (const [key, value] of Object.entries(headers ?? {})) {
         if (Array.isArray(value)) {
-          this.headers.set(key, value);
+          this.headers.set(key.toLowerCase(), value);
         } else {
-          this.headers.set(key, [value]);
+          this.headers.set(key.toLowerCase(), [value]);
         }
       }
     } else {
@@ -231,7 +231,7 @@ export class AkamaiResponse implements EdgeResponse {
       this.headers = new Map();
       let rh = base.getHeaders();
       for (const key in rh) {
-        this.headers.set(key, rh[key]);
+        this.headers.set(key.toLowerCase(), rh[key]);
       }
     }
   }
@@ -242,6 +242,10 @@ export class AkamaiResponse implements EdgeResponse {
 
   get body(): ReadableStream<Uint8Array> | string {
     return this._body ?? "";
+  }
+
+  set body(new_body: ReadableStream<Uint8Array> | string) {
+    this._body = new_body;
   }
 
   text(): Promise<string> {
@@ -259,13 +263,13 @@ export class AkamaiResponse implements EdgeResponse {
   }
 
   addHeader(key: string, value: string): void {
-    let v = this.headers.get(key) ?? [];
+    let v = this.headers.get(key.toLowerCase()) ?? [];
     v.push(value);
-    this.headers.set(key, v);
+    this.headers.set(key.toLowerCase(), v);
   }
 
   getHeader(key: string): string | null {
-    return this.headers.get(key)?.join(",") ?? null;
+    return this.headers.get(key.toLowerCase())?.join(",") ?? null;
   }
 
   getHeaders(): Map<string, string> {
@@ -388,15 +392,15 @@ export class AkamaiContext extends RecaptchaContext {
     const sessionKey = this.config.sessionSiteKey;
     const RECAPTCHA_JS_SCRIPT = `<script src="${RECAPTCHA_JS}?render=${sessionKey}&waf=session" async defer></script>`;
     // rewrite the response
-    if (resp.getHeader("Content-Type")?.startsWith("text/html")) {
+    if (base_resp.getHeader("Content-Type")?.startsWith("text/html")) {
       let body = base_resp.body;
       if (typeof body === "string") {
+        base_resp.body = body.replace("</head>", RECAPTCHA_JS_SCRIPT + "</head>");
       } else {
-        const newRespStream = streamReplace(body, "</head>", RECAPTCHA_JS_SCRIPT + "</head>");
-        base_resp._body = newRespStream;
+        base_resp.body = streamReplace(body, "</head>", RECAPTCHA_JS_SCRIPT + "</head>");
       }
     }
-    return Promise.resolve(resp);
+    return Promise.resolve(base_resp);
   }
 
   async fetch_origin(req: EdgeRequest): Promise<EdgeResponse> {
