@@ -22,7 +22,18 @@ const RECAPTCHA_JS = "https://www.google.com/recaptcha/enterprise.js";
 // Firewall Policies API is currently only available in the public preview.
 const DEFAULT_RECAPTCHA_ENDPOINT = "https://public-preview-recaptchaenterprise.googleapis.com";
 
-import { processRequest, RecaptchaConfig, RecaptchaContext, LogLevel, InitError } from "@google-cloud/recaptcha";
+import {
+  processRequest,
+  RecaptchaConfig,
+  RecaptchaContext,
+  LogLevel,
+  InitError,
+  EdgeResponse,
+  EdgeRequest,
+  FetchApiResponse,
+  FetchApiRequest,
+  EdgeResponseInit,
+} from "@google-cloud/recaptcha";
 import pkg from "../package.json";
 
 const streamReplace = (
@@ -116,24 +127,25 @@ export class FastlyContext extends RecaptchaContext {
     }
   }
 
-  async buildEvent(req: Request): Promise<object> {
+  async buildEvent(req: EdgeRequest): Promise<object> {
     return {
       // extracting common signals
       userIpAddress: this.event.client.address ?? undefined,
-      headers: Array.from(req.headers.entries()).map(([k, v]) => `${k}:${v}`),
+      headers: Array.from(req.getHeaders().entries()).map(([k, v]) => `${k}:${v}`),
       ja3: this.event.client.tlsJA3MD5 ?? undefined,
       requestedUri: req.url,
-      userAgent: req.headers.get("user-agent") ?? undefined,
+      userAgent: req.getHeader("user-agent") ?? undefined,
     };
   }
 
-  async injectRecaptchaJs(resp: Response): Promise<Response> {
+  async injectRecaptchaJs(resp: EdgeResponse): Promise<EdgeResponse> {
+    let base_resp = (resp as FetchApiResponse).asResponse();
     const sessionKey = this.config.sessionSiteKey;
     const RECAPTCHA_JS_SCRIPT = `<script src="${RECAPTCHA_JS}?render=${sessionKey}&waf=session" async defer></script>`;
     // rewrite the response
-    if (resp.headers.get("Content-Type")?.startsWith("text/html")) {
-      const newRespStream = streamReplace(resp.body!, "</head>", RECAPTCHA_JS_SCRIPT + "</head>");
-      resp = new Response(newRespStream, resp);
+    if (resp.getHeader("Content-Type")?.startsWith("text/html")) {
+      const newRespStream = streamReplace(base_resp.body!, "</head>", RECAPTCHA_JS_SCRIPT + "</head>");
+      resp = new FetchApiResponse(new Response(newRespStream, base_resp));
     }
     return Promise.resolve(resp);
   }
@@ -143,36 +155,54 @@ export class FastlyContext extends RecaptchaContext {
     super.log(level, msg);
   }
 
+  createRequest(url: string, options: any): EdgeRequest {
+    return new FetchApiRequest(new Request(url, options));
+  }
+
+  createResponse(body: string, options?: EdgeResponseInit): EdgeResponse {
+    return new FetchApiResponse(body, options);
+  }
+
+  async fetch(req: EdgeRequest, options?: RequestInit): Promise<EdgeResponse> {
+    let base_req = req as FetchApiRequest;
+    return fetch(base_req.asRequest(), options).then((v) => {
+      return new FetchApiResponse(v);
+    });
+  }
+
   /**
    * Fetch from the customer's origin.
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_origin(req: RequestInfo, options?: RequestInit): Promise<Response> {
-    return this.fetch(req, { ...options, backend: "origin" });
+  async fetch_origin(req: EdgeRequest): Promise<EdgeResponse> {
+    return this.fetch(req, { backend: "origin" });
   }
 
   /**
    * Call fetch for ListFirewallPolicies.
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_list_firewall_policies(req: RequestInfo, options?: RequestInit): Promise<Response> {
-    return this.fetch(req, { ...options, backend: "recaptcha" });
+  async fetch_list_firewall_policies(req: EdgeRequest): Promise<EdgeResponse> {
+    return this.fetch(req, { backend: "recaptcha" });
   }
 
   /**
    * Call fetch for CreateAssessment
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_create_assessment(req: RequestInfo, options?: RequestInit): Promise<Response> {
-    return this.fetch(req, { ...options, backend: "recaptcha" });
+  async fetch_create_assessment(req: EdgeRequest): Promise<EdgeResponse> {
+    return this.fetch(req, { backend: "recaptcha" });
   }
 
   /**
    * Call fetch for getting the ChallengePage
-   * Parameters and outputs are the same as the 'fetch' function.
+   * @param path: the URL to fetch the challenge page from.
+   * @param soz_base64: the base64 encoded soz.
    */
-  async fetch_challenge_page(req: RequestInfo, options?: RequestInit): Promise<Response> {
-    return this.fetch(req, { ...options, backend: "google" });
+  async fetch_challenge_page(req: EdgeRequest): Promise<EdgeResponse> {
+    return this.fetch(req, {
+      backend: "google",
+    });
   }
 }
 
@@ -213,13 +243,15 @@ export function recaptchaConfigFromConfigStore(name: string): RecaptchaConfig {
 
 addEventListener("fetch", (event) => event.respondWith(handleRequest(event)));
 
-async function handleRequest(event: FetchEvent) {
+async function handleRequest(event: FetchEvent): Promise<Response> {
   try {
     const config = recaptchaConfigFromConfigStore("recaptcha");
     const fastly_ctx = new FastlyContext(event, config);
     fastly_ctx.log("debug", "Fastly client JA3MD5: " + event.client.tlsJA3MD5);
     fastly_ctx.log("debug", "Fastly client address " + event.client.address);
-    return processRequest(fastly_ctx, event.request);
+    return processRequest(fastly_ctx, new FetchApiRequest(event.request)).then((v) =>
+      (v as FetchApiResponse).asResponse(),
+    );
     // eslint-disable-next-line  @typescript-eslint/no-unused-vars
   } catch (e) {
     // Default just fetch from origin...
