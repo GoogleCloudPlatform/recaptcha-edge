@@ -22,7 +22,7 @@
     "directory": "bindings/cloudflare"
   },
   "scripts": {
-    "build": "esbuild --bundle src/index.ts --platform=node --outdir=dist",
+    "build": "esbuild --bundle src/index.ts --platform=node --outdir=dist --external:'@protobuf-ts/runtime'",
     "build:worker": "wrangler deploy --dry-run --outdir=dist",
     "deploy": "wrangler deploy src/cloudflare_worker.ts",
     "deploy:nobuild": "wrangler deploy dist/cloudflare_worker.js --no-bundle",
