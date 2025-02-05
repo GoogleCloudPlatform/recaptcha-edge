@@ -41,6 +41,21 @@ export const FirewallPolicySchema = z.object({
 /** FirewallPolicy type used in CreateAssessment RPCs. */
 export type FirewallPolicy = z.infer<typeof FirewallPolicySchema>;
 
+export const UserInfoSchema = z.object({
+  accountId: z.string().optional(),
+  userIds: z
+    .array(
+      z.object({
+        email: z.string().optional(),
+        phoneNumber: z.string().optional(),
+        username: z.string().optional(),
+      }),
+    )
+    .optional(),
+});
+
+export type UserInfo = z.infer<typeof UserInfoSchema>;
+
 /** Zod schema for Event type. */
 export const EventSchema = z.object({
   token: z.string().optional(),

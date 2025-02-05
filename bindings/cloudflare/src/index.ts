@@ -25,25 +25,8 @@ const RECAPTCHA_JS = "https://www.google.com/recaptcha/enterprise.js";
 const DEFAULT_RECAPTCHA_ENDPOINT = "https://public-preview-recaptchaenterprise.googleapis.com";
 
 // eslint-disable-next-line  @typescript-eslint/no-unused-vars
-import { processRequest, RecaptchaConfig, RecaptchaContext } from "@google-cloud/recaptcha";
+import { processRequest, RecaptchaConfig, RecaptchaContext, UserInfo } from "@google-cloud/recaptcha";
 import pkg from "../package.json";
-import { z } from "zod";
-
-// Customize the Cloudflare UserInfo schema
-const userInfoSchema = z.object({
-  accountId: z.string().optional(),
-  userIds: z
-    .array(
-      z.object({
-        email: z.string().optional(),
-        phoneNumber: z.string().optional(),
-        username: z.string().optional(),
-      }),
-    )
-    .optional(),
-});
-
-type UserInfo = z.infer<typeof userInfoSchema>;
 
 export {
   callCreateAssessment,

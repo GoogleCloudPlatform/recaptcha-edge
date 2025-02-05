@@ -1,3 +1,4 @@
+import { userInfoSchema } from './assessment';
 /**
  * Copyright 2024 Google LLC
  *
@@ -34,7 +35,7 @@ export {
   SubstituteActionSchema,
 } from "./action";
 
-export { Assessment, AssessmentSchema, Event, EventSchema, FirewallPolicy, FirewallPolicySchema } from "./assessment";
+export { Assessment, AssessmentSchema, Event, EventSchema, FirewallPolicy, FirewallPolicySchema, UserInfo, UserInfoSchema} from "./assessment";
 
 export { callCreateAssessment, createPartialEventWithSiteInfo } from "./createAssessment";
 
