@@ -34,6 +34,7 @@ import {
   FetchApiRequest,
   FetchApiResponse,
   EdgeResponseInit,
+  Event,
 } from "@google-cloud/recaptcha";
 import pkg from "../package.json";
 
@@ -76,15 +77,15 @@ export class CloudflareContext extends RecaptchaContext {
     }
   }
 
-  buildEvent(req: EdgeRequest): object {
+  async buildEvent(req: EdgeRequest): Promise<Event> {
     let base_req = (req as FetchApiRequest).asRequest();
     return {
       // extracting common signals
-      userIpAddress: req.getHeader("CF-Connecting-IP"),
+      userIpAddress: req.getHeader("CF-Connecting-IP") ?? undefined,
       headers: Array.from(req.getHeaders().entries()).map(([k, v]) => `${k}:${v}`),
       ja3: (base_req as any)?.["cf"]?.["bot_management"]?.["ja3_hash"] ?? undefined,
       requestedUri: req.url,
-      userAgent: req.getHeader("user-agent"),
+      userAgent: req.getHeader("user-agent") ?? undefined,
     };
   }
 

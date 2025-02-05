@@ -95,10 +95,10 @@ class TestContext extends RecaptchaContext {
   };
   // eslint-disable-next-line  @typescript-eslint/no-unused-vars
   buildEvent = (req: EdgeRequest) => {
-    return EventSchema.parse({
+    return Promise.resolve(EventSchema.parse({
       userIpAddress: "1.2.3.4",
       userAgent: "test-user-agent",
-    });
+    }));
   };
   injectRecaptchaJs = async (resp: EdgeResponse) => {
     let html = await resp.text();
@@ -129,7 +129,7 @@ test("callCreateAssessment-ok", async () => {
 
   const testContext = new TestContext(testConfig);
   testContext.buildEvent = (req: EdgeRequest) => {
-    return baseEvent;
+    return Promise.resolve(baseEvent);
   };
 
   const req = new FetchApiRequest("https://www.google.com");
@@ -993,7 +993,7 @@ test("createPartialEventWithSiteInfo-actionToken", async () => {
   const req = new FetchApiRequest("https://www.example.com/teste2e");
   req.addHeader("X-Recaptcha-Token", "action-token");
   const site_info = await createPartialEventWithSiteInfo(context, req);
-  const site_features = EventSchema.parse(context.buildEvent(req));
+  const site_features = EventSchema.parse(await context.buildEvent(req));
   const event = {
     ...site_info,
     ...site_features,
@@ -1022,7 +1022,7 @@ test("createPartialEventWithSiteInfo-regularActionToken-json", async () => {
     }),
   );
   const site_info = await createPartialEventWithSiteInfo(context, req);
-  const site_features = EventSchema.parse(context.buildEvent(req));
+  const site_features = EventSchema.parse(await context.buildEvent(req));
   const event = {
     ...site_info,
     ...site_features,
@@ -1110,7 +1110,7 @@ test("createPartialEventWithSiteInfo-sessionToken", async () => {
   const req = new FetchApiRequest("https://www.example.com/test");
   req.addHeader("cookie", "recaptcha-test-t=session-token");
   const site_info = await createPartialEventWithSiteInfo(context, req);
-  const site_features = EventSchema.parse(context.buildEvent(req));
+  const site_features = EventSchema.parse(await context.buildEvent(req));
   const event = {
     ...site_info,
     ...site_features,
@@ -1131,7 +1131,7 @@ test("createPartialEventWithSiteInfo-strictSessionToken", async () => {
   const req = new FetchApiRequest("https://www.example.com/test");
   req.addHeader("cookie", "recaptcha-example-t=session-token");
   const site_info = await createPartialEventWithSiteInfo(context, req);
-  const site_features = EventSchema.parse(context.buildEvent(req));
+  const site_features = EventSchema.parse(await context.buildEvent(req));
   const event = {
     ...site_info,
     ...site_features,
@@ -1151,7 +1151,7 @@ test("createPartialEventWithSiteInfo-nonStrictSessionToken", async () => {
   const req = new FetchApiRequest("https://www.example.com/test");
   req.addHeader("cookie", "recaptcha-example-t=session-token");
   const site_info = await createPartialEventWithSiteInfo(context, req);
-  const site_features = EventSchema.parse(context.buildEvent(req));
+  const site_features = EventSchema.parse(await context.buildEvent(req));
   const event = {
     ...site_info,
     ...site_features,
@@ -1171,7 +1171,7 @@ test("createPartialEventWithSiteInfo-challengeToken", async () => {
   const req = new FetchApiRequest("https://www.example.com/test");
   req.addHeader("cookie", "recaptcha-test-e=challenge-token");
   const site_info = await createPartialEventWithSiteInfo(context, req);
-  const site_features = EventSchema.parse(context.buildEvent(req));
+  const site_features = EventSchema.parse(await context.buildEvent(req));
   const event = {
     ...site_info,
     ...site_features,
@@ -1192,7 +1192,7 @@ test("createPartialEventWithSiteInfo-nonStrictChallengeToken", async () => {
   const req = new FetchApiRequest("https://www.example.com/test");
   req.addHeader("cookie", "recaptcha-example-e=challenge-token");
   const site_info = await createPartialEventWithSiteInfo(context, req);
-  const site_features = EventSchema.parse(context.buildEvent(req));
+  const site_features = EventSchema.parse(await context.buildEvent(req));
   const event = {
     ...site_info,
     ...site_features,
@@ -1211,7 +1211,7 @@ test("createPartialEventWithSiteInfo-express", async () => {
   const context = new TestContext(testConfig);
   const req = new FetchApiRequest("https://www.example.com/test");
   const site_info = await createPartialEventWithSiteInfo(context, req);
-  const site_features = EventSchema.parse(context.buildEvent(req));
+  const site_features = EventSchema.parse(await context.buildEvent(req));
   const event = {
     ...site_info,
     ...site_features,

@@ -33,7 +33,18 @@ export {
   SubstituteActionSchema,
 } from "./action";
 
-export { Assessment, AssessmentSchema, Event, EventSchema, FirewallPolicy, FirewallPolicySchema } from "./assessment";
+export {
+  Assessment,
+  AssessmentSchema,
+  Event,
+  EventSchema,
+  FirewallPolicy,
+  FirewallPolicySchema,
+  UserInfo,
+  UserInfoSchema,
+} from "./assessment";
+
+import { Event } from "./assessment";
 
 export { callCreateAssessment, createPartialEventWithSiteInfo } from "./createAssessment";
 
@@ -261,6 +272,6 @@ export abstract class RecaptchaContext {
     this.log_messages.push([level, [msg]]);
   }
 
-  abstract buildEvent(req: EdgeRequest): any;
+  abstract buildEvent(req: EdgeRequest): Promise<Event>;
   abstract injectRecaptchaJs(resp: EdgeResponse): Promise<EdgeResponse>;
 }
