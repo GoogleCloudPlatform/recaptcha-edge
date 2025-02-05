@@ -33,6 +33,7 @@
     "ipaddr.js": "^2.2.0",
     "parse-multipart-form-data": "^1.0.0",
     "picomatch": "^4.0.2",
+    "url-parse": "^1.5.10",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -43,6 +44,7 @@
     "@rollup/plugin-typescript": "^11.1.6",
     "@types/node": "^20.14.10",
     "@types/picomatch": "^2.3.4",
+    "@types/url-parse": "^1.4.11",
     "@vitest/coverage-v8": "^1.6.0",
     "cross-fetch": "^4.0.0",
     "eslint": "^8.57.1",

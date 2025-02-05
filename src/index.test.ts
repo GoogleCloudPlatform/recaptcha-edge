@@ -35,9 +35,23 @@ import {
   SetHeaderAction,
   LogLevel,
   DebugTrace,
+  EdgeRequest,
+  EdgeResponse,
+  EdgeResponseInit,
 } from "./index";
 
+import { FetchApiRequest, FetchApiResponse } from "./fetchApi";
+
 import { Action, ActionSchema, createBlockAction } from "./action";
+
+async function fetchHasRequest(o: Request): Promise<boolean> {
+  let calls = (fetch as Mock).mock.calls;
+  expect(calls.length).equals(1);
+  let req = calls[0][0] as Request;
+  return (
+    req.url == o.url && req.headers == o.headers && req.method == o.method && (await req.text()) == (await o.text())
+  );
+}
 
 const testConfig: RecaptchaConfig = {
   recaptchaEndpoint: "https://recaptchaenterprise.googleapis.com",
@@ -61,6 +75,18 @@ class TestContext extends RecaptchaContext {
     super(config);
   }
 
+  createRequest(url: string, options: any): EdgeRequest {
+    return new FetchApiRequest(new Request(url, options));
+  }
+
+  createResponse(body: string, options?: EdgeResponseInit): EdgeResponse {
+    return new FetchApiResponse(body, options);
+  }
+
+  async fetch(req: EdgeRequest): Promise<EdgeResponse> {
+    let base_req = (req as FetchApiRequest).asRequest();
+    return fetch(base_req).then((v) => new FetchApiResponse(v));
+  }
   logException = (e: any) => {
     this.exceptions.push(e);
   };
@@ -68,16 +94,16 @@ class TestContext extends RecaptchaContext {
     this.log_messages.push([level, [msg]]);
   };
   // eslint-disable-next-line  @typescript-eslint/no-unused-vars
-  buildEvent = (req: Request) => {
+  buildEvent = (req: EdgeRequest) => {
     return EventSchema.parse({
       userIpAddress: "1.2.3.4",
       userAgent: "test-user-agent",
     });
   };
-  injectRecaptchaJs = async (resp: Response) => {
+  injectRecaptchaJs = async (resp: EdgeResponse) => {
     let html = await resp.text();
     html = html.replace("<HTML>", '<HTML><script src="test.js"/>');
-    return new Response(html, resp);
+    return new FetchApiResponse(new Response(html, resp));
   };
 }
 
@@ -96,41 +122,32 @@ test("callCreateAssessment-ok", async () => {
     vi.fn(() =>
       Promise.resolve({
         json: () => Promise.resolve(testAssessment),
+        headers: new Headers(),
       }),
     ),
   );
 
-  const testContext = {
-    ...new TestContext(testConfig),
-    // eslint-disable-next-line  @typescript-eslint/no-unused-vars
-    buildEvent: (req: Request) => {
-      return baseEvent;
-    },
-    fetch: (req, options) => fetch(req, options),
-    fetch_create_assessment: (req, options) => fetch(req, options),
+  const testContext = new TestContext(testConfig);
+  testContext.buildEvent = (req: EdgeRequest) => {
+    return baseEvent;
   };
 
-  const resp = await callCreateAssessment(
-    testContext as RecaptchaContext,
-    new Request("https://www.google.com", {
-      headers: {
-        "X-Recaptcha-Token": "test-token",
-      },
-    }),
-    ["test-env", "test-version"],
-  );
-  expect(fetch).toHaveBeenCalledWith(
-    "https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123",
-    {
-      body: JSON.stringify({
-        event: testEvent,
-        assessmentEnvironment: { client: "test-env", version: "test-version" },
+  const req = new FetchApiRequest("https://www.google.com");
+  req.addHeader("X-Recaptcha-Token", "test-token");
+  const resp = await callCreateAssessment(testContext as RecaptchaContext, req, ["test-env", "test-version"]);
+  expect(
+    await fetchHasRequest(
+      new Request("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123", {
+        body: JSON.stringify({
+          event: testEvent,
+          assessmentEnvironment: { client: "test-env", version: "test-version" },
+        }),
+        headers: {
+          "content-type": "application/json;charset=UTF-8",
+        },
+        method: "POST",
       }),
-      headers: {
-        "content-type": "application/json;charset=UTF-8",
-      },
-      method: "POST",
-    },
+    ),
   );
   expect(resp).toEqual(testAssessment);
 });
@@ -161,19 +178,24 @@ test("callListFirewallPolicies-ok", async () => {
           Promise.resolve({
             firewallPolicies: testPolicies,
           }),
+        headers: new Headers(),
       }),
     ),
   );
 
   const resp = await callListFirewallPolicies(new TestContext(testConfig));
-  expect(fetch).toHaveBeenCalledWith(
-    "https://recaptchaenterprise.googleapis.com/v1/projects/12345/firewallpolicies?key=abc123&page_size=1000",
-    {
-      headers: {
-        "content-type": "application/json;charset=UTF-8",
-      },
-      method: "GET",
-    },
+  expect(
+    await fetchHasRequest(
+      new Request(
+        "https://recaptchaenterprise.googleapis.com/v1/projects/12345/firewallpolicies?key=abc123&page_size=1000",
+        {
+          headers: {
+            "content-type": "application/json;charset=UTF-8",
+          },
+          method: "GET",
+        },
+      ),
+    ),
   );
   expect(resp).toEqual({
     firewallPolicies: testPolicies,
@@ -192,10 +214,10 @@ test("ActionSchema-parseOk", () => {
 
 test("ApplyActions-allow", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/doallow");
+  const req = new FetchApiRequest("https://www.example.com/doallow");
   vi.stubGlobal(
     "fetch",
-    vi.fn(() => Promise.resolve({ status: 200, text: () => "<HTML>Hello World</HTML>" })),
+    vi.fn(() => Promise.resolve({ status: 200, headers: new Headers(), text: () => "<HTML>Hello World</HTML>" })),
   );
   const resp = await applyActions(context, req, [ActionSchema.parse({ allow: {} })]);
   expect(resp.status).toEqual(200);
@@ -205,13 +227,13 @@ test("ApplyActions-allow", async () => {
 
 test("ApplyActions-block", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/doblock");
+  const req = new FetchApiRequest("https://www.example.com/doblock");
   vi.stubGlobal(
     "fetch",
     vi.fn(() => Promise.resolve({ status: 200, text: () => "<HTML>Hello World</HTML>" })),
   );
   const resp = await applyActions(context, req, [createBlockAction()]);
-  expect(resp).toEqual(new Response(null, { status: 403 }));
+  expect(await resp.text()).toEqual("");
   expect(resp.status).toEqual(403);
   // TODO: custom html
   expect(fetch).toHaveBeenCalledTimes(0);
@@ -219,13 +241,14 @@ test("ApplyActions-block", async () => {
 
 test("ApplyActions-setHeader", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/setheader");
+  const req = new FetchApiRequest("https://www.example.com/setheader");
   vi.stubGlobal(
     "fetch",
     vi.fn((req) => {
       expect(req.headers.get("test-key")).toEqual("test-value");
       return Promise.resolve({
         status: 200,
+        headers: new Headers(),
         text: () => "<HTML>Hello World</HTML>",
       });
     }),
@@ -239,8 +262,8 @@ test("ApplyActions-setHeader", async () => {
 });
 test("ApplyActions-redirect", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/originalreq");
-  req.headers.set("test-key", "test-value");
+  const req = new FetchApiRequest("https://www.example.com/originalreq");
+  req.addHeader("test-key", "test-value");
   vi.stubGlobal(
     "fetch",
     vi.fn((req) => {
@@ -251,6 +274,7 @@ test("ApplyActions-redirect", async () => {
       );
       return Promise.resolve({
         status: 200,
+        headers: new Headers(),
         text: () => "<HTML>Hello World</HTML>",
       });
     }),
@@ -262,13 +286,14 @@ test("ApplyActions-redirect", async () => {
 });
 test("ApplyActions-substitute", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/substitute");
+  const req = new FetchApiRequest("https://www.example.com/substitute");
   vi.stubGlobal(
     "fetch",
     vi.fn((req) => {
       expect(req.url).toEqual("https://www.example.com/newdest");
       return Promise.resolve({
         status: 200,
+        headers: new Headers(),
         text: () => "<HTML>Hello World</HTML>",
       });
     }),
@@ -281,13 +306,14 @@ test("ApplyActions-substitute", async () => {
 
 test("ApplyActions-injectJs", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/testinject");
+  const req = new FetchApiRequest("https://www.example.com/testinject");
   vi.stubGlobal(
     "fetch",
     vi.fn((req) => {
       expect(req.url).toEqual("https://www.example.com/testinject");
       return Promise.resolve({
         status: 200,
+        headers: new Headers(),
         text: () => "<HTML>Hello World</HTML>",
       });
     }),
@@ -301,13 +327,14 @@ test("ApplyActions-injectJs", async () => {
 
 test("ApplyActions-injectJsOnlyOnce", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/testinject");
+  const req = new FetchApiRequest("https://www.example.com/testinject");
   vi.stubGlobal(
     "fetch",
     vi.fn((req) => {
       expect(req.url).toEqual("https://www.example.com/testinject");
       return Promise.resolve({
         status: 200,
+        headers: new Headers(),
         text: () => "<HTML>Hello World</HTML>",
       });
     }),
@@ -324,7 +351,7 @@ test("ApplyActions-injectJsOnlyOnce", async () => {
 
 test("localPolicyAssessment-matchTrivialCondition", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/testlocal");
+  const req = new FetchApiRequest("https://www.example.com/testlocal");
   const testPolicies = [
     {
       name: "projects/12345/firewallpolicies/100",
@@ -344,12 +371,13 @@ test("localPolicyAssessment-matchTrivialCondition", async () => {
   ];
   vi.stubGlobal(
     "fetch",
-    vi.fn((url) => {
-      expect(url).toEqual(
+    vi.fn((req) => {
+      expect(req.url).toEqual(
         "https://recaptchaenterprise.googleapis.com/v1/projects/12345/firewallpolicies?key=abc123&page_size=1000",
       );
       return Promise.resolve({
         status: 200,
+        headers: new Headers(),
         json: () =>
           Promise.resolve({
             firewallPolicies: testPolicies,
@@ -364,7 +392,7 @@ test("localPolicyAssessment-matchTrivialCondition", async () => {
 
 test("localPolicyAssessment-noMatch", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/testlocal");
+  const req = new FetchApiRequest("https://www.example.com/testlocal");
   const testPolicies = [
     {
       name: "projects/12345/firewallpolicies/100",
@@ -384,12 +412,13 @@ test("localPolicyAssessment-noMatch", async () => {
   ];
   vi.stubGlobal(
     "fetch",
-    vi.fn((url) => {
-      expect(url).toEqual(
+    vi.fn((req) => {
+      expect(req.url).toEqual(
         "https://recaptchaenterprise.googleapis.com/v1/projects/12345/firewallpolicies?key=abc123&page_size=1000",
       );
       return Promise.resolve({
         status: 200,
+        headers: new Headers(),
         json: () =>
           Promise.resolve({
             firewallPolicies: testPolicies,
@@ -404,7 +433,7 @@ test("localPolicyAssessment-noMatch", async () => {
 
 test("localPolicyAssessment-matchNontrivialCondition", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/testlocal");
+  const req = new FetchApiRequest("https://www.example.com/testlocal");
   const testPolicies = [
     {
       name: "projects/12345/firewallpolicies/100",
@@ -453,7 +482,7 @@ test("policyPathMatch", async () => {
         // 'type' isn't a part of the interface, but is added for testing.
         actions: [{ allow: {}, type: "allow" }],
       },
-      new Request("https://www.example.com/goodpath"),
+      new FetchApiRequest("https://www.example.com/goodpath"),
     ),
   ).toEqual(true);
   expect(
@@ -461,16 +490,16 @@ test("policyPathMatch", async () => {
       {
         path: "/goo?path",
       },
-      new Request("https://www.example.com/goodpath"),
+      new FetchApiRequest("https://www.example.com/goodpath"),
     ),
   ).toEqual(true);
-  expect(policyPathMatch({}, new Request("https://www.example.com/goodpath"))).toEqual(true);
+  expect(policyPathMatch({}, new FetchApiRequest("https://www.example.com/goodpath"))).toEqual(true);
   expect(
     policyPathMatch(
       {
         path: "/goodppath",
       },
-      new Request("https://www.example.com/goodpath"),
+      new FetchApiRequest("https://www.example.com/goodpath"),
     ),
   ).toEqual(false);
   expect(
@@ -478,7 +507,7 @@ test("policyPathMatch", async () => {
       {
         path: "/badppath",
       },
-      new Request("https://www.example.com/badpath"),
+      new FetchApiRequest("https://www.example.com/badpath"),
     ),
   ).toEqual(false);
   expect(
@@ -486,7 +515,7 @@ test("policyPathMatch", async () => {
       {
         path: "/wild/*/path",
       },
-      new Request("https://www.example.com/wild/card/path"),
+      new FetchApiRequest("https://www.example.com/wild/card/path"),
     ),
   ).toEqual(true);
   expect(
@@ -494,7 +523,7 @@ test("policyPathMatch", async () => {
       {
         path: "/wild/card/*a*",
       },
-      new Request("https://www.example.com/wild/card/path"),
+      new FetchApiRequest("https://www.example.com/wild/card/path"),
     ),
   ).toEqual(true);
   expect(
@@ -502,7 +531,7 @@ test("policyPathMatch", async () => {
       {
         path: "/wild/**/path",
       },
-      new Request("https://www.example.com/wild/long/card/path"),
+      new FetchApiRequest("https://www.example.com/wild/long/card/path"),
     ),
   ).toEqual(true);
 });
@@ -518,18 +547,18 @@ test("policyConditionMatch", async () => {
         // 'type' isn't a part of the interface, but is added for testing.
         actions: [{ allow: {}, type: "allow" }],
       },
-      new Request("https://www.example.com/goodpath"),
+      new FetchApiRequest("https://www.example.com/goodpath"),
     ),
   ).toEqual(true);
 
-  expect(policyConditionMatch({}, new Request("https://www.example.com/goodpath"))).toEqual(true);
+  expect(policyConditionMatch({}, new FetchApiRequest("https://www.example.com/goodpath"))).toEqual(true);
 
   expect(
     policyConditionMatch(
       {
         condition: "false",
       },
-      new Request("https://www.example.com/goodpath"),
+      new FetchApiRequest("https://www.example.com/goodpath"),
     ),
   ).toEqual(false);
 
@@ -538,14 +567,14 @@ test("policyConditionMatch", async () => {
       {
         condition: "recaptcha.score > 0.5",
       },
-      new Request("https://www.example.com/goodpath"),
+      new FetchApiRequest("https://www.example.com/goodpath"),
     ),
   ).toEqual("unknown");
 });
 
 test("localPolicyAssessment-failedRpc", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/testlocal");
+  const req = new FetchApiRequest("https://www.example.com/testlocal");
   vi.stubGlobal(
     "fetch",
     vi.fn((url) => {
@@ -562,7 +591,7 @@ test("localPolicyAssessment-failedRpc", async () => {
 
 test("localPolicyAssessment-badJson", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/testlocal");
+  const req = new FetchApiRequest("https://www.example.com/testlocal");
   vi.stubGlobal(
     "fetch",
     vi.fn((url) => {
@@ -582,15 +611,16 @@ test("localPolicyAssessment-badJson", async () => {
 
 test("localPolicyAssessment-errJson", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/testlocal");
+  const req = new FetchApiRequest("https://www.example.com/testlocal");
   vi.stubGlobal(
     "fetch",
-    vi.fn((url) => {
-      expect(url).toEqual(
+    vi.fn((req) => {
+      expect(req.url).toEqual(
         "https://recaptchaenterprise.googleapis.com/v1/projects/12345/firewallpolicies?key=abc123&page_size=1000",
       );
       return Promise.resolve({
         status: 200,
+        headers: new Headers(),
         json: () => Promise.resolve({ error: { message: "bad", code: 400, status: "INVALID_ARGUMENT" } }),
       });
     }),
@@ -603,13 +633,14 @@ test("localPolicyAssessment-errJson", async () => {
 
 test("evaluatePolicyAssessment-ok", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/testlocal");
+  const req = new FetchApiRequest("https://www.example.com/testlocal");
   vi.stubGlobal(
     "fetch",
-    vi.fn((url) => {
-      expect(url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123");
+    vi.fn((req) => {
+      expect(req.url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123");
       return Promise.resolve({
         status: 200,
+        headers: new Headers(),
         json: () =>
           Promise.resolve({
             name: "projects/12345/assessments/1234567890",
@@ -629,11 +660,11 @@ test("evaluatePolicyAssessment-ok", async () => {
 
 test("evaluatePolicyAssessment-failedRpc", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/testlocal");
+  const req = new FetchApiRequest("https://www.example.com/testlocal");
   vi.stubGlobal(
     "fetch",
-    vi.fn((url) => {
-      expect(url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123");
+    vi.fn((req) => {
+      expect(req.url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123");
       return Promise.reject(new Error("test-error"));
     }),
   );
@@ -644,7 +675,7 @@ test("evaluatePolicyAssessment-failedRpc", async () => {
 
 test("evaluatePolicyAssessment-badJson", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/testlocal");
+  const req = new FetchApiRequest("https://www.example.com/testlocal");
   vi.stubGlobal(
     "fetch",
     vi.fn((url) => {
@@ -662,13 +693,14 @@ test("evaluatePolicyAssessment-badJson", async () => {
 
 test("evaluatePolicyAssessment-errJson", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/testlocal");
+  const req = new FetchApiRequest("https://www.example.com/testlocal");
   vi.stubGlobal(
     "fetch",
-    vi.fn((url) => {
-      expect(url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123");
+    vi.fn((req) => {
+      expect(req.url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123");
       return Promise.resolve({
         status: 200,
+        headers: new Headers(),
         json: () => Promise.resolve({ error: { message: "bad", code: 400, status: "INVALID_ARGUMENT" } }),
       });
     }),
@@ -680,7 +712,7 @@ test("evaluatePolicyAssessment-errJson", async () => {
 
 test("processRequest-ok", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/teste2e");
+  const req = new FetchApiRequest("https://www.example.com/teste2e");
   const testPolicies = [
     {
       name: "test-policy",
@@ -702,6 +734,7 @@ test("processRequest-ok", async () => {
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
+      headers: new Headers(),
       json: () => Promise.resolve({ firewallPolicies: testPolicies }),
     }),
   );
@@ -722,6 +755,7 @@ test("processRequest-ok", async () => {
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
+      headers: new Headers(),
       text: () => Promise.resolve("<HTML>Hello World</HTML>"),
     }),
   );
@@ -732,7 +766,7 @@ test("processRequest-ok", async () => {
 
 test("processRequest-nomatch", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/teste2e");
+  const req = new FetchApiRequest("https://www.example.com/teste2e");
   const testPolicies = [
     {
       name: "test-policy",
@@ -754,12 +788,14 @@ test("processRequest-nomatch", async () => {
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
+      headers: new Headers(),
       json: () => Promise.resolve({ firewallPolicies: testPolicies }),
     }),
   );
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
+      headers: new Headers(),
       text: () => Promise.resolve("<HTML>Hello World</HTML>"),
     }),
   );
@@ -771,7 +807,7 @@ test("processRequest-nomatch", async () => {
 test("processRequest-inject", async () => {
   const context = new TestContext(testConfig);
   context.config.sessionJsInjectPath = "/somepath;/some/other/path;/teste2e;/another/path";
-  const req = new Request("https://www.example.com/teste2e");
+  const req = new FetchApiRequest("https://www.example.com/teste2e");
   const testPolicies = [
     {
       name: "test-policy",
@@ -793,12 +829,14 @@ test("processRequest-inject", async () => {
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
+      headers: new Headers(),
       json: () => Promise.resolve({ firewallPolicies: testPolicies }),
     }),
   );
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
+      headers: new Headers(),
       text: () => Promise.resolve("<HTML>Hello World</HTML>"),
     }),
   );
@@ -810,7 +848,7 @@ test("processRequest-inject", async () => {
 test("processRequest-noinject", async () => {
   const context = new TestContext(testConfig);
   context.config.sessionJsInjectPath = "/somepath;/some/other/path;/another/path";
-  const req = new Request("https://www.example.com/teste2e");
+  const req = new FetchApiRequest("https://www.example.com/teste2e");
   const testPolicies = [
     {
       name: "test-policy",
@@ -832,12 +870,14 @@ test("processRequest-noinject", async () => {
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
+      headers: new Headers(),
       json: () => Promise.resolve({ firewallPolicies: testPolicies }),
     }),
   );
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
+      headers: new Headers(),
       text: () => Promise.resolve("<HTML>Hello World</HTML>"),
     }),
   );
@@ -848,7 +888,7 @@ test("processRequest-noinject", async () => {
 
 test("processRequest-block", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/teste2e");
+  const req = new FetchApiRequest("https://www.example.com/teste2e");
   const testPolicies = [
     {
       name: "test-policy",
@@ -869,6 +909,7 @@ test("processRequest-block", async () => {
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
+      headers: new Headers(),
       json: () => Promise.resolve({ firewallPolicies: testPolicies }),
     }),
   );
@@ -879,12 +920,9 @@ test("processRequest-block", async () => {
 
 test("processRequest-dump", async () => {
   const context = new TestContext({ ...testConfig, unsafe_debug_dump_logs: true });
-  const req = new Request("https://www.example.com/nomatch", {
-    headers: {
-      "Content-Type": "application/json",
-      Hello: "World",
-    },
-  });
+  const req = new FetchApiRequest("https://www.example.com/nomatch");
+  req.addHeader("Content-Type", "application/json");
+  req.addHeader("Hello", "World");
   const testPolicies = [
     {
       name: "test-policy",
@@ -905,7 +943,15 @@ test("processRequest-dump", async () => {
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
+      headers: new Headers(),
       json: () => Promise.resolve({ firewallPolicies: testPolicies }),
+    }),
+  );
+  (fetch as Mock).mockImplementationOnce(() =>
+    Promise.resolve({
+      status: 200,
+      headers: new Headers(),
+      text: () => Promise.resolve("<HTML>Hello World</HTML>"),
     }),
   );
   const resp = await processRequest(context, req);
@@ -916,16 +962,12 @@ test("processRequest-dump", async () => {
       ["debug", ["terminalAction: allow"]],
     ],
     exceptions: [],
-    request_headers: {
-      "content-type": "application/json",
-      hello: "World",
-    },
   });
 });
 
 test("processRequest-raise", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/teste2e");
+  const req = new FetchApiRequest("https://www.example.com/teste2e");
   vi.stubGlobal("fetch", vi.fn());
   (fetch as Mock).mockImplementationOnce(() => {
     throw "garbagelist";
@@ -936,6 +978,7 @@ test("processRequest-raise", async () => {
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
+      headers: new Headers(),
       text: () => Promise.resolve("<HTML>Hello World</HTML>"),
     }),
   );
@@ -947,9 +990,8 @@ test("processRequest-raise", async () => {
 
 test("createPartialEventWithSiteInfo-actionToken", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/teste2e", {
-    headers: { "X-Recaptcha-Token": "action-token" },
-  });
+  const req = new FetchApiRequest("https://www.example.com/teste2e");
+  req.addHeader("X-Recaptcha-Token", "action-token");
   const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(context.buildEvent(req));
   const event = {
@@ -968,15 +1010,17 @@ test("createPartialEventWithSiteInfo-actionToken", async () => {
 
 test("createPartialEventWithSiteInfo-regularActionToken-json", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/teste2e", {
-    body: JSON.stringify({
-      "g-recaptcha-response": "regular-action-token",
+  const req = new FetchApiRequest(
+    new Request("https://www.example.com/teste2e", {
+      body: JSON.stringify({
+        "g-recaptcha-response": "regular-action-token",
+      }),
+      headers: {
+        "content-type": "application/json;charset=UTF-8",
+      },
+      method: "POST",
     }),
-    headers: {
-      "content-type": "application/json;charset=UTF-8",
-    },
-    method: "POST",
-  });
+  );
   const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(context.buildEvent(req));
   const event = {
@@ -997,13 +1041,15 @@ test("createPartialEventWithSiteInfo-regularActionToken-form-urlencoded", async 
   const context = new TestContext(testConfig);
   const formData = new URLSearchParams();
   formData.append("g-recaptcha-response", "regular-action-token-urlencoded");
-  const req = new Request("https://www.example.com/teste2e", {
-    body: formData.toString(),
-    headers: {
-      "content-type": "application/x-www-form-urlencoded",
-    },
-    method: "POST",
-  });
+  const req = new FetchApiRequest(
+    new Request("https://www.example.com/teste2e", {
+      body: formData.toString(),
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      method: "POST",
+    }),
+  );
 
   const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(await context.buildEvent(req));
@@ -1033,13 +1079,15 @@ test("createPartialEventWithSiteInfo-regularActionToken-multipart-form-data", as
   body += `${crlf}regular-action-token-multipart`;
   body += `--${boundary}--${crlf}`;
 
-  const req = new Request("https://www.example.com/teste2e", {
-    body: body,
-    headers: {
-      "content-type": `multipart/form-data; boundary=${boundary}`,
-    },
-    method: "POST",
-  });
+  const req = new FetchApiRequest(
+    new Request("https://www.example.com/teste2e", {
+      body: body,
+      headers: {
+        "content-type": `multipart/form-data; boundary=${boundary}`,
+      },
+      method: "POST",
+    }),
+  );
 
   const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(await context.buildEvent(req));
@@ -1059,9 +1107,8 @@ test("createPartialEventWithSiteInfo-regularActionToken-multipart-form-data", as
 
 test("createPartialEventWithSiteInfo-sessionToken", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/test", {
-    headers: { cookie: "recaptcha-test-t=session-token" },
-  });
+  const req = new FetchApiRequest("https://www.example.com/test");
+  req.addHeader("cookie", "recaptcha-test-t=session-token");
   const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(context.buildEvent(req));
   const event = {
@@ -1081,9 +1128,8 @@ test("createPartialEventWithSiteInfo-sessionToken", async () => {
 test("createPartialEventWithSiteInfo-strictSessionToken", async () => {
   const context = new TestContext(testConfig);
   context.config.strict_cookie = true;
-  const req = new Request("https://www.example.com/test", {
-    headers: { cookie: "recaptcha-example-t=session-token" },
-  });
+  const req = new FetchApiRequest("https://www.example.com/test");
+  req.addHeader("cookie", "recaptcha-example-t=session-token");
   const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(context.buildEvent(req));
   const event = {
@@ -1102,9 +1148,8 @@ test("createPartialEventWithSiteInfo-strictSessionToken", async () => {
 test("createPartialEventWithSiteInfo-nonStrictSessionToken", async () => {
   const context = new TestContext(testConfig);
   context.config.strict_cookie = false;
-  const req = new Request("https://www.example.com/test", {
-    headers: { cookie: "recaptcha-example-t=session-token" },
-  });
+  const req = new FetchApiRequest("https://www.example.com/test");
+  req.addHeader("cookie", "recaptcha-example-t=session-token");
   const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(context.buildEvent(req));
   const event = {
@@ -1123,9 +1168,8 @@ test("createPartialEventWithSiteInfo-nonStrictSessionToken", async () => {
 
 test("createPartialEventWithSiteInfo-challengeToken", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/test", {
-    headers: { cookie: "recaptcha-test-e=challenge-token" },
-  });
+  const req = new FetchApiRequest("https://www.example.com/test");
+  req.addHeader("cookie", "recaptcha-test-e=challenge-token");
   const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(context.buildEvent(req));
   const event = {
@@ -1145,9 +1189,8 @@ test("createPartialEventWithSiteInfo-challengeToken", async () => {
 test("createPartialEventWithSiteInfo-nonStrictChallengeToken", async () => {
   const context = new TestContext(testConfig);
   context.config.strict_cookie = false;
-  const req = new Request("https://www.example.com/test", {
-    headers: { cookie: "recaptcha-example-e=challenge-token" },
-  });
+  const req = new FetchApiRequest("https://www.example.com/test");
+  req.addHeader("cookie", "recaptcha-example-e=challenge-token");
   const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(context.buildEvent(req));
   const event = {
@@ -1166,7 +1209,7 @@ test("createPartialEventWithSiteInfo-nonStrictChallengeToken", async () => {
 
 test("createPartialEventWithSiteInfo-express", async () => {
   const context = new TestContext(testConfig);
-  const req = new Request("https://www.example.com/test", {});
+  const req = new FetchApiRequest("https://www.example.com/test");
   const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = EventSchema.parse(context.buildEvent(req));
   const event = {
