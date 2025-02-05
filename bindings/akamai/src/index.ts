@@ -361,7 +361,7 @@ export class AkamaiContext extends RecaptchaContext {
     // on Akamai.
     let url = new URL(req.url);
     let headers = Object.fromEntries(req.getHeaders().entries());
-    let body = await req.getBodyText() || undefined;
+    let body = (await req.getBodyText()) || undefined;
     return httpRequest(url.pathname + url.query, {
       method: req.method,
       headers,
