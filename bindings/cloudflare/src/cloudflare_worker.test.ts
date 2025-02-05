@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
+//@ts-expect-error
 import { createExecutionContext, env, fetchMock, SELF, waitOnExecutionContext } from "cloudflare:test";
 import { afterEach, beforeAll, expect, test } from "vitest";
 
+// @ts-expect-error
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
 beforeAll(() => {
@@ -79,6 +81,7 @@ test("nomatch-ok", async () => {
     .reply(200, JSON.stringify({ firewallPolicyAssessment: {} }));
   // Mock the third fetch request to the actual website
   fetchMock.get("http://example.com").intercept({ path: "/teste2e" }).reply(200, "<HTML>Hello World</HTML>");
+  // @ts-expect-error
   const req = new IncomingRequest("http://example.com/teste2e", {
     headers: {
       "X-Recaptcha-Token": "action-token",

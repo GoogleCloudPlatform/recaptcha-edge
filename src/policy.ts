@@ -23,9 +23,10 @@ import * as action from "./action";
 import { FirewallPolicy } from "./assessment";
 import { callCreateAssessment } from "./createAssessment";
 import * as error from "./error";
-import { RecaptchaContext } from "./index";
+import { RecaptchaContext, EdgeRequest, EdgeResponse, FetchApiResponse } from "./index";
 import { callListFirewallPolicies } from "./listFirewallPolicies";
 import { createSoz } from "./soz";
+import URL from "url-parse";
 
 type LocalAssessment = action.Action[] | "recaptcha-required";
 
@@ -41,7 +42,7 @@ export const CHALLENGE_PAGE_URL = "https://www.google.com/recaptcha/challengepag
 /**
  * Checks whether a particular policy path pattern matches the incoming request.
  */
-export function policyPathMatch(policy: FirewallPolicy, req: Request): boolean {
+export function policyPathMatch(policy: FirewallPolicy, req: EdgeRequest): boolean {
   const url = new URL(req.url);
   if (!policy.path) {
     return true;
@@ -56,7 +57,7 @@ export function policyPathMatch(policy: FirewallPolicy, req: Request): boolean {
  * 'unknown' if we can't evaluate the condition locally.
  */
 // eslint-disable-next-line  @typescript-eslint/no-unused-vars
-export function policyConditionMatch(policy: FirewallPolicy, req: Request): boolean | "unknown" {
+export function policyConditionMatch(policy: FirewallPolicy, req: EdgeRequest): boolean | "unknown" {
   // An empty condition imples 'true' and always matches.
   if (!policy?.condition?.trim()) {
     return true;
@@ -79,7 +80,7 @@ export function policyConditionMatch(policy: FirewallPolicy, req: Request): bool
  * Check if a request can be locally accessed,
  * with amortized caching of policies.
  */
-export async function localPolicyAssessment(context: RecaptchaContext, req: Request): Promise<LocalAssessment> {
+export async function localPolicyAssessment(context: RecaptchaContext, req: EdgeRequest): Promise<LocalAssessment> {
   // TODO: local overrides or hooks
 
   // Optimization to inspect a cached copy of the firewall policies if HTTP caching is enabled.
@@ -115,7 +116,7 @@ export async function localPolicyAssessment(context: RecaptchaContext, req: Requ
 /**
  * Evaluate the policy assessment for a request.
  */
-export async function evaluatePolicyAssessment(context: RecaptchaContext, req: Request): Promise<action.Action[]> {
+export async function evaluatePolicyAssessment(context: RecaptchaContext, req: EdgeRequest): Promise<action.Action[]> {
   let assessment;
   try {
     context.log_performance_debug("[rpc] callCreateAssessment - start");
@@ -141,13 +142,12 @@ export async function evaluatePolicyAssessment(context: RecaptchaContext, req: R
  */
 export async function applyActions(
   context: RecaptchaContext,
-  req: Request,
+  req: EdgeRequest,
   actions: action.Action[],
-): Promise<Response> {
+): Promise<EdgeResponse> {
   let terminalAction: action.Action = action.createAllowAction();
   const reqNonterminalActions: action.RequestNonTerminalAction[] = [];
   const respNonterminalActions: action.ResponseNonTerminalAction[] = [];
-  let newReq = new Request(req.url, req);
 
   // Actions are assumed to be in order of processing. Non-terminal actions must
   // be processed before terminal actions, and will be ignored if erroniously
@@ -177,7 +177,7 @@ export async function applyActions(
   context.log("debug", "terminalAction: " + terminalAction.type);
 
   if (terminalAction.type === "block") {
-    return new Response(null, { status: 403 }); // TODO: custom html
+    return context.createResponse("", { status: 403 }); // TODO: custom html
   }
 
   if (terminalAction.type === "redirect") {
@@ -188,32 +188,32 @@ export async function applyActions(
       context.log("error", "[!] attempt to redirect without challenge page site key!");
     }
     const soz = createSoz(
+      context,
       url.hostname,
       event.userIpAddress,
       context.config.projectNumber,
       context.config.challengePageSiteKey ?? "", // TODO: default site key?
     );
-    return context.fetch_challenge_page(
-      new Request(CHALLENGE_PAGE_URL, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json;charset=UTF-8",
-          "X-ReCaptcha-Soz": soz,
-        },
-      }),
-    );
+    let cp_req = context.createRequest(CHALLENGE_PAGE_URL, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json;charset=UTF-8",
+        "X-ReCaptcha-Soz": soz,
+      },
+    });
+    return context.fetch_challenge_page(cp_req);
   }
 
   // Handle Pre-Request actions.
   for (const action of reqNonterminalActions) {
     context.log("debug", "reqNonterminal action: " + action.type);
     if (action.type === "setHeader") {
-      newReq.headers.set(action.setHeader.key, action.setHeader.value);
+      req.addHeader(action.setHeader.key, action.setHeader.value);
       continue;
     }
     if (action.type === "substitute") {
-      const url = new URL(newReq.url);
-      newReq = new Request(`${url.origin}${action.substitute.path}`, newReq);
+      const url = new URL(req.url);
+      req.url = `${url.origin}${action.substitute.path}`;
       continue;
     }
     /* v8 ignore next 2 lines */
@@ -221,7 +221,7 @@ export async function applyActions(
   }
 
   // Fetch from the backend, whether redirected or not.
-  let resp = context.fetch_origin(newReq);
+  let resp = context.fetch_origin(req);
 
   // Handle Post-Response actions.
   const once = new Set<string>();
@@ -248,8 +248,8 @@ export async function applyActions(
 /**
  * Process reCAPTCHA request.
  */
-export async function processRequest(context: RecaptchaContext, req: Request): Promise<Response> {
-  let actions = [];
+export async function processRequest(context: RecaptchaContext, req: EdgeRequest): Promise<EdgeResponse> {
+  let actions: action.Action[] = [];
   try {
     const localAssessment = await localPolicyAssessment(context, req);
     if (localAssessment === "recaptcha-required") {
@@ -289,12 +289,11 @@ export async function processRequest(context: RecaptchaContext, req: Request): P
   if (context.config.unsafe_debug_dump_logs) {
     await resp;
     resp = Promise.resolve(
-      new Response(
+      context.createResponse(
         JSON.stringify(
           {
             logs: context.log_messages,
             exceptions: context.exceptions,
-            request_headers: Object.fromEntries(req.headers.entries()),
           },
           null,
           2,
@@ -307,9 +306,7 @@ export async function processRequest(context: RecaptchaContext, req: Request): P
   if (context.config.debug) {
     let resolved_resp = await resp;
     context.debug_trace.exception_count = context.exceptions.length;
-    // Clone the response so that it's no longer immutable.
-    resolved_resp = new Response(resolved_resp.body, resolved_resp);
-    resolved_resp.headers.append("X-RECAPTCHA-DEBUG", context.debug_trace.formatAsHeaderValue());
+    resolved_resp.addHeader("X-RECAPTCHA-DEBUG", context.debug_trace.formatAsHeaderValue());
     resp = Promise.resolve(resolved_resp);
   }
 
