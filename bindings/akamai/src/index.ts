@@ -131,9 +131,7 @@ export {
 
 type AkamaiRequestInit = {
   method?: string;
-  headers?: {
-    [others: string]: string | string[];
-  };
+  headers?: Record<string, string | string[]>;
   body?: string;
   timeout?: number;
 };
@@ -150,7 +148,14 @@ export class AkamaiRequest implements EdgeRequest {
       this.url_ = req;
       this.method_ = options?.method ?? "GET";
       this.body_ = options?.body ?? "";
-      this.headers = new Map(); // TODO: headers
+      this.headers = new Map();
+      for (const [key, value] of Object.entries(options?.headers ?? {})) {
+        if (typeof value === "string") {
+          this.headers.set(key, value);
+        } else {
+          this.headers.set(key, value.join(","));
+        }
+      }
     } else {
       this.req = req;
       this.url_ = `${this.req.scheme}://${this.req.host}${this.req.path}`;
@@ -356,7 +361,7 @@ export class AkamaiContext extends RecaptchaContext {
     // on Akamai.
     let url = new URL(req.url);
     let headers = Object.fromEntries(req.getHeaders().entries());
-    let body = await req.getBodyText();
+    let body = await req.getBodyText() || undefined;
     return httpRequest(url.pathname + url.query, {
       method: req.method,
       headers,
