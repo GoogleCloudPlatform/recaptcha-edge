@@ -440,6 +440,6 @@ export function recaptchaConfigFromRequest(request: EW.ResponseProviderRequest):
     recaptchaEndpoint: request.getVariable("PMUSER_RECAPTCHAENDPOINT") || DEFAULT_RECAPTCHA_ENDPOINT,
     debug: request.getVariable("PMUSER_DEBUG") === "true",
     unsafe_debug_dump_logs: request.getVariable("PMUSER_UNSAFE_DEBUG_DUMP_LOGS") === "true",
-    strict_cookie: (request.getVariable("PMUSER_STRICTCOOKIE") ?? "true") === "true" // default to true
+    strict_cookie: (request.getVariable("PMUSER_STRICTCOOKIE") ?? "true") === "true", // default to true
   };
 }
