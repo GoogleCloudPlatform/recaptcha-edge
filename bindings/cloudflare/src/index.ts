@@ -35,7 +35,7 @@ import {
   FetchApiResponse,
   EdgeResponseInit,
   UserInfo,
-  Event
+  Event,
 } from "@google-cloud/recaptcha";
 import pkg from "../package.json";
 
@@ -79,10 +79,10 @@ export class CloudflareContext extends RecaptchaContext {
   }
 
   // Get UserInfo from the default login event.
-  async getUserInfo(req: Request, accountIdField: string, usernameField: string): Promise<UserInfo> {
+  async getUserInfo(req: EdgeRequest, accountIdField: string, usernameField: string): Promise<UserInfo> {
     let userInfo: UserInfo = { accountId: "", userIds: [] };
     try {
-      const body = await req.clone().json();
+      const body = (await (req as FetchApiRequest).req.clone().json()) as any;
       const accountId = body[accountIdField];
       const username = body[usernameField];
 
@@ -102,7 +102,7 @@ export class CloudflareContext extends RecaptchaContext {
     let base_req = (req as FetchApiRequest).asRequest();
     let userInfo: UserInfo | undefined = undefined;
     if (req.method === "POST" && new URL(req.url).pathname === this.config.credentialPath) {
-      userInfo = await this.getUserInfo(req, this.config.accountId, this.config.username);
+      userInfo = await this.getUserInfo(req, this.config.accountId ?? "", this.config.username ?? "");
     }
     return {
       // extracting common signals
@@ -111,7 +111,7 @@ export class CloudflareContext extends RecaptchaContext {
       ja3: (base_req as any)?.["cf"]?.["bot_management"]?.["ja3_hash"] ?? undefined,
       requestedUri: req.url,
       userAgent: req.getHeader("user-agent") ?? undefined,
-      userInfo
+      userInfo,
     };
   }
 

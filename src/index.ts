@@ -110,6 +110,9 @@ export interface RecaptchaConfig {
   debug?: boolean;
   unsafe_debug_dump_logs?: boolean;
   strict_cookie?: boolean;
+  credentialPath?: string;
+  accountId?: string;
+  username?: string;
 }
 
 export class DebugTrace {
