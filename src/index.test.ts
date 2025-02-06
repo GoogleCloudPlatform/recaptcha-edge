@@ -156,7 +156,6 @@ test("callCreateAssessment-ok", async () => {
 });
 
 test("callCreateAssessmentWithUserInfo-ok", async () => {
-  const baseEvent = {};
   const testEvent = {
     token: "test-token",
     siteKey: "enterprise-site-key",
@@ -184,45 +183,44 @@ test("callCreateAssessmentWithUserInfo-ok", async () => {
     vi.fn(() =>
       Promise.resolve({
         json: () => Promise.resolve(testAssessment),
+        headers: new Headers(),
       }),
     ),
   );
 
-  const testContext = {
-    ...new TestContext(testConfig),
-    // eslint-disable-next-line  @typescript-eslint/no-unused-vars
-    buildEvent: (req: Request) => {
-      return testEvent;
-    },
-    fetch: (req, options) => fetch(req, options),
-    fetch_create_assessment: (req, options) => fetch(req, options),
+  const testContext = new TestContext(testConfig);
+  testContext.buildEvent = (req: EdgeRequest) => {
+    return Promise.resolve(testEvent);
   };
 
   const resp = await callCreateAssessment(
     testContext as RecaptchaContext,
-    new Request("https://www.google.com", {
-      body: JSON.stringify({
-        "g-recaptcha-response": "test-token",
+    new FetchApiRequest(
+      new Request("https://www.google.com", {
+        body: JSON.stringify({
+          "g-recaptcha-response": "test-token",
+        }),
+        headers: {
+          "content-type": "application/json;charset=UTF-8",
+        },
+        method: "POST",
       }),
-      headers: {
-        "content-type": "application/json;charset=UTF-8",
-      },
-      method: "POST",
-    }),
+    ),
     ["test-env", "test-version"],
   );
-  expect(fetch).toHaveBeenCalledWith(
-    "https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123",
-    {
-      body: JSON.stringify({
-        event: testEvent,
-        assessmentEnvironment: { client: "test-env", version: "test-version" },
+  expect(
+    await fetchHasRequest(
+      new Request("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123", {
+        body: JSON.stringify({
+          event: testEvent,
+          assessmentEnvironment: { client: "test-env", version: "test-version" },
+        }),
+        headers: {
+          "content-type": "application/json;charset=UTF-8",
+        },
+        method: "POST",
       }),
-      headers: {
-        "content-type": "application/json;charset=UTF-8",
-      },
-      method: "POST",
-    },
+    ),
   );
   expect(resp).toEqual(testAssessment);
 });
