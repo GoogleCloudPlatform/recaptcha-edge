@@ -33,6 +33,7 @@ import {
   FetchApiResponse,
   FetchApiRequest,
   EdgeResponseInit,
+  Event,
 } from "@google-cloud/recaptcha";
 import pkg from "../package.json";
 
@@ -127,7 +128,7 @@ export class FastlyContext extends RecaptchaContext {
     }
   }
 
-  buildEvent(req: EdgeRequest): object {
+  async buildEvent(req: EdgeRequest): Promise<Event> {
     return {
       // extracting common signals
       userIpAddress: this.event.client.address ?? undefined,

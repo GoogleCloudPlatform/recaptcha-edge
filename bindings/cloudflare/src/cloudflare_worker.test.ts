@@ -66,10 +66,10 @@ test("nomatch-ok", async () => {
           token: "action-token",
           siteKey: "action-site-key",
           wafTokenAssessment: true,
-          userAgent: "test-user-agent",
           userIpAddress: "1.2.3.4",
-          requestedUri: "http://example.com/teste2e",
           headers: ["cf-connecting-ip:1.2.3.4", "user-agent:test-user-agent", "x-recaptcha-token:action-token"],
+          requestedUri: "http://example.com/teste2e",
+          userAgent: "test-user-agent",
           firewallPolicyEvaluation: true,
         },
         assessmentEnvironment: {
