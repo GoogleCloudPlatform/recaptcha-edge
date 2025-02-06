@@ -88,10 +88,10 @@ const MockRequest = {
     throw "unimplemented";
   },
   getHeader: () => {
-    throw "unimplemented";
+    return "";
   },
   getHeaders: () => {
-    throw "unimplemented";
+    return {};
   },
   setHeader: () => {
     throw "unimplemented";
@@ -115,6 +115,12 @@ beforeAll(() => {
     return {
       logger: {
         log: vi.fn(() => {
+          return {};
+        }),
+        error: vi.fn(() => {
+          return {};
+        }),
+        debug: vi.fn(() => {
           return {};
         }),
       },
@@ -180,8 +186,9 @@ test("nomatch-ok", async () => {
       });
     });
 
+  // @ts-expect-error
   const resp = await responseProvider(vi.mocked(MockRequest));
-  expect(await readStream(resp.body as ReadableStream)).toEqual("<HTML>HELLO WORLD!</HTML>");
+  expect(await readStream((resp as any).body as ReadableStream)).toEqual("<HTML>HELLO WORLD!</HTML>");
 });
 
 test("localmatch-ok", async () => {
@@ -211,6 +218,49 @@ test("localmatch-ok", async () => {
     url: "http://www.example.com/block",
     path: "/block",
   });
+  // @ts-expect-error
   const resp = await responseProvider(req);
-  expect(resp.status).toEqual(403);
+  expect((resp as any).status).toEqual(403);
+});
+
+test("jsinject", async () => {
+  const testPolicies = [
+    {
+      name: "test-policy",
+      description: "test-description",
+      path: "/block",
+      // 'type' isn't a part of the interface, but is added for testing.
+      actions: [{ block: {}, type: "block" }],
+    },
+  ];
+
+  mockHttpRequest
+    .mockImplementationOnce(() => {
+      return Promise.resolve({
+        body: JSON.stringify({ firewallPolicies: testPolicies }),
+        json: () => Promise.resolve({ firewallPolicies: testPolicies }),
+        ok: true,
+        status: 200,
+        getHeader: () => undefined,
+        getHeaders: () => [],
+      });
+    })
+    .mockImplementationOnce(() => {
+      return Promise.resolve({
+        body: stringToStream("<HTML>HELLO WORLD!</HTML>"),
+        ok: true,
+        status: 200,
+        getHeader: () => undefined,
+        getHeaders: () => [],
+      });
+    });
+
+  const req = vi.mocked({
+    ...MockRequest,
+    url: "http://www.example.com/injectjs",
+    path: "/block",
+  });
+  // @ts-expect-error
+  const resp = await responseProvider(req);
+  expect((resp as any).status).toEqual(403);
 });

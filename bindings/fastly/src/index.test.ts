@@ -108,6 +108,7 @@ describe("Run local Viceroy", function () {
   test("Response status code is 200", async function () {
     // Make a fetch request to the app. Returns a Promise that resolves to a Response.
     const response = await app.fetch("/helloworld");
+    assert.equal(await response.text(), "<html><head><title>hello</title></head>helloworld</html>");
     assert.equal(response.status, 200);
   });
 

@@ -25,7 +25,18 @@ const RECAPTCHA_JS = "https://www.google.com/recaptcha/enterprise.js";
 const DEFAULT_RECAPTCHA_ENDPOINT = "https://public-preview-recaptchaenterprise.googleapis.com";
 
 // eslint-disable-next-line  @typescript-eslint/no-unused-vars
-import { processRequest, RecaptchaConfig, RecaptchaContext } from "@google-cloud/recaptcha";
+import {
+  processRequest,
+  RecaptchaConfig,
+  RecaptchaContext,
+  EdgeRequest,
+  EdgeResponse,
+  FetchApiRequest,
+  FetchApiResponse,
+  EdgeResponseInit,
+  UserInfo,
+  Event,
+} from "@google-cloud/recaptcha";
 import pkg from "../package.json";
 
 export {
@@ -67,35 +78,77 @@ export class CloudflareContext extends RecaptchaContext {
     }
   }
 
-  buildEvent(req: Request): object {
+  // Get UserInfo from the default login event.
+  async getUserInfo(req: EdgeRequest, accountIdField: string, usernameField: string): Promise<UserInfo> {
+    let userInfo: UserInfo = { accountId: "", userIds: [] };
+    try {
+      const body = (await (req as FetchApiRequest).req.clone().json()) as any;
+      const accountId = body[accountIdField];
+      const username = body[usernameField];
+
+      if (accountId) {
+        userInfo = {
+          accountId,
+          userIds: [{ username: username }],
+        };
+      }
+    } catch (error) {
+      console.error("getUserInfo error:", error);
+    }
+    return userInfo;
+  }
+
+  async buildEvent(req: EdgeRequest): Promise<Event> {
+    let base_req = (req as FetchApiRequest).asRequest();
+    let userInfo: UserInfo | undefined = undefined;
+    if (req.method === "POST" && new URL(req.url).pathname === this.config.credentialPath) {
+      userInfo = await this.getUserInfo(req, this.config.accountId ?? "", this.config.username ?? "");
+    }
     return {
       // extracting common signals
-      userIpAddress: req.headers.get("CF-Connecting-IP"),
-      headers: Array.from(req.headers.entries()).map(([k, v]) => `${k}:${v}`),
-      ja3: (req as any)?.["cf"]?.["bot_management"]?.["ja3_hash"] ?? undefined,
+      userIpAddress: req.getHeader("CF-Connecting-IP") ?? undefined,
+      headers: Array.from(req.getHeaders().entries()).map(([k, v]) => `${k}:${v}`),
+      ja3: (base_req as any)?.["cf"]?.["bot_management"]?.["ja3_hash"] ?? undefined,
       requestedUri: req.url,
-      userAgent: req.headers.get("user-agent"),
+      userAgent: req.getHeader("user-agent") ?? undefined,
+      userInfo,
     };
   }
 
-  injectRecaptchaJs(resp: Response): Promise<Response> {
-    const sessionKey = this.config.sessionSiteKey;
+  injectRecaptchaJs(resp: EdgeResponse): Promise<EdgeResponse> {
+    let base = (resp as FetchApiResponse).asResponse();
+    const sessionKey = this.config.sessionSiteKey ?? "";
     const recaptchaJsUrl = new URL(RECAPTCHA_JS);
     recaptchaJsUrl.searchParams.set("render", sessionKey);
     recaptchaJsUrl.searchParams.set("waf", "session");
     const RECAPTCHA_JS_SCRIPT = `<script src="${recaptchaJsUrl.toString()}" async defer></script>`;
     return Promise.resolve(
-      new HTMLRewriter()
-        .on("head", {
-          element(element: any) {
-            element.append(RECAPTCHA_JS_SCRIPT, { html: true });
-          },
-        })
-        .transform(new Response(resp.body, resp)),
+      new FetchApiResponse(
+        new HTMLRewriter()
+          .on("head", {
+            element(element: any) {
+              element.append(RECAPTCHA_JS_SCRIPT, { html: true });
+            },
+          })
+          .transform((resp as FetchApiResponse).asResponse()),
+      ),
     );
   }
 
-  async fetch_list_firewall_policies(req: RequestInfo, options?: RequestInit): Promise<Response> {
+  createRequest(url: string, options: any): EdgeRequest {
+    return new FetchApiRequest(new Request(url, options));
+  }
+
+  createResponse(body: string, options?: EdgeResponseInit): EdgeResponse {
+    return new FetchApiResponse(body, options);
+  }
+
+  async fetch(req: EdgeRequest, options?: RequestInit): Promise<EdgeResponse> {
+    let base_req = (req as FetchApiRequest).asRequest();
+    return fetch(base_req, options).then((v) => new FetchApiResponse(v));
+  }
+
+  async fetch_list_firewall_policies(req: EdgeRequest, options?: RequestInit): Promise<EdgeResponse> {
     return this.fetch(req, {
       ...options,
       cf: {
@@ -114,8 +167,12 @@ export function recaptchaConfigFromEnv(env: Env): RecaptchaConfig {
     expressSiteKey: env.EXPRESS_SITE_KEY,
     sessionSiteKey: env.SESSION_SITE_KEY,
     challengePageSiteKey: env.CHALLENGE_PAGE_SITE_KEY,
+    enterpriseSiteKey: env.ENTERPRISE_SITE_KEY,
     recaptchaEndpoint: env.RECAPTCHA_ENDPOINT ?? DEFAULT_RECAPTCHA_ENDPOINT,
     sessionJsInjectPath: env.SESSION_JS_INSTALL_PATH,
+    credentialPath: env.CREDENTIAL_PATH,
+    accountId: env.USER_ACCOUNT_ID,
+    username: env.USERNAME,
     debug: env.DEBUG ?? false,
     unsafe_debug_dump_logs: env.UNSAFE_DEBUG_DUMP_LOGS ?? false,
   };

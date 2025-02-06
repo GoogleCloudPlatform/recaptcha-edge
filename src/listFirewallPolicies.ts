@@ -21,7 +21,7 @@
 import { z } from "zod";
 import { FirewallPolicySchema, RpcErrorSchema } from "./assessment";
 import * as error from "./error";
-import { RecaptchaContext } from "./index";
+import { EdgeResponse, RecaptchaContext } from "./index";
 
 /** Zod Schema for ListFirewallPoliciesResponse */
 export const ListFirewallPoliciesResponseSchema = z.object({
@@ -45,9 +45,9 @@ export async function callListFirewallPolicies(context: RecaptchaContext): Promi
   const projectNumber = context.config.projectNumber;
   const apiKey = context.config.apiKey;
   const policiesUrl = `${endpoint}/v1/projects/${projectNumber}/firewallpolicies?key=${apiKey}&page_size=1000`;
-
+  const req = context.createRequest(policiesUrl, options);
   return context
-    .fetch_list_firewall_policies(policiesUrl, options)
+    .fetch_list_firewall_policies(req)
     .then((response) => {
       return response
         .json()

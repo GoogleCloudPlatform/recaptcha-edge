@@ -20,7 +20,7 @@
  */
 
 import ipaddr from "ipaddr.js";
-import { ReCaptchaSoz } from "../generated/soz";
+import { RecaptchaContext } from ".";
 
 function base64UrlEncode(bytes: Uint8Array) {
   let base64 = "";
@@ -52,18 +52,29 @@ function base64UrlEncode(bytes: Uint8Array) {
  * @param {string} siteKey - The reCAPTCHA Enterprise site key.
  * @return {string} - The base64 encoded reCaptchaSoz message.
  */
-export function createSoz(host: string, userIp: string, projectNumber: number, siteKey: string): string {
-  const message: ReCaptchaSoz = {
-    host,
-    projectNumber: BigInt(projectNumber),
-    siteKey,
-  };
+export function createSoz(
+  context: RecaptchaContext,
+  host: string,
+  userIp: string,
+  projectNumber: number,
+  siteKey: string,
+): string {
+  let ip = undefined;
   try {
-    message.userIp = new Uint8Array(ipaddr.parse(userIp).toByteArray());
+    ip = base64UrlEncode(new Uint8Array(ipaddr.parse(userIp).toByteArray()));
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (e) {
     // Invalid IP address. Ignore it.
   }
-  const bytes = ReCaptchaSoz.toBinary(message);
-  return base64UrlEncode(bytes);
+
+  return base64UrlEncode(
+    context.encodeString(
+      JSON.stringify({
+        host,
+        projectNumber,
+        siteKey,
+        userIp: ip,
+      }),
+    ),
+  );
 }

@@ -18,7 +18,6 @@
  * @fileoverview reCAPTCHA Enterprise TypeScript Library.
  */
 export { InitError, NetworkError, ParseError, RecaptchaError } from "./error";
-
 export {
   AllowAction,
   AllowActionSchema,
@@ -34,9 +33,22 @@ export {
   SubstituteActionSchema,
 } from "./action";
 
-export { Assessment, AssessmentSchema, Event, EventSchema, FirewallPolicy, FirewallPolicySchema } from "./assessment";
+export {
+  Assessment,
+  AssessmentSchema,
+  Event,
+  EventSchema,
+  FirewallPolicy,
+  FirewallPolicySchema,
+  UserInfo,
+  UserInfoSchema,
+} from "./assessment";
+
+import { Event } from "./assessment";
 
 export { callCreateAssessment, createPartialEventWithSiteInfo } from "./createAssessment";
+
+export { FetchApiRequest, FetchApiResponse } from "./fetchApi";
 
 export {
   ListFirewallPoliciesResponse,
@@ -53,6 +65,35 @@ export {
   processRequest,
 } from "./policy";
 
+export type EdgeRequestInit = {
+  method?: string;
+  headers?: Record<string, string>;
+  body?: string;
+};
+
+export interface EdgeRequest {
+  readonly method: string;
+  url: string;
+  addHeader(key: string, value: string): void;
+  getHeader(key: string): string | null;
+  getHeaders(): Map<string, string>;
+  getBodyText(): Promise<string>;
+  getBodyJson(): Promise<any>;
+}
+export type EdgeResponseInit = {
+  readonly status?: number;
+  readonly headers?: Record<string, string>;
+};
+
+export interface EdgeResponse {
+  text(): Promise<string>;
+  json(): Promise<unknown>;
+  addHeader(key: string, value: string): void;
+  getHeader(key: string): string | null;
+  getHeaders(): Map<string, string>;
+  readonly status: number;
+}
+
 /**
  * reCAPTCHA Enterprise configuration.
  */
@@ -63,11 +104,15 @@ export interface RecaptchaConfig {
   expressSiteKey?: string;
   sessionSiteKey?: string;
   challengePageSiteKey?: string;
+  enterpriseSiteKey?: string;
   sessionJsInjectPath?: string;
   recaptchaEndpoint: string;
   debug?: boolean;
   unsafe_debug_dump_logs?: boolean;
   strict_cookie?: boolean;
+  credentialPath?: string;
+  accountId?: string;
+  username?: string;
 }
 
 export class DebugTrace {
@@ -77,7 +122,7 @@ export class DebugTrace {
   policy_count?: number;
   policy_match?: boolean;
   inject_js_match?: boolean;
-  site_key_used?: "action" | "session" | "challenge" | "express" | "none";
+  site_key_used?: "action" | "session" | "challenge" | "express" | "none" | "enterprise";
   site_keys_present?: string;
   version?: string;
   empty_config?: string;
@@ -156,40 +201,44 @@ export abstract class RecaptchaContext {
     this.debug_trace = new DebugTrace(this);
   }
 
-  async fetch(req: RequestInfo, options?: RequestInit): Promise<Response> {
-    return fetch(req, options);
+  abstract createRequest(url: string, options: EdgeRequestInit): EdgeRequest;
+  abstract createResponse(body: string, options?: EdgeResponseInit): EdgeResponse;
+  encodeString(st: string): Uint8Array {
+    return new TextEncoder().encode(st);
   }
+  abstract fetch(req: EdgeRequest): Promise<EdgeResponse>;
 
   /**
    * Fetch from the customer's origin.
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_origin(req: RequestInfo, options?: RequestInit): Promise<Response> {
-    return this.fetch(req, options);
+  async fetch_origin(req: EdgeRequest): Promise<EdgeResponse> {
+    return this.fetch(req);
   }
 
   /**
    * Call fetch for ListFirewallPolicies.
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_list_firewall_policies(req: RequestInfo, options?: RequestInit): Promise<Response> {
-    return this.fetch(req, options);
+  async fetch_list_firewall_policies(req: EdgeRequest): Promise<EdgeResponse> {
+    return this.fetch(req);
   }
 
   /**
    * Call fetch for CreateAssessment
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_create_assessment(req: RequestInfo, options?: RequestInit): Promise<Response> {
-    return this.fetch(req, options);
+  async fetch_create_assessment(req: EdgeRequest): Promise<EdgeResponse> {
+    return this.fetch(req);
   }
 
   /**
    * Call fetch for getting the ChallengePage
-   * Parameters and outputs are the same as the 'fetch' function.
+   * @param path: the URL to fetch the challenge page from.
+   * @param soz_base64: the base64 encoded soz.
    */
-  async fetch_challenge_page(req: RequestInfo, options?: RequestInit): Promise<Response> {
-    return this.fetch(req, options);
+  async fetch_challenge_page(req: EdgeRequest): Promise<EdgeResponse> {
+    return this.fetch(req);
   }
 
   /**
@@ -226,6 +275,6 @@ export abstract class RecaptchaContext {
     this.log_messages.push([level, [msg]]);
   }
 
-  abstract buildEvent(req: Request): any;
-  abstract injectRecaptchaJs(resp: Response): Promise<Response>;
+  abstract buildEvent(req: EdgeRequest): Promise<Event>;
+  abstract injectRecaptchaJs(resp: EdgeResponse): Promise<EdgeResponse>;
 }

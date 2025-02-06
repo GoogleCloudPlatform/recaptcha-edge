@@ -28,6 +28,14 @@ app.get("/token/session", (req, res) => {
   res.render("session", { siteKey: config.sessionSiteKey });
 });
 
+app.get("/token/v3web", (req, res) => {
+  res.render("v3web", { siteKey: config.enterpriseSiteKey });
+});
+
+app.get("/token/credentials", (req, res) => {
+  res.render("credentials", { siteKey: config.enterpriseSiteKey });
+});
+
 app.get("*", (req, res) => {
   res.send({
     url: req.url,
@@ -44,7 +52,7 @@ app.listen(config.http_port, () => {
 });
 
 if (config.https_port > 0 && https_options) {
-  var server = https.createServer(options, app);
+  var server = https.createServer(https_options, app);
   server.listen(config.https_port, () => {
     console.log(`mock backend https starting on port " ${config.https_port}`);
   });

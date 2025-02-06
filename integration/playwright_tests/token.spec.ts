@@ -88,6 +88,31 @@ test("should generate an action token after execute() by clicking the button", a
   await expect(page.getByText("x-recaptcha-test")).toBeVisible({ timeout: 3000 });
 });
 
+test("should generate an enterprise token after execute() by clicking the button", async ({ page }) => {
+  const endpointUrl = process.env.ENDPOINT as string;
+  // Go to the page with the reCAPTCHA.
+  await page.goto(`${endpointUrl}/token/v3web`);
+
+  // Intercept the request triggered by the button click.
+  const responsePromise = page.waitForResponse(
+    (response) => response.url().includes("/server") && response.request().method() === "POST",
+  );
+  await page.click("#execute-button");
+
+  // Wait for the response and extract the token from the header.
+  const response = await responsePromise;
+  const enterpriseToken = response.request().postDataJSON()["g-recaptcha-response"];
+
+  // Assert that the token is not empty.
+  expect(enterpriseToken).toBeTruthy();
+
+  // Call CreateAsessment by visit condition matching pages.
+  await page.goto(`${endpointUrl}/condition/1`);
+  await expect(page).toHaveURL(`${endpointUrl}/condition/1`);
+  // Match the expected value from the firewall rule.
+  await expect(page.getByText("x-recaptcha-test")).toBeVisible({ timeout: 3000 });
+});
+
 test("should get session token after visiting the intended injectJS path", async ({ page }) => {
   const endpointUrl = process.env.ENDPOINT as string;
 
@@ -165,6 +190,42 @@ test("should get session token and then challenge token", async ({ page }) => {
   expect(sessionToken).toBeTruthy();
   expect(challengeToken).toBeTruthy();
 
+  await page.goto(`${endpointUrl}/condition/1`);
+  await expect(page).toHaveURL(`${endpointUrl}/condition/1`);
+  // Match the expected value from the firewall rule.
+  await expect(page.getByText("x-recaptcha-test")).toBeVisible({ timeout: 3000 });
+});
+
+test("should get user info with an enterprise token by accessing the default login page", async ({ page }) => {
+  const endpointUrl = process.env.ENDPOINT as string;
+  // Go to the page with the reCAPTCHA.
+  await page.goto(`${endpointUrl}/token/credentials`);
+
+  await page.fill("#firstName", "Test");
+  await page.fill("#lastName", "User");
+  await page.fill("#email", "testing@example.com");
+  await page.fill("#username", "test_user");
+  await page.fill("#password", "test_password");
+
+  // Intercept the request triggered by the button click.
+  const responsePromise = page.waitForResponse(
+    (response) => response.url().includes("/login") && response.request().method() === "POST",
+  );
+  await page.click("#submit");
+
+  // Wait for the response and extract data.
+  const response = await responsePromise;
+
+  // Extract the token and username from the parsed body.
+  const enterpriseToken = response.request().postDataJSON()["g-recaptcha-response"];
+  const username = response.request().postDataJSON()["username"];
+
+  // Assert that the token and username are not empty.
+  expect(enterpriseToken).toBeTruthy();
+  expect(username).toBeTruthy();
+  expect(username).toEqual("test_user");
+
+  // Call CreateAsessment by visit condition matching pages.
   await page.goto(`${endpointUrl}/condition/1`);
   await expect(page).toHaveURL(`${endpointUrl}/condition/1`);
   // Match the expected value from the firewall rule.

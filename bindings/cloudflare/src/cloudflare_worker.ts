@@ -20,11 +20,12 @@
 
 type Env = any;
 
+import { FetchApiRequest, FetchApiResponse } from "@google-cloud/recaptcha";
 import { CloudflareContext, processRequest, recaptchaConfigFromEnv } from "./index";
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const cfctx = new CloudflareContext(env, ctx, recaptchaConfigFromEnv(env));
-    return processRequest(cfctx, request);
+    return processRequest(cfctx, new FetchApiRequest(request)).then((v) => (v as FetchApiResponse).asResponse());
   },
 } satisfies ExportedHandler;

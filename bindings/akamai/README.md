@@ -67,8 +67,6 @@ Please see the [reCAPTCHA Google Cloud Documentation](https://cloud.google.com/r
 ### As a Library
 This package has not yet been added to the NPM package repository, and must be manually imported.
 
-Please see the examples in the [examples](https://github.com/GoogleCloudPlatform/recaptcha-waf/tree/main/bindings/akamai/examples) directory.
-
 ## Contribution
 
 Please see our [Contribution](https://github.com/GoogleCloudPlatform/recaptcha-waf/blob/main/CONTRIBUTING.md) guidelines.
