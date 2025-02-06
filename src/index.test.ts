@@ -94,13 +94,14 @@ class TestContext extends RecaptchaContext {
     this.log_messages.push([level, [msg]]);
   };
   // eslint-disable-next-line  @typescript-eslint/no-unused-vars
-  buildEvent = (req: EdgeRequest) => {
-    return Promise.resolve(
-      EventSchema.parse({
-        userIpAddress: "1.2.3.4",
-        userAgent: "test-user-agent",
-      }),
-    );
+
+  buildEvent = async (req: EdgeRequest) => {
+    const partialEvent = await createPartialEventWithSiteInfo(this, req);
+    const baseEvent = EventSchema.parse({
+      userIpAddress: "1.2.3.4",
+      userAgent: "test-user-agent",
+    });
+    return { ...baseEvent, ...partialEvent };
   };
   injectRecaptchaJs = async (resp: EdgeResponse) => {
     let html = await resp.text();
@@ -137,6 +138,76 @@ test("callCreateAssessment-ok", async () => {
   const req = new FetchApiRequest("https://www.google.com");
   req.addHeader("X-Recaptcha-Token", "test-token");
   const resp = await callCreateAssessment(testContext as RecaptchaContext, req, ["test-env", "test-version"]);
+  expect(
+    await fetchHasRequest(
+      new Request("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123", {
+        body: JSON.stringify({
+          event: testEvent,
+          assessmentEnvironment: { client: "test-env", version: "test-version" },
+        }),
+        headers: {
+          "content-type": "application/json;charset=UTF-8",
+        },
+        method: "POST",
+      }),
+    ),
+  );
+  expect(resp).toEqual(testAssessment);
+});
+
+test("callCreateAssessmentWithUserInfo-ok", async () => {
+  const testEvent = {
+    token: "test-token",
+    siteKey: "enterprise-site-key",
+    wafTokenAssessment: false,
+    userInfo: {
+      accountId: "testuser",
+      userIds: [
+        {
+          email: "testing@google.com",
+        },
+        {
+          phoneNumber: "123456789",
+        },
+        {
+          username: "test",
+        },
+      ],
+    },
+  };
+  const testAssessment = {
+    event: testEvent,
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(() =>
+      Promise.resolve({
+        json: () => Promise.resolve(testAssessment),
+        headers: new Headers(),
+      }),
+    ),
+  );
+
+  const testContext = new TestContext(testConfig);
+  testContext.buildEvent = (req: EdgeRequest) => {
+    return Promise.resolve(testEvent);
+  };
+
+  const resp = await callCreateAssessment(
+    testContext as RecaptchaContext,
+    new FetchApiRequest(
+      new Request("https://www.google.com", {
+        body: JSON.stringify({
+          "g-recaptcha-response": "test-token",
+        }),
+        headers: {
+          "content-type": "application/json;charset=UTF-8",
+        },
+        method: "POST",
+      }),
+    ),
+    ["test-env", "test-version"],
+  );
   expect(
     await fetchHasRequest(
       new Request("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123", {
