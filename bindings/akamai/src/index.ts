@@ -15,61 +15,86 @@
  * limitations under the License.
  */
 
-import { RecaptchaConfig, RecaptchaContext } from "@google-cloud/recaptcha";
-import { HtmlRewritingStream } from "html-rewriter";
-import { httpRequest } from "http-request";
+import {
+  RecaptchaConfig,
+  RecaptchaContext,
+  EdgeRequest,
+  EdgeResponse,
+  LogLevel,
+  EdgeResponseInit,
+  EdgeRequestInit,
+} from "@google-cloud/recaptcha";
+import { TextDecoder, TextEncoder } from "encoding";
+import { httpRequest, HttpResponse } from "http-request";
+import { createResponse } from "create-response";
 import { logger } from "log";
 import { ReadableStream } from "streams";
 import pkg from "../package.json";
+import URL from "url-parse";
 
-type RequestInfo = Request | string;
+function streamReplace(
+  inputStream: ReadableStream<Uint8Array>,
+  targetStr: string,
+  replacementStr: string,
+): ReadableStream<Uint8Array> {
+  let buffer = "";
+  const decoder = new TextDecoder("utf-8");
+  const encoder = new TextEncoder();
+  const inputReader = inputStream.getReader();
+  let found = false; // Flag to track if replacement has been made.
 
-function headersGuard(
-  headers: Headers | Record<string, string | readonly string[]> | string[][] | undefined,
-): Record<string, string | string[]> {
-  if (headers === undefined) {
-    return {};
-  }
+  const outputStream = new ReadableStream<Uint8Array>({
+    start() {
+      buffer = "";
+      found = false;
+    },
+    async pull(controller) {
+      const { value: chunk, done: readerDone } = await inputReader.read();
 
-  // We have Headers
-  if (headers instanceof Headers) {
-    const headerObj: Record<string, string> = {};
-    headers.forEach((value, key) => {
-      headerObj[key] = value;
-    });
-    return headerObj;
-  }
+      if (chunk) {
+        buffer += decoder.decode(chunk);
+      }
 
-  // We have string[][]
-  if (Array.isArray(headers)) {
-    const headerMap: Record<string, string | string[]> = {};
+      if (!found) {
+        // Only perform replacement if not already found.
+        let targetIndex = buffer.indexOf(targetStr);
+        if (targetIndex !== -1) {
+          const beforeTarget = buffer.slice(0, targetIndex);
+          const afterTarget = buffer.slice(targetIndex + targetStr.length);
+          controller.enqueue(encoder.encode(beforeTarget + replacementStr));
+          buffer = afterTarget;
+          targetIndex = -1;
+          found = true;
+        }
+      }
 
-    headers.forEach(([key, ...values]) => {
-      headerMap[key] = values.length === 1 ? values[0] : values;
-    });
+      if (readerDone) {
+        controller.enqueue(encoder.encode(buffer));
+        controller.close();
+      } else if (buffer.length > targetStr.length && !found) {
+        const safeChunk = buffer.slice(0, buffer.length - targetStr.length);
+        controller.enqueue(encoder.encode(safeChunk));
+        buffer = buffer.slice(buffer.length - targetStr.length);
+      }
+    },
+    cancel() {
+      inputReader.cancel();
+    },
+  });
 
-    return headerMap;
-  }
-
-  // We have Record<string, string | readonly string[]>
-  // remove readonly attribute
-  const headerMap: Record<string, string | string[]> = {};
-  for (const key in headers) {
-    const value = headers[key];
-    headerMap[key] = value.length === 1 ? value[0] : [...value];
-  }
-
-  return headerMap;
+  return outputStream;
 }
 
-function bodyGuard(body: any | null): string | ReadableStream | undefined {
-  if (body === null) {
-    return undefined;
+async function readStream(stream: ReadableStream<Uint8Array>): Promise<string> {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let result = await reader.read();
+  let out = "";
+  while (!result.done) {
+    out += decoder.decode(new Uint8Array(result.value).buffer);
+    result = await reader.read();
   }
-  if (typeof body === "string" || body instanceof ReadableStream) {
-    return body as string | ReadableStream;
-  }
-  throw "Invalid request body";
+  return out;
 }
 
 const RECAPTCHA_JS = "https://www.google.com/recaptcha/enterprise.js";
@@ -104,11 +129,167 @@ export {
   RecaptchaError,
 } from "@google-cloud/recaptcha";
 
-export class AkamaiContext extends RecaptchaContext {
-  // eslint-disable-next-line  @typescript-eslint/no-unused-vars
-  static injectRecaptchaJs(inputResponse: object) {
-    throw new Error("Method not implemented.");
+type AkamaiRequestInit = {
+  method?: string;
+  headers?: Record<string, string | string[]>;
+  body?: string;
+  timeout?: number;
+};
+
+export class AkamaiRequest implements EdgeRequest {
+  req?: EW.ResponseProviderRequest;
+  method_: string;
+  url_: string;
+  body_?: string;
+  headers: Map<string, string>;
+
+  constructor(req: EW.ResponseProviderRequest | string, options?: AkamaiRequestInit) {
+    if (typeof req === "string") {
+      this.url_ = req;
+      this.method_ = options?.method ?? "GET";
+      this.body_ = options?.body ?? "";
+      this.headers = new Map();
+      for (const [key, value] of Object.entries(options?.headers ?? {})) {
+        if (typeof value === "string") {
+          this.headers.set(key.toLowerCase(), value);
+        } else {
+          this.headers.set(key.toLowerCase(), value.join(","));
+        }
+      }
+    } else {
+      this.req = req;
+      this.url_ = `${this.req.scheme}://${this.req.host}${this.req.path}`;
+      this.method_ = this.req.method;
+      this.headers = new Map();
+      let headers = req.getHeaders();
+      for (const [key, value] of Object.entries(headers)) {
+        this.headers.set(key.toLowerCase(), value.join(","));
+      }
+    }
   }
+
+  get url() {
+    return this.url_;
+  }
+
+  set url(url: string) {
+    this.url_ = url;
+  }
+
+  get method() {
+    return this.method_;
+  }
+
+  addHeader(key: string, value: string): void {
+    this.headers.set(key.toLowerCase(), value);
+  }
+
+  getHeader(key: string): string | null {
+    return this.headers.get(key.toLowerCase()) ?? null;
+  }
+
+  getHeaders(): Map<string, string> {
+    return this.headers;
+  }
+
+  getBodyText(): Promise<string> {
+    if (this.req) {
+      return this.req.text();
+    }
+    return Promise.resolve(this.body_ || "");
+  }
+  getBodyJson(): Promise<any> {
+    if (this.req) {
+      return this.req.json();
+    }
+    return Promise.resolve(JSON.parse(this.body_ || "{}"));
+  }
+}
+
+export class AkamaiResponse implements EdgeResponse {
+  //resp?: HttpResponse;
+  _body?: string | ReadableStream<Uint8Array>;
+  _status: number;
+  headers: Map<string, string[]>;
+
+  constructor(base: string | HttpResponse, status?: number, headers?: Record<string, string>) {
+    if (typeof base === "string") {
+      this._body = base;
+      this._status = status ?? 200;
+      this.headers = new Map();
+      for (const [key, value] of Object.entries(headers ?? {})) {
+        if (Array.isArray(value)) {
+          this.headers.set(key.toLowerCase(), value);
+        } else {
+          this.headers.set(key.toLowerCase(), [value]);
+        }
+      }
+    } else {
+      // base type is HttpResponse
+      this._body = base.body;
+      this._status = status ?? base.status;
+      this.headers = new Map();
+      let rh = base.getHeaders();
+      for (const key in rh) {
+        this.headers.set(key.toLowerCase(), rh[key]);
+      }
+    }
+  }
+
+  get status(): number {
+    return this._status;
+  }
+
+  get body(): ReadableStream<Uint8Array> | string {
+    return this._body ?? "";
+  }
+
+  set body(new_body: ReadableStream<Uint8Array> | string) {
+    this._body = new_body;
+  }
+
+  text(): Promise<string> {
+    if (!this._body) {
+      return Promise.resolve("");
+    }
+    if (typeof this._body === "string") {
+      return Promise.resolve(this._body);
+    }
+    return readStream(this._body);
+  }
+
+  async json(): Promise<unknown> {
+    return Promise.resolve(JSON.parse(await this.text()));
+  }
+
+  addHeader(key: string, value: string): void {
+    let v = this.headers.get(key.toLowerCase()) ?? [];
+    v.push(value);
+    this.headers.set(key.toLowerCase(), v);
+  }
+
+  getHeader(key: string): string | null {
+    return this.headers.get(key.toLowerCase())?.join(",") ?? null;
+  }
+
+  getHeaders(): Map<string, string> {
+    let ret = new Map();
+    for (const [k, v] of this.headers.entries()) {
+      ret.set(k, v.join(","));
+    }
+    return ret;
+  }
+
+  asResponse(): object {
+    let headers = new Map(this.headers);
+    for (const key of UNSAFE_RESPONSE_HEADERS) {
+      headers.delete(key);
+    }
+    return createResponse(this.status, Object.fromEntries(headers.entries()), this.body);
+  }
+}
+
+export class AkamaiContext extends RecaptchaContext {
   readonly sessionPageCookie = "recaptcha-akam-t";
   readonly challengePageCookie = "recaptcha-akam-e";
   readonly environment: [string, string] = [pkg.name, pkg.version];
@@ -118,7 +299,7 @@ export class AkamaiContext extends RecaptchaContext {
 
   constructor(cfg: RecaptchaConfig) {
     super(cfg);
-    this.start_time = performance.now();
+    this.start_time = Date.now();
   }
 
   /**
@@ -129,115 +310,130 @@ export class AkamaiContext extends RecaptchaContext {
    */
   log_performance_debug(event: string) {
     if (this.config.debug) {
-      this.performance_counters.push([event, performance.now() - this.start_time]);
+      this.performance_counters.push([event, Date.now() - this.start_time]);
     }
   }
 
-  buildEvent(req: Request): object {
+  /**
+   * Log an exception.
+   *
+   * For Akamai, these messages can be dumped with CURL using enhanced debug headers.
+   * see: https://techdocs.akamai.com/edgeworkers/docs/enable-enhanced-debug-headers
+   */
+  logException(e: any) {
+    super.logException(e);
+    logger.error("Exception: " + JSON.stringify(e, Object.getOwnPropertyNames(e)));
+  }
+
+  /**
+   * Log a message.
+   *
+   * For Akamai, these messages can be dumped with CURL using enhanced debug headers.
+   * see: https://techdocs.akamai.com/edgeworkers/docs/enable-enhanced-debug-headers
+   */
+  log(level: LogLevel, msg: string) {
+    super.log(level, msg);
+    switch (level) {
+      case "debug":
+        logger.debug(msg);
+        break;
+      case "info":
+        logger.info(msg);
+        break;
+      case "warning":
+        logger.warn(msg);
+        break;
+      case "error":
+        logger.error(msg);
+        break;
+    }
+  }
+
+  buildEvent(req: EdgeRequest): object {
     return {
       // extracting common signals
-      userIpAddress: req.headers.get("True-Client-IP"),
-      headers: Array.from(req.headers.entries()).map(([k, v]) => `${k}:${v}`),
-      ja3: (req as any)?.akamai?.bot_management?.ja3_hash ?? undefined,
+      userIpAddress: (req as AkamaiRequest).req?.clientIp,
+      headers: Array.from(req.getHeaders()).map(([k, v]) => `${k}:${v}`),
+      ja3: ((req as AkamaiRequest).req as any)?.akamai?.bot_management?.ja3_hash ?? undefined,
       requestedUri: req.url,
-      userAgent: req.headers.get("user-agent"),
+      userAgent: req.getHeader("user-agent"),
     };
   }
 
-  async fetch(req: RequestInfo, options?: RequestInit): Promise<Response> {
-    // Convert RequestInfo to string if it's not already
-    const url = typeof req === "string" ? req : req.url;
-    return httpRequest(url, {
-      method: options?.method ?? undefined,
-      headers: headersGuard(options?.headers),
-      body: bodyGuard(options?.body ?? null),
+  async fetch(req: EdgeRequest): Promise<EdgeResponse> {
+    // Use a relative path, since this is the method for origin redirection used
+    // on Akamai.
+    let url = new URL(req.url);
+    let headers = Object.fromEntries(req.getHeaders().entries());
+    let body = (await req.getBodyText()) || undefined;
+    return httpRequest(url.pathname + url.query, {
+      method: req.method,
+      headers,
+      body,
       /* there is no timeout in a Fetch API request. Consider making it a member of the Context */
-    }).then((resp: any) => {
-      return Promise.resolve({
-        ...resp,
-        type: "basic",
-        statusText: resp.status.toString(),
-        bodyUsed: false,
-        redirected: false,
-        headers: new Headers(resp.getHeaders()),
-        arrayBuffer: () => {
-          throw "unimplemented";
-        },
-        blob: () => {
-          throw "unimplemented";
-        },
-        clone: () => {
-          throw "unimplemented";
-        },
-        formData: () => {
-          throw "unimplemented";
-        },
-      });
-    });
+    }).then((v) => new AkamaiResponse(v));
   }
 
-  getSafeResponseHeaders(headers: any) {
-    for (const [headerKey] of Object.entries(headers)) {
-      if (UNSAFE_RESPONSE_HEADERS.has(headerKey)) {
-        headers.delete(headerKey);
-      }
-    }
-
-    return headers;
+  createRequest(url: string, options: EdgeRequestInit): EdgeRequest {
+    return new AkamaiRequest(url, options);
   }
 
-  injectRecaptchaJs(resp: Response): Promise<Response> {
+  createResponse(body: string, options?: EdgeResponseInit): EdgeResponse {
+    return new AkamaiResponse(body, options?.status, options?.headers);
+  }
+
+  // Overwritten because the TextEncoder object is different from the builtin NodeJS TextEncoder.
+  encodeString(st: string): Uint8Array {
+    return new TextEncoder().encode(st);
+  }
+
+  injectRecaptchaJs(resp: EdgeResponse): Promise<EdgeResponse> {
+    let base_resp = resp as AkamaiResponse;
     const sessionKey = this.config.sessionSiteKey;
     const RECAPTCHA_JS_SCRIPT = `<script src="${RECAPTCHA_JS}?render=${sessionKey}&waf=session" async defer></script>`;
-
-    const rewriter = new HtmlRewritingStream();
-
-    // Adds a <script> tag to the <head>
-    rewriter.onElement("head", (el) => {
-      el.append(`${RECAPTCHA_JS_SCRIPT}`);
-    });
-
-    let readableBody: ReadableStream<Uint8Array>;
-    if (resp.body) {
-      // Double check why it's NULL
-      const reader = resp.body.getReader();
-      readableBody = new ReadableStream({
-        async pull(controller) {
-          const { done, value } = await reader.read();
-          if (done) {
-            controller.close();
-          } else {
-            controller.enqueue(value);
-          }
-        },
-      });
-    } else {
-      // Create an empty ReadableStream if resp.body is null
-      logger.log("Request body is NULL");
-      readableBody = new ReadableStream();
+    // rewrite the response
+    if (base_resp.getHeader("Content-Type")?.startsWith("text/html")) {
+      let body = base_resp.body;
+      if (typeof body === "string") {
+        base_resp.body = body.replace("</head>", RECAPTCHA_JS_SCRIPT + "</head>");
+      } else {
+        base_resp.body = streamReplace(body, "</head>", RECAPTCHA_JS_SCRIPT + "</head>");
+      }
     }
+    return Promise.resolve(base_resp);
+  }
 
-    return Promise.resolve(
-      new Response(readableBody.pipeThrough(rewriter) as any, {
-        status: resp.status,
-        headers: this.getSafeResponseHeaders(resp.headers),
-      }),
-    );
+  async fetch_origin(req: EdgeRequest): Promise<EdgeResponse> {
+    return this.fetch(req);
   }
 
   // Fetch the firewall lists.
   // TODO: Cache the firewall policies.
   // https://techdocs.akamai.com/api-definitions/docs/caching
   // https://techdocs.akamai.com/property-mgr/docs/caching-2#how-it-works
-  async fetch_list_firewall_policies(req: RequestInfo, options?: RequestInit): Promise<Response> {
-    return this.fetch(req, {
-      ...options,
-    });
+  async fetch_list_firewall_policies(req: EdgeRequest): Promise<EdgeResponse> {
+    return this.fetch(req);
+  }
+
+  /**
+   * Call fetch for CreateAssessment
+   * Parameters and outputs are the same as the 'fetch' function.
+   */
+  async fetch_create_assessment(req: EdgeRequest): Promise<EdgeResponse> {
+    return this.fetch(req);
+  }
+
+  /**
+   * Call fetch for getting the ChallengePage
+   * @param path: the URL to fetch the challenge page from.
+   * @param soz_base64: the base64 encoded soz.
+   */
+  async fetch_challenge_page(req: EdgeRequest): Promise<EdgeResponse> {
+    return this.fetch(req);
   }
 }
 
-export function recaptchaConfigFromRequest(request: EW.IngressClientRequest): RecaptchaConfig {
-  logger.log(request.getVariable("PMUSER_RECAPTCHAACTIONSITEKEY") || "");
+export function recaptchaConfigFromRequest(request: EW.ResponseProviderRequest): RecaptchaConfig {
   return {
     projectNumber: parseInt(request.getVariable("PMUSER_GCPPROJECTNUMBER") || "0", 10),
     apiKey: request.getVariable("PMUSER_GCPAPIKEY") || "",
@@ -248,5 +444,7 @@ export function recaptchaConfigFromRequest(request: EW.IngressClientRequest): Re
     recaptchaEndpoint: request.getVariable("PMUSER_RECAPTCHAENDPOINT") || DEFAULT_RECAPTCHA_ENDPOINT,
     debug: request.getVariable("PMUSER_DEBUG") === "true",
     unsafe_debug_dump_logs: request.getVariable("PMUSER_UNSAFE_DEBUG_DUMP_LOGS") === "true",
+    sessionJsInjectPath: request.getVariable("PMUSER_SESSION_JS_INSTALL_PATH"),
+    strict_cookie: (request.getVariable("PMUSER_STRICTCOOKIE") ?? "true") === "true", // default to true
   };
 }
