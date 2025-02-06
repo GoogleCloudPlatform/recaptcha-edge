@@ -35,7 +35,7 @@ import {
   FetchApiResponse,
   EdgeResponseInit,
   UserInfo,
-  Event
+  Event,
 } from "@google-cloud/recaptcha";
 import pkg from "../package.json";
 
@@ -111,7 +111,7 @@ export class CloudflareContext extends RecaptchaContext {
       ja3: (base_req as any)?.["cf"]?.["bot_management"]?.["ja3_hash"] ?? undefined,
       requestedUri: req.url,
       userAgent: req.getHeader("user-agent") ?? undefined,
-      userInfo
+      userInfo,
     };
   }
 
