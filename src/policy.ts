@@ -190,7 +190,7 @@ export async function applyActions(
     const soz = createSoz(
       context,
       url.hostname,
-      event.userIpAddress,
+      event.userIpAddress ?? "",
       context.config.projectNumber,
       context.config.challengePageSiteKey ?? "", // TODO: default site key?
     );

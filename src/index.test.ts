@@ -132,7 +132,7 @@ test("callCreateAssessment-ok", async () => {
 
   const testContext = new TestContext(testConfig);
   testContext.buildEvent = (req: EdgeRequest) => {
-    return baseEvent;
+    return Promise.resolve(baseEvent);
   };
 
   const req = new FetchApiRequest("https://www.google.com");
