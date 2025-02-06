@@ -182,7 +182,7 @@ export async function applyActions(
 
   if (terminalAction.type === "redirect") {
     // TODO: consider caching event.
-    const event = context.buildEvent(req);
+    const event = await context.buildEvent(req);
     const url = new URL(req.url);
     if (!context.config.challengePageSiteKey) {
       context.log("error", "[!] attempt to redirect without challenge page site key!");
@@ -190,7 +190,7 @@ export async function applyActions(
     const soz = createSoz(
       context,
       url.hostname,
-      event.userIpAddress,
+      event.userIpAddress ?? "",
       context.config.projectNumber,
       context.config.challengePageSiteKey ?? "", // TODO: default site key?
     );
