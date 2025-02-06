@@ -15,9 +15,7 @@
  * limitations under the License.
  */
 
-import { AkamaiContext, processRequest, recaptchaConfigFromRequest } from "./index";
-import { createResponse } from "create-response";
-import { ReadableStream } from "streams";
+import { AkamaiContext, AkamaiRequest, AkamaiResponse, processRequest, recaptchaConfigFromRequest } from "./index";
 
 /**
  * The Akamai Edge Worker event handler.
@@ -26,14 +24,8 @@ import { ReadableStream } from "streams";
  * creates an AkamaiContext object and then calls the processRequest function
  * to handle the request.
  */
-
-export async function responseProvider(inreq: EW.IngressClientRequest) {
+export async function responseProvider(inreq: EW.ResponseProviderRequest) {
   const akamaiContext = new AkamaiContext(recaptchaConfigFromRequest(inreq));
-
-  const req = { ...new Request(inreq.url, inreq), ...inreq };
-  // Use the akamaiContext and its methods to handle the request
-  const response = await processRequest(akamaiContext, req);
-  // convert Response back to createResponse
-  // TODO: populate headers
-  return createResponse(response.status, {}, (response.body ?? "") as ReadableStream | string);
+  let resp = await processRequest(akamaiContext, new AkamaiRequest(inreq));
+  return (resp as AkamaiResponse).asResponse();
 }
