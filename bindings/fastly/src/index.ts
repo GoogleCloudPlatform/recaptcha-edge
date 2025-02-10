@@ -230,6 +230,9 @@ export function recaptchaConfigFromConfigStore(name: string): RecaptchaConfig {
     enterpriseSiteKey: cfg.get("enterprise_site_key") ?? undefined,
     recaptchaEndpoint: cfg.get("recaptcha_endpoint") ?? DEFAULT_RECAPTCHA_ENDPOINT,
     sessionJsInjectPath: cfg.get("session_js_install_path") ?? undefined,
+    credentialPath: cfg.get("credential_path") ?? undefined,
+    accountId: cfg.get("account_id") ?? undefined,
+    username: cfg.get("username") ?? undefined,
     debug: (cfg.get("debug") ?? "false") == "true",
     unsafe_debug_dump_logs: (cfg.get("unsafe_debug_dump_logs") ?? "false") == "true",
   };

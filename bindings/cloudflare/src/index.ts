@@ -39,6 +39,20 @@ import {
 } from "@google-cloud/recaptcha";
 import pkg from "../package.json";
 
+// example build
+import { evaluate, parse } from 'cel-js'
+
+const parenthesizedExpr = '(2 + 2) * 2'
+console.log(`${parenthesizedExpr} => ${evaluate(parenthesizedExpr)}`) // => 8
+const result = parse('2 + 2')
+
+if (!result.isSuccess) {
+  throw new Error('Invalid syntax')
+}
+
+// Reuse the result of `parse` to evaluate the expression
+console.log(evaluate(result.cst)) // => 4
+
 export {
   callCreateAssessment,
   callListFirewallPolicies,

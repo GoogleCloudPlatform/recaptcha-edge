@@ -34,7 +34,8 @@
   },
   "dependencies": {
     "@google-cloud/recaptcha": "^1.0.0",
-    "@worker-tools/html-rewriter": "^0.1.0-pre.19"
+    "@worker-tools/html-rewriter": "^0.1.0-pre.19",
+    "cel-js": "^0.3.0"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.4.31",
