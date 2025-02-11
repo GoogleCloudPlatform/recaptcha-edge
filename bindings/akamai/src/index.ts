@@ -192,11 +192,8 @@ export class AkamaiRequest implements EdgeRequest {
   }
 
   getBodyText(): Promise<string> {
-    if (this.req && typeof this.req.arrayBuffer === "function") {
-      return this.req.arrayBuffer().then((buffer) => {
-        const decoder = new TextDecoder("utf-8");
-        return decoder.decode(buffer);
-      });
+    if (this.req) {
+      return this.req.text();
     }
     return Promise.resolve(this.body_ || "");
   }

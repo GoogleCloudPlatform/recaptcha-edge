@@ -93,6 +93,18 @@ const MockRequest = {
   getHeaders: () => {
     return {};
   },
+  getBodyText: () => {
+    return "";
+  },
+  getBodyJson: () => {
+    return {};
+  },
+  text: () => {
+    return "";
+  },
+  json: () => {
+    return {};
+  },
   setHeader: () => {
     throw "unimplemented";
   },
