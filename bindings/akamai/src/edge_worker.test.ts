@@ -149,6 +149,9 @@ beforeAll(() => {
       httpRequest: mockHttpRequest,
     };
   });
+  vi.mock("encoding", () => {
+    return {};
+  });
   vi.mock("create-response", () => {
     return {
       createResponse: (status: number, headers: any, body: any) => {
