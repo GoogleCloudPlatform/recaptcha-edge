@@ -24,7 +24,6 @@ import {
   EdgeResponseInit,
   EdgeRequestInit,
 } from "@google-cloud/recaptcha";
-import { TextDecoder, TextEncoder } from "encoding";
 import { httpRequest, HttpResponse } from "http-request";
 import { createResponse } from "create-response";
 import { logger } from "log";
