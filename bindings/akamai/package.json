@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@google-cloud/recaptcha": "^1.0.0",
+    "cel-js": "^0.3.0",
     "url-parse": "^1.5.10"
   },
   "devDependencies": {

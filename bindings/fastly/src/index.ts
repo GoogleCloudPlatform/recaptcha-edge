@@ -37,6 +37,15 @@ import {
 } from "@google-cloud/recaptcha";
 import pkg from "../package.json";
 
+import { evaluate, parse } from 'cel-js'
+
+// use `evaluate` to parse and evaluate an expression
+evaluate('2 + 2 * 2') // => 6
+
+evaluate('"foo" + "bar"') // => 'foobar'
+
+evaluate('user.role == "admin"', { user: { role: 'admin' } }) // => true
+
 const streamReplace = (
   inputStream: ReadableStream<Uint8Array>,
   targetStr: string,
