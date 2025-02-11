@@ -93,6 +93,18 @@ const MockRequest = {
   getHeaders: () => {
     return {};
   },
+  getBodyText: () => {
+    return "";
+  },
+  getBodyJson: () => {
+    return {};
+  },
+  text: () => {
+    return "";
+  },
+  json: () => {
+    return {};
+  },
   setHeader: () => {
     throw "unimplemented";
   },
@@ -136,6 +148,9 @@ beforeAll(() => {
     return {
       httpRequest: mockHttpRequest,
     };
+  });
+  vi.mock("encoding", () => {
+    return {};
   });
   vi.mock("create-response", () => {
     return {
