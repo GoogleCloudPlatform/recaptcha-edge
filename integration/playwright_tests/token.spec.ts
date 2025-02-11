@@ -39,7 +39,7 @@ test("should get session token as a cookie", async ({ browser, page }) => {
   try {
     // Perform JS injection automatically.
     await page.goto(`${endpointUrl}/token/session`);
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(1000);
     // Get cookies from the current context.
     cookies = await page.context().cookies();
   } catch (err) {
@@ -57,7 +57,7 @@ test("should get session token as a cookie", async ({ browser, page }) => {
   await page.goto(`${endpointUrl}/condition/1`);
   await expect(page).toHaveURL(`${endpointUrl}/condition/1`);
   // Match the expected value from the firewall rule.
-  await expect(page.getByText("x-recaptcha-test")).toBeVisible({ timeout: 3000 });
+  await expect(page.getByText("x-recaptcha-test")).toBeVisible({ timeout: 1000 });
 });
 
 test("should generate an action token after execute() by clicking the button", async ({ page }) => {
@@ -85,7 +85,7 @@ test("should generate an action token after execute() by clicking the button", a
   await page.goto(`${endpointUrl}/condition/1`);
   await expect(page).toHaveURL(`${endpointUrl}/condition/1`);
   // Match the expected value from the firewall rule.
-  await expect(page.getByText("x-recaptcha-test")).toBeVisible({ timeout: 3000 });
+  await expect(page.getByText("x-recaptcha-test")).toBeVisible({ timeout: 1000 });
 });
 
 test("should generate an enterprise token after execute() by clicking the button", async ({ page }) => {
@@ -110,7 +110,7 @@ test("should generate an enterprise token after execute() by clicking the button
   await page.goto(`${endpointUrl}/condition/1`);
   await expect(page).toHaveURL(`${endpointUrl}/condition/1`);
   // Match the expected value from the firewall rule.
-  await expect(page.getByText("x-recaptcha-test")).toBeVisible({ timeout: 3000 });
+  await expect(page.getByText("x-recaptcha-test")).toBeVisible({ timeout: 1000 });
 });
 
 test("should get session token after visiting the intended injectJS path", async ({ page }) => {
@@ -153,7 +153,7 @@ test("should get challenge token as a cookie", async ({ browser, page }) => {
   await page.goto(`${endpointUrl}/condition/1`);
   await expect(page).toHaveURL(`${endpointUrl}/condition/1`);
   // Match the expected value from the firewall rule.
-  await expect(page.getByText("x-recaptcha-test")).toBeVisible({ timeout: 3000 });
+  await expect(page.getByText("x-recaptcha-test")).toBeVisible({ timeout: 1000 });
 });
 
 test("should get session token and then challenge token", async ({ page }) => {
@@ -193,7 +193,7 @@ test("should get session token and then challenge token", async ({ page }) => {
   await page.goto(`${endpointUrl}/condition/1`);
   await expect(page).toHaveURL(`${endpointUrl}/condition/1`);
   // Match the expected value from the firewall rule.
-  await expect(page.getByText("x-recaptcha-test")).toBeVisible({ timeout: 3000 });
+  await expect(page.getByText("x-recaptcha-test")).toBeVisible({ timeout: 1000 });
 });
 
 test("should get user info with an enterprise token by accessing the default login page", async ({ page }) => {
@@ -229,5 +229,5 @@ test("should get user info with an enterprise token by accessing the default log
   await page.goto(`${endpointUrl}/condition/1`);
   await expect(page).toHaveURL(`${endpointUrl}/condition/1`);
   // Match the expected value from the firewall rule.
-  await expect(page.getByText("x-recaptcha-test")).toBeVisible({ timeout: 3000 });
+  await expect(page.getByText("x-recaptcha-test")).toBeVisible({ timeout: 1000 });
 });
