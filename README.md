@@ -23,7 +23,7 @@ The prebuilt packages are intended to be used with the [reCAPTCHA Firewall Polic
 
 Typically, this involves:
 * Create the appropriate reCAPTCHA Site Keys in [Google Cloud reCAPTCHA Console](https://console.cloud.google.com/security/recaptcha).
-* Upload the package to your edge compute platform.
+* Upload and install the package to your edge compute platform.
 * Configure the package to use the created reCAPTCHA Site Keys.
 * Create a set of Firewall Policies to protect sensative pages or actions.
 
