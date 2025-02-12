@@ -545,6 +545,56 @@ test("localPolicyAssessment-matchNontrivialCondition", async () => {
   expect(fetch).toHaveBeenCalledTimes(1);
 });
 
+test("localPolicyAssessment-performance", async () => {
+  const numPolicies = 500;
+  const testPolicies: FirewallPolicy[] = [];
+  const testPath = "test-path-performance";
+
+  const context = new TestContext(testConfig);
+  const req = new FetchApiRequest(`https://www.example.com/${testPath}`);
+
+  // Create a large array of non trivial policies that all match the test path.
+  for (let i = 0; i < numPolicies; i++) {
+    testPolicies.push({
+      name: `policy-${i}`,
+      description: `Test policy ${i}`,
+      path: testPath, // All policies match the path
+      condition: `recaptcha.score < 0.${i}`,
+      actions: [{ block: {}, type: "block" }], // Simple action
+    });
+  }
+
+  const startTime = performance.now();
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((req) => {
+      expect(req.url).toEqual(
+        "https://recaptchaenterprise.googleapis.com/v1/projects/12345/firewallpolicies?key=abc123&page_size=1000",
+      );
+      return Promise.resolve({
+        status: 200,
+        headers: new Headers(),
+        json: () =>
+          Promise.resolve({
+            name: "projects/12345/assessments/1234567890",
+            firewallPolicyAssessment: {
+              firewallPolicy: testPolicies,
+            },
+          }),
+      });
+    }),
+  );
+  const localAssessment = await localPolicyAssessment(context, req);
+  expect(localAssessment).toEqual("recaptcha-required");
+  expect(fetch).toHaveBeenCalledTimes(1);
+
+  const endTime = performance.now();
+  const duration = endTime - startTime;
+
+  console.log(`Fetch & nonTrivialLocalPolicyAssessment took ${duration}ms for ${numPolicies} policies`);
+  expect(duration).toBeLessThan(1000);
+});
+
 test("policyPathMatch", async () => {
   expect(
     policyPathMatch(
@@ -730,54 +780,6 @@ test("evaluatePolicyAssessment-ok", async () => {
   const assessment = await evaluatePolicyAssessment(context, req);
   expect(assessment[0].type).toEqual("block");
   expect(fetch).toHaveBeenCalledTimes(1);
-});
-
-test("evaluatePolicyAssessment-performance", async () => {
-  const numPolicies = 500;
-  const testPolicies: FirewallPolicy[] = [];
-  const testPath = "test-path-performance";
-
-  const context = new TestContext(testConfig);
-  const req = new FetchApiRequest(`https://www.example.com/${testPath}`);
-
-  // Create a large array of policies that all match the test path.
-  for (let i = 0; i < numPolicies; i++) {
-    testPolicies.push({
-      name: `policy-${i}`,
-      description: `Test policy ${i}`,
-      path: testPath, // All policies match the path
-      condition: `recaptcha.score > 0.${i} || recaptcha.token.valid`, // All conditions are true
-      actions: [{ allow: {}, type: "allow" }], // Simple action
-    });
-  }
-
-  const startTime = performance.now();
-  vi.stubGlobal(
-    "fetch",
-    vi.fn((req) => {
-      expect(req.url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123");
-      return Promise.resolve({
-        status: 200,
-        headers: new Headers(),
-        json: () =>
-          Promise.resolve({
-            name: "projects/12345/assessments/1234567890",
-            firewallPolicyAssessment: {
-              firewallPolicy: testPolicies,
-            },
-          }),
-      });
-    }),
-  );
-  const assessment = await evaluatePolicyAssessment(context, req);
-
-  expect(assessment[0].type).toEqual("allow");
-  expect(fetch).toHaveBeenCalledTimes(1);
-  const endTime = performance.now();
-  const duration = endTime - startTime;
-
-  console.log(`Fetch & evaluateFirewallPolicies took ${duration}ms for ${numPolicies} policies`);
-  expect(duration).toBeLessThan(1000);
 });
 
 test("evaluatePolicyAssessment-failedRpc", async () => {
