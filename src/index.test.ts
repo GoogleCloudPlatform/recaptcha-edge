@@ -63,6 +63,9 @@ const testConfig: RecaptchaConfig = {
   sessionSiteKey: "session-site-key",
   challengePageSiteKey: "challenge-page-site-key",
   enterpriseSiteKey: "enterprise-site-key",
+  credentialPath: "test/login",
+  accountId: "account-id-is-here",
+  username: "username-is-here",
 };
 
 class TestContext extends RecaptchaContext {
