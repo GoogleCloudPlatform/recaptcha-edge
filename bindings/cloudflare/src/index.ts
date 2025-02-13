@@ -80,20 +80,39 @@ export class CloudflareContext extends RecaptchaContext {
 
   // Get UserInfo from the default login event.
   async getUserInfo(req: EdgeRequest, accountIdField: string, usernameField: string): Promise<UserInfo> {
+    const contentType = req.getHeader("content-type");
     let userInfo: UserInfo = { accountId: "", userIds: [] };
-    try {
-      const body = (await (req as FetchApiRequest).req.clone().json()) as any;
-      const accountId = body[accountIdField];
-      const username = body[usernameField];
+    if (contentType && contentType.includes("application/json")) {
+      try {
+        const body = (await (req as FetchApiRequest).req.clone().json()) as any;
+        const accountId = body[accountIdField];
+        const username = body[usernameField];
 
-      if (accountId) {
-        userInfo = {
-          accountId,
-          userIds: [{ username: username }],
-        };
+        if (accountId) {
+          userInfo = {
+            accountId,
+            userIds: [{ username: username }],
+          };
+        }
+      } catch (error) {
+        console.error("Error parsing json when getting UserInfo:", error);
       }
-    } catch (error) {
-      console.error("getUserInfo error:", error);
+    } else if (contentType && contentType.includes("application/x-www-form-urlencoded")) {
+      try {
+        const bodyText = (await (req as FetchApiRequest).req.clone().text()) as any;
+        const formData = new URLSearchParams(bodyText);
+        const accountId = formData.get(accountIdField);
+        const username = formData.get(usernameField);
+
+        if (accountId) {
+          userInfo = {
+            accountId,
+            userIds: username ? [{ username }] : [],
+          };
+        }
+      } catch (error) {
+        console.error("Error parsing form data when getting UserInfo:", error);
+      }
     }
     return userInfo;
   }
