@@ -78,51 +78,8 @@ export class CloudflareContext extends RecaptchaContext {
     }
   }
 
-  // Get UserInfo from the default login event.
-  async getUserInfo(req: EdgeRequest, accountIdField: string, usernameField: string): Promise<UserInfo> {
-    const contentType = req.getHeader("content-type");
-    let userInfo: UserInfo = { accountId: "", userIds: [] };
-    if (contentType && contentType.includes("application/json")) {
-      try {
-        const body = (await (req as FetchApiRequest).req.clone().json()) as any;
-        const accountId = body[accountIdField];
-        const username = body[usernameField];
-
-        if (accountId) {
-          userInfo = {
-            accountId,
-            userIds: [{ username: username }],
-          };
-        }
-      } catch (error) {
-        console.error("Error parsing json when getting UserInfo:", error);
-      }
-    } else if (contentType && contentType.includes("application/x-www-form-urlencoded")) {
-      try {
-        const bodyText = (await (req as FetchApiRequest).req.clone().text()) as any;
-        const formData = new URLSearchParams(bodyText);
-        const accountId = formData.get(accountIdField);
-        const username = formData.get(usernameField);
-
-        if (accountId) {
-          userInfo = {
-            accountId,
-            userIds: username ? [{ username }] : [],
-          };
-        }
-      } catch (error) {
-        console.error("Error parsing form data when getting UserInfo:", error);
-      }
-    }
-    return userInfo;
-  }
-
   async buildEvent(req: EdgeRequest): Promise<Event> {
     let base_req = (req as FetchApiRequest).asRequest();
-    let userInfo: UserInfo | undefined = undefined;
-    if (req.method === "POST" && new URL(req.url).pathname === this.config.credentialPath) {
-      userInfo = await this.getUserInfo(req, this.config.accountId ?? "", this.config.username ?? "");
-    }
     return {
       // extracting common signals
       userIpAddress: req.getHeader("CF-Connecting-IP") ?? undefined,
@@ -130,7 +87,6 @@ export class CloudflareContext extends RecaptchaContext {
       ja3: (base_req as any)?.["cf"]?.["bot_management"]?.["ja3_hash"] ?? undefined,
       requestedUri: req.url,
       userAgent: req.getHeader("user-agent") ?? undefined,
-      userInfo,
     };
   }
 

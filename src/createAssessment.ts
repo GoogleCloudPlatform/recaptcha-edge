@@ -19,7 +19,7 @@
  */
 
 import * as action from "./action";
-import { Assessment, AssessmentSchema, Event, EventSchema, RpcErrorSchema } from "./assessment";
+import { Assessment, AssessmentSchema, Event, EventSchema, RpcErrorSchema, UserInfo } from "./assessment";
 import * as error from "./error";
 import { EdgeRequest, EdgeRequestInit, EdgeResponse, RecaptchaContext } from "./index";
 import picomatch from "picomatch";
@@ -77,6 +77,47 @@ async function getTokenFromBody(context: RecaptchaContext, request: EdgeRequest)
     context.log("error", "Unsupported Content-Type or no Content-Type header found.");
     return null;
   }
+}
+
+/**
+ * Get UserInfo from the default login event.
+ */
+async function getUserInfo(req: EdgeRequest, accountIdField?: string, usernameField?: string): Promise<UserInfo> {
+  const contentType = req.getHeader("content-type");
+  let userInfo: UserInfo = { accountId: "", userIds: [] };
+  if (contentType && contentType.includes("application/json")) {
+    try {
+      const body = await req.getBodyJson();
+      const accountId = accountIdField ? (body[accountIdField] ?? undefined) : undefined;
+      const username = usernameField ? (body[usernameField] ?? undefined) : undefined;
+
+      if (accountId) {
+        userInfo = {
+          accountId,
+          userIds: [{ username: username }],
+        };
+      }
+    } catch (error) {
+      console.error("Error parsing json when getting UserInfo:", error);
+    }
+  } else if (contentType && contentType.includes("application/x-www-form-urlencoded")) {
+    try {
+      const bodyText = await req.getBodyText();
+      const formData = new URLSearchParams(bodyText);
+      const accountId = accountIdField ? (formData.get(accountIdField) ?? undefined) : undefined;
+      const username = usernameField ? (formData.get(usernameField) ?? undefined) : undefined;
+
+      if (accountId) {
+        userInfo = {
+          accountId,
+          userIds: username ? [{ username }] : [],
+        };
+      }
+    } catch (error) {
+      console.error("Error parsing form data when getting UserInfo:", error);
+    }
+  }
+  return userInfo;
 }
 
 /**
@@ -185,6 +226,10 @@ export async function callCreateAssessment(
   // TODO: this should use a builder pattern. with a CreateAssessmentRequest type.
   const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = await context.buildEvent(req);
+  if (req.method === "POST" && new URL(req.url).pathname === context.config.credentialPath) {
+    site_features.userInfo = await getUserInfo(req, context.config.accountId, context.config.username);
+  }
+
   const event = {
     ...site_info,
     ...site_features,
