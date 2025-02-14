@@ -82,9 +82,6 @@ export function policyConditionMatch(policy: FirewallPolicy, req: EdgeRequest): 
  */
 export async function localPolicyAssessment(context: RecaptchaContext, req: EdgeRequest): Promise<LocalAssessment> {
   // Optimization to inspect a cached copy of the firewall policies if HTTP caching is enabled.
-  if (context.httpGetCachingEnabled) {
-    // TODO: platforms-explicit caching
-  }
   let resp;
   try {
     context.log_performance_debug("[rpc] callListFirewallPolicies - start");

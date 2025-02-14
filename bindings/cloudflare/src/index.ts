@@ -53,7 +53,6 @@ export class CloudflareContext extends RecaptchaContext {
   readonly sessionPageCookie = "recaptcha-cf-t";
   readonly challengePageCookie = "recaptcha-cf-e";
   readonly environment: [string, string] = [pkg.name, pkg.version];
-  readonly httpGetCachingEnabled = true;
   start_time: number;
   performance_counters: Array<[string, number]> = [];
 
