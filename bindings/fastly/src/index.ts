@@ -104,7 +104,6 @@ export class FastlyContext extends RecaptchaContext {
   readonly sessionPageCookie = "recaptcha-fastly-t";
   readonly challengePageCookie = "recaptcha-fastly-e";
   readonly environment: [string, string] = [pkg.name, pkg.version];
-  readonly httpGetCachingEnabled = true;
   start_time: number;
   performance_counters: Array<[string, number]> = [];
 
