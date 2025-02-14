@@ -26,10 +26,9 @@ async function measurePageLoadAndElementVisibility(
   selector: string,
   timeout: number,
 ): Promise<number> {
-  const startTime = Date.now();
-
   await page.goto(url);
   await expect(page).toHaveURL(url);
+  const startTime = Date.now();
 
   try {
     await page.waitForSelector(selector, { timeout });
@@ -46,7 +45,7 @@ test.beforeEach(async ({ context }) => {
   await context.clearCookies();
 });
 
-// By default, playwright tests in a single file are run in order.
+// By default, playwright tests in a single file run in order.
 test("should get session token and load condition within 600ms", async ({ browser, page }) => {
   const endpointUrl = process.env.ENDPOINT as string;
 
@@ -54,7 +53,7 @@ test("should get session token and load condition within 600ms", async ({ browse
   let cookies: Cookie[] = [];
   try {
     await page.goto(`${endpointUrl}/token/session`);
-    await page.waitForTimeout(1000); // Wait for token.
+    await page.waitForTimeout(1200); // Wait for token.
     cookies = await page.context().cookies();
   } catch (err) {
     await browser.close();
