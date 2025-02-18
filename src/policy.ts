@@ -84,9 +84,9 @@ export async function localPolicyAssessment(context: RecaptchaContext, req: Edge
   // Optimization to inspect a cached copy of the firewall policies if HTTP caching is enabled.
   let resp;
   try {
-    context.log_performance_debug("[rpc] callListFirewallPolicies - start");
+    context.log_performance_debug("[rpc] callFWP - start");
     resp = await callListFirewallPolicies(context);
-    context.log_performance_debug("[rpc] callListFirewallPolicies - end");
+    context.log_performance_debug("[rpc] callFWP - end");
   } catch (reason) {
     context.logException(reason);
     return "recaptcha-required";
@@ -114,11 +114,11 @@ export async function localPolicyAssessment(context: RecaptchaContext, req: Edge
 export async function evaluatePolicyAssessment(context: RecaptchaContext, req: EdgeRequest): Promise<action.Action[]> {
   let assessment;
   try {
-    context.log_performance_debug("[rpc] callCreateAssessment - start");
+    context.log_performance_debug("[rpc] callCA - start");
     assessment = await callCreateAssessment(context, req, context.environment, {
       firewallPolicyEvaluation: true,
     });
-    context.log_performance_debug("[rpc] callCreateAssessment - end");
+    context.log_performance_debug("[rpc] callCA - end");
   } catch (reason) {
     if (reason instanceof error.RecaptchaError) {
       if (reason.recommendedAction) {
