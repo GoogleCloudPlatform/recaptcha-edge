@@ -1360,6 +1360,6 @@ test("DebugTrace-format", () => {
   trace.policy_count = 10;
   trace.site_key_used = "session";
   expect(trace.formatAsHeaderValue()).toEqual(
-    "list_firewall_policies=ok;policy_count=10;site_key_used=session;site_keys_present=asce;empty_config=apikey,endpoint;performance_counters=",
+    "list_firewall_policies=ok;policy_count=10;site_key_used=session;site_keys_present=asce;empty_config=apikey,endpoint",
   );
 });
