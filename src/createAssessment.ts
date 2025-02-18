@@ -253,6 +253,7 @@ export async function callCreateAssessment(
   const endpoint = context.config.recaptchaEndpoint;
   const projectNumber = context.config.projectNumber;
   const apiKey = context.config.apiKey;
+  context.log_performance_debug("[rpc] callCA (fetch) - start");
   const assessmentUrl = `${endpoint}/v1/projects/${projectNumber}/assessments?key=${apiKey}`;
   const ca_req = context.createRequest(assessmentUrl, options);
   return context
