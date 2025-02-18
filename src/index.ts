@@ -193,7 +193,6 @@ export abstract class RecaptchaContext {
   log_messages: Array<[LogLevel, string[]]> = [];
   debug_trace: DebugTrace;
   readonly environment: [string, string] = ["[npm] @google-cloud/recaptcha", ""];
-  abstract readonly httpGetCachingEnabled: boolean;
   abstract readonly sessionPageCookie: string;
   abstract readonly challengePageCookie: string;
 

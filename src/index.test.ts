@@ -71,7 +71,6 @@ const testConfig: RecaptchaConfig = {
 class TestContext extends RecaptchaContext {
   sessionPageCookie = "recaptcha-test-t";
   challengePageCookie = "recaptcha-test-e";
-  httpGetCachingEnabled = true;
   exceptions: any[] = [];
   log_messages: Array<[LogLevel, string[]]> = [];
 

@@ -81,31 +81,26 @@ export function policyConditionMatch(policy: FirewallPolicy, req: EdgeRequest): 
  * with amortized caching of policies.
  */
 export async function localPolicyAssessment(context: RecaptchaContext, req: EdgeRequest): Promise<LocalAssessment> {
-  // TODO: local overrides or hooks
-
   // Optimization to inspect a cached copy of the firewall policies if HTTP caching is enabled.
-  if (context.httpGetCachingEnabled) {
-    // TODO: some platforms might need explicit caching?
-    let resp;
-    try {
-      context.log_performance_debug("[rpc] callListFirewallPolicies - start");
-      resp = await callListFirewallPolicies(context);
-      context.log_performance_debug("[rpc] callListFirewallPolicies - end");
-    } catch (reason) {
-      context.logException(reason);
-      return "recaptcha-required";
-    }
-    const policies = resp.firewallPolicies ?? [];
-    for (const policy of policies) {
-      if (policyPathMatch(policy, req)) {
-        const conditionMatch = policyConditionMatch(policy, req);
-        if (conditionMatch === "unknown") {
-          return "recaptcha-required";
-        } else if (conditionMatch) {
-          // TODO: handle multiple policies.
-          context.log("debug", "local assessment condition matched");
-          return policy?.actions ?? [];
-        }
+  let resp;
+  try {
+    context.log_performance_debug("[rpc] callListFirewallPolicies - start");
+    resp = await callListFirewallPolicies(context);
+    context.log_performance_debug("[rpc] callListFirewallPolicies - end");
+  } catch (reason) {
+    context.logException(reason);
+    return "recaptcha-required";
+  }
+  const policies = resp.firewallPolicies ?? [];
+  for (const policy of policies) {
+    if (policyPathMatch(policy, req)) {
+      const conditionMatch = policyConditionMatch(policy, req);
+      if (conditionMatch === "unknown") {
+        return "recaptcha-required";
+      } else if (conditionMatch) {
+        // TODO: handle multiple policies.
+        context.log("debug", "local assessment condition matched");
+        return policy?.actions ?? [];
       }
     }
   }
