@@ -294,7 +294,6 @@ export class AkamaiContext extends RecaptchaContext {
   readonly challengePageCookie = "recaptcha-akam-e";
   readonly environment: [string, string] = [pkg.name, pkg.version];
   start_time: number;
-  performance_counters: Array<[string, number]> = [];
 
   constructor(cfg: RecaptchaConfig) {
     super(cfg);
@@ -309,7 +308,7 @@ export class AkamaiContext extends RecaptchaContext {
    */
   log_performance_debug(event: string) {
     if (true) {
-      this.performance_counters.push([event, Date.now() - this.start_time]);
+      this.debug_trace.performance_counters.push([event, Date.now() - this.start_time]);
     }
   }
 

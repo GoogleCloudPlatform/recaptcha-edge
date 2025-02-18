@@ -129,7 +129,6 @@ export class DebugTrace {
   performance_counters: Array<[string, number]> = [];
 
   constructor(context: RecaptchaContext) {
-    this.performance_counters = context.performance_counters;
     this.site_keys_present = "";
     if (context.config.actionSiteKey?.trim()) {
       this.site_keys_present += "a";
@@ -196,7 +195,6 @@ export abstract class RecaptchaContext {
   readonly environment: [string, string] = ["[npm] @google-cloud/recaptcha", ""];
   abstract readonly sessionPageCookie: string;
   abstract readonly challengePageCookie: string;
-  abstract performance_counters: Array<[string, number]>;
 
   constructor(config: RecaptchaConfig) {
     this.config = config;

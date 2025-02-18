@@ -105,7 +105,6 @@ export class FastlyContext extends RecaptchaContext {
   readonly challengePageCookie = "recaptcha-fastly-e";
   readonly environment: [string, string] = [pkg.name, pkg.version];
   start_time: number;
-  performance_counters: Array<[string, number]> = [];
 
   constructor(
     private event: FetchEvent,
@@ -123,7 +122,7 @@ export class FastlyContext extends RecaptchaContext {
    */
   log_performance_debug(event: string) {
     if (true) {
-      this.performance_counters.push([event, performance.now() - this.start_time]);
+      this.debug_trace.performance_counters.push([event, performance.now() - this.start_time]);
     }
   }
 
