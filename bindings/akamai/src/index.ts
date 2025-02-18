@@ -293,7 +293,6 @@ export class AkamaiContext extends RecaptchaContext {
   readonly sessionPageCookie = "recaptcha-akam-t";
   readonly challengePageCookie = "recaptcha-akam-e";
   readonly environment: [string, string] = [pkg.name, pkg.version];
-  readonly httpGetCachingEnabled = true;
   start_time: number;
   performance_counters: Array<[string, number]> = [];
 
