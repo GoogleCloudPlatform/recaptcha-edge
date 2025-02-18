@@ -53,7 +53,6 @@ export class CloudflareContext extends RecaptchaContext {
   readonly sessionPageCookie = "recaptcha-cf-t";
   readonly challengePageCookie = "recaptcha-cf-e";
   readonly environment: [string, string] = [pkg.name, pkg.version];
-  readonly httpGetCachingEnabled = true;
   start_time: number;
   performance_counters: Array<[string, number]> = [];
 
@@ -148,7 +147,7 @@ export function recaptchaConfigFromEnv(env: Env): RecaptchaConfig {
     credentialPath: env.CREDENTIAL_PATH,
     accountId: env.USER_ACCOUNT_ID,
     username: env.USERNAME,
-    debug: env.DEBUG ?? false,
+    debug: env.DEBUG ?? true,
     unsafe_debug_dump_logs: env.UNSAFE_DEBUG_DUMP_LOGS ?? false,
   };
 }
