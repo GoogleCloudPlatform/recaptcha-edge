@@ -72,7 +72,7 @@ export class CloudflareContext extends RecaptchaContext {
    * config.debug flag is set to true.
    */
   log_performance_debug(event: string) {
-    if (this.config.debug) {
+    if (true) {
       this.performance_counters.push([event, performance.now() - this.start_time]);
     }
   }
