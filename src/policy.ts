@@ -229,7 +229,9 @@ export async function applyActions(
       case "injectjs":
         // Only inject JS once, even if multiple actions erroneously specify it.
         once.add(action.type);
+        context.log_performance_debug("[func] injectJS - start");
         resp = context.injectRecaptchaJs(await resp);
+        context.log_performance_debug("[func] injectJS - end");
         continue;
       /* v8 ignore next 2 lines */
       default:

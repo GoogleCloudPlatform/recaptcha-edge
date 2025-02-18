@@ -114,7 +114,6 @@ async function measurePageLoadAndScriptInjection(
   scriptSrc: string,
   timeout: number,
 ): Promise<number> {
-
   const startTime = Date.now();
   await page.goto(url);
   await expect(page).toHaveURL(url);
