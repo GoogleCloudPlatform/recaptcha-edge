@@ -309,6 +309,7 @@ export class AkamaiContext extends RecaptchaContext {
   log_performance_debug(event: string) {
     if (true) {
       let current_time = new Date().getTime();
+      this.debug_trace.performance_counters.push(["debug", current_time]);
       this.debug_trace.performance_counters.push([event, current_time - this.start_time]);
     }
   }
