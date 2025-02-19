@@ -297,7 +297,7 @@ export class AkamaiContext extends RecaptchaContext {
 
   constructor(cfg: RecaptchaConfig) {
     super(cfg);
-    this.start_time = Date.now();
+    this.start_time = new Date().getTime();
   }
 
   /**
@@ -308,7 +308,8 @@ export class AkamaiContext extends RecaptchaContext {
    */
   log_performance_debug(event: string) {
     if (true) {
-      this.debug_trace.performance_counters.push([event, Date.now() - this.start_time]);
+      let current_time = new Date().getTime();
+      this.debug_trace.performance_counters.push([event, current_time - this.start_time]);
     }
   }
 
