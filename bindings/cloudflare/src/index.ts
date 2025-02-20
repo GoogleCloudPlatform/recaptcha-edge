@@ -54,7 +54,6 @@ export class CloudflareContext extends RecaptchaContext {
   readonly challengePageCookie = "recaptcha-cf-e";
   readonly environment: [string, string] = [pkg.name, pkg.version];
   start_time: number;
-  performance_counters: Array<[string, number]> = [];
 
   constructor(
     private env: Env,
@@ -73,7 +72,7 @@ export class CloudflareContext extends RecaptchaContext {
    */
   log_performance_debug(event: string) {
     if (this.config.debug) {
-      this.performance_counters.push([event, performance.now() - this.start_time]);
+      this.debug_trace.performance_counters.push([event, performance.now() - this.start_time]);
     }
   }
 

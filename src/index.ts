@@ -126,6 +126,7 @@ export class DebugTrace {
   site_keys_present?: string;
   version?: string;
   empty_config?: string;
+  performance_counters: Array<[string, number]> = [];
 
   constructor(context: RecaptchaContext) {
     this.site_keys_present = "";
