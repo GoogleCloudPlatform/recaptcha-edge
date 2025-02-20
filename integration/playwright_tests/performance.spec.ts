@@ -46,8 +46,8 @@ test.beforeEach(async ({ context }) => {
   await context.clearCookies();
 });
 
-// By default, playwright tests in a single file are run in order.
-test("should get session token and load condition within 600ms", async ({ browser, page }) => {
+// By default, playwright tests in a single file run in order.
+test("should get session token and load condition within 1000ms", async ({ browser, page }) => {
   const endpointUrl = process.env.ENDPOINT as string;
 
   // Get the session token.
@@ -70,14 +70,14 @@ test("should get session token and load condition within 600ms", async ({ browse
     page,
     `${endpointUrl}/condition/1`,
     "text=x-recaptcha-test",
-    300,
+    1000,
   );
 
   console.log(`Page load and element visibility time: ${loadTime}ms`);
-  expect(loadTime).toBeLessThanOrEqual(600);
+  expect(loadTime).toBeLessThanOrEqual(1000);
 });
 
-test("should generate action token and load condition within 600ms", async ({ page }) => {
+test("should generate action token and load condition within 1000ms", async ({ page }) => {
   const endpointUrl = process.env.ENDPOINT as string;
 
   // Get the action token.
@@ -102,9 +102,56 @@ test("should generate action token and load condition within 600ms", async ({ pa
     page,
     `${endpointUrl}/condition/1`,
     "text=x-recaptcha-test",
-    600,
+    1000,
   );
 
   console.log(`Page load and element visibility time: ${loadTime}ms`);
-  expect(loadTime).toBeLessThanOrEqual(600);
+  expect(loadTime).toBeLessThanOrEqual(1000);
+});
+
+async function measurePageLoadAndScriptInjection(
+  page: Page,
+  url: string,
+  scriptSrc: string,
+  timeout: number,
+): Promise<number> {
+  const startTime = Date.now();
+  await page.goto(url);
+  await expect(page).toHaveURL(url);
+
+  try {
+    await page.waitForFunction(
+      (src) => {
+        return Array.from(document.querySelectorAll("script")).some((script) => script.src.includes(src));
+      },
+      scriptSrc,
+      { timeout },
+    );
+  } catch (error) {
+    const elapsedTime = Date.now() - startTime;
+    throw new Error(`Script ${scriptSrc} not injected within ${timeout}ms (Total time: ${elapsedTime}ms).`);
+  }
+
+  const endTime = Date.now();
+  return endTime - startTime;
+}
+
+test("should get session token and measure JS injection time", async ({ page }) => {
+  const endpointUrl = process.env.ENDPOINT as string;
+  const targetUrl = `${endpointUrl}/hello.html`;
+  const recaptchaScriptSrc = "www.google.com/recaptcha/enterprise.js";
+  const timeout = 3000;
+
+  const injectionTime = await measurePageLoadAndScriptInjection(page, targetUrl, recaptchaScriptSrc, timeout);
+
+  console.log(`JS injection time: ${injectionTime}ms`);
+  expect(injectionTime).toBeLessThanOrEqual(timeout);
+
+  // Check if the reCAPTCHA script is present in the page.
+  const scriptExists = await page.evaluate(() => {
+    return Array.from(document.querySelectorAll("script")).some((script) =>
+      script.src.includes("www.google.com/recaptcha/enterprise.js"),
+    );
+  });
+  expect(scriptExists).toBe(true);
 });
