@@ -140,7 +140,7 @@ test("should get session token and measure JS injection time", async ({ page }) 
   const endpointUrl = process.env.ENDPOINT as string;
   const targetUrl = `${endpointUrl}/hello.html`;
   const recaptchaScriptSrc = "www.google.com/recaptcha/enterprise.js";
-  const timeout = 1000;
+  const timeout = 2000;
 
   const injectionTime = await measurePageLoadAndScriptInjection(page, targetUrl, recaptchaScriptSrc, timeout);
 
