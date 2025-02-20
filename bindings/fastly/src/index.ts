@@ -36,6 +36,7 @@ import {
   Event,
 } from "@google-cloud/recaptcha";
 import pkg from "../package.json";
+import { CacheOverride } from "fastly:cache-override";
 
 const streamReplace = (
   inputStream: ReadableStream<Uint8Array>,
@@ -182,7 +183,9 @@ export class FastlyContext extends RecaptchaContext {
    * Parameters and outputs are the same as the 'fetch' function.
    */
   async fetch_list_firewall_policies(req: EdgeRequest): Promise<EdgeResponse> {
-    return this.fetch(req, { backend: "recaptcha" });
+    let cacheOverride = new CacheOverride("override", { ttl: 600 });
+
+    return this.fetch(req, { backend: "recaptcha", cacheOverride });
   }
 
   /**
