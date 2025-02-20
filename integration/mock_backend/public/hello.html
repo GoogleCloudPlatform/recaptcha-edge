@@ -1,9 +1,210 @@
+<!DOCTYPE html>
 <html>
-  <head>
-    <title>Hello World</title>
-  </head>
-  <body>
-    <h1>Hello World!</h1>
-    <p>Welcome to our website!</p>
-  </body>
+<head>
+    <title>Large HTML for Load Testing</title>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+        }
+        .random-text {
+            color: #333;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        .random-image {
+            width: 100%; /* Responsive images */
+            max-width: 500px; /* Limit maximum size */
+            height: auto;
+            margin-bottom: 20px;
+            display: block; /* Remove extra space below inline elements */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .hidden { /* For initially hidden content */
+            display: none;
+        }
+
+        /*  CSS Grid Example */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Responsive grid */
+            grid-gap: 20px;
+            margin-bottom: 20px;
+        }
+        .grid-item {
+            border: 1px solid #eee;
+            padding: 15px;
+            background-color: #fafafa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Large HTML Document for Load Testing</h1>
+        <p>This document contains a large amount of content to simulate a heavy page load.</p>
+
+        <h2>Random Text Content</h2>
+        <script>
+            // Function to generate random text
+            function generateRandomText(length) {
+                const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 ';
+                let result = '';
+                for (let i = 0; i < length; i++) {
+                    result += characters.charAt(Math.floor(Math.random() * characters.length));
+                }
+                return result;
+            }
+
+            // Generate and insert a lot of random text.
+            const textContainer = document.createElement('div');
+            for (let i = 0; i < 500; i++) { // 500 paragraphs of random text.
+                const p = document.createElement('p');
+                p.className = 'random-text';
+                p.textContent = generateRandomText(Math.floor(Math.random() * 500) + 100); // Random length between 100 and 600
+                textContainer.appendChild(p);
+            }
+           document.querySelector('.container').appendChild(textContainer);
+
+
+        </script>
+
+        <h2>Random Images (Placeholders)</h2>
+         <script>
+            // Function to generate random placeholder image URLs
+            function generateRandomImageUrl(width, height) {
+                return `https://picsum.photos/${width}/${height}?text=Image+${width}x${height}`;
+            }
+            const imageContainer = document.createElement('div');
+           // Generate and insert placeholder images
+            for (let i = 0; i < 50; i++) { // 50 images
+                const width = Math.floor(Math.random() * 300) + 200; // Width between 200 and 500
+                const height = Math.floor(Math.random() * 200) + 150; // Height between 150 and 350
+                const img = document.createElement('img');
+                img.className = 'random-image';
+                img.src = generateRandomImageUrl(width, height);
+                img.alt = `Placeholder Image ${width}x${height}`;
+                imageContainer.appendChild(img);
+            }
+           document.querySelector('.container').appendChild(imageContainer);
+        </script>
+
+
+
+        <h2>Large Table</h2>
+        <script>
+        const tableContainer = document.createElement('div');
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        const tbody = document.createElement('tbody');
+
+        // Create table header
+        const headerRow = document.createElement('tr');
+        for (let i = 0; i < 5; i++) {
+            const th = document.createElement('th');
+            th.textContent = `Header ${i + 1}`;
+            headerRow.appendChild(th);
+        }
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        // Create table body with many rows and cells
+        for (let i = 0; i < 200; i++) { // 200 rows
+            const tr = document.createElement('tr');
+            for (let j = 0; j < 5; j++) { // 5 columns
+                const td = document.createElement('td');
+                td.textContent = generateRandomText(20); // Short random text in each cell
+                tr.appendChild(td);
+            }
+            tbody.appendChild(tr);
+        }
+        table.appendChild(tbody);
+        tableContainer.appendChild(table)
+        document.querySelector('.container').appendChild(tableContainer);
+        </script>
+
+
+        <h2>CSS Grid Layout</h2>
+        <div class="grid-container">
+            <script>
+              // Generate grid items
+                const gridContainer = document.querySelector('.grid-container');
+                for (let i = 0; i < 20; i++) { // 20 grid items
+                    const item = document.createElement('div');
+                    item.className = 'grid-item';
+                    item.textContent = generateRandomText(50);
+                    gridContainer.appendChild(item);
+                }
+            </script>
+
+        </div>
+
+        <h2>Initially Hidden Content (for testing dynamic loading)</h2>
+         <div id="hidden-content" class="hidden">
+            <p>This content is initially hidden and can be revealed with JavaScript.</p>
+            <button onclick="document.getElementById('hidden-content').classList.remove('hidden');">Show Content</button>
+        </div>
+
+        <h2>Nested Lists</h2>
+            <ul>
+                <li>Item 1
+                    <ul>
+                        <li>Subitem 1.1</li>
+                        <li>Subitem 1.2
+                            <ul>
+                                <li>Sub-subitem 1.2.1</li>
+                                <li>Sub-subitem 1.2.2</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li>Item 2</li>
+                <li>Item 3
+                  <ul>
+                        <li>Subitem 3.1</li>
+                        <li>Subitem 3.2
+                            <ul>
+                                <li>Sub-subitem 3.2.1</li>
+                                <li>Sub-subitem 3.2.2</li>
+                                 <li>Sub-subitem 3.2.3</li>
+                                <li>Sub-subitem 3.2.4</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                 <li>Item 4</li>
+                <li>Item 5
+                  <ul>
+                        <li>Subitem 5.1</li>
+                        <li>Subitem 5.2
+                            <ul>
+                                <li>Sub-subitem 5.2.1</li>
+                                <li>Sub-subitem 5.2.2</li>
+                                 <li>Sub-subitem 5.2.3</li>
+                                <li>Sub-subitem 5.2.4</li>
+                                <li>Sub-subitem 5.2.5</li>
+                                <li>Sub-subitem 5.2.6</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+    </div>
+</body>
 </html>
