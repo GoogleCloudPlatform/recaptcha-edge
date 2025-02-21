@@ -19,11 +19,20 @@
  */
 
 import * as action from "./action";
-import { Assessment, AssessmentSchema, Event, EventSchema, RpcErrorSchema, UserInfo } from "./assessment";
+import {
+  Assessment,
+  AssessmentSchema,
+  Event,
+  EventSchema,
+  RpcErrorSchema,
+  UserInfo,
+  UserInfoSchema,
+} from "./assessment";
 import * as error from "./error";
 import { EdgeRequest, EdgeRequestInit, EdgeResponse, RecaptchaContext } from "./index";
 import picomatch from "picomatch";
-import { extractBoundary, parse } from "parse-multipart-form-data";
+import { extractBoundary, parse as parseMultipart } from "parse-multipart-form-data";
+import { evaluate, parse as parseCel } from "cel-js";
 
 /**
  * Get reCAPTCHA regular token from POST request body,
@@ -55,7 +64,7 @@ async function getTokenFromBody(context: RecaptchaContext, request: EdgeRequest)
       const boundary = extractBoundary(contentType);
       const bodyText = await request.getBodyText();
       const body = Buffer.from(bodyText);
-      const parts = parse(body, boundary);
+      const parts = parseMultipart(body, boundary);
 
       for (const part of parts) {
         // Check filename directly, or a custom header if controlling the upload.
@@ -79,44 +88,88 @@ async function getTokenFromBody(context: RecaptchaContext, request: EdgeRequest)
   }
 }
 
+// Sample User Info Config (Fieldname should be provided by clients; probably stored in WAF first)
+// Syntax should be: user_info_account_id: <cel_expr>
+const userInfoConfig: {
+  [key: string]: string; // Index signature
+  accountId: string;
+  userIds: string;
+} = {
+  accountId: "has(accountIdField)",
+  userIds: `[{email: user.emailField, phoneNumber: user.phoneNumberField, username: user.usernameField}]`,
+};
+
 /**
  * Get UserInfo from the default login event.
  */
-async function getUserInfo(req: EdgeRequest, accountIdField?: string, usernameField?: string): Promise<UserInfo> {
+async function getUserInfo(context: RecaptchaContext, req: EdgeRequest): Promise<UserInfo> {
   const contentType = req.getHeader("content-type");
   let userInfo: UserInfo = { accountId: "", userIds: [] };
+
+  // Get the request body based on content type
+  let requestBody;
   if (contentType && contentType.includes("application/json")) {
     try {
-      const body = await req.getBodyJson();
-      const accountId = accountIdField ? (body[accountIdField] ?? undefined) : undefined;
-      const username = usernameField ? (body[usernameField] ?? undefined) : undefined;
-
-      if (accountId) {
-        userInfo = {
-          accountId,
-          userIds: [{ username: username }],
-        };
-      }
+      requestBody = await req.getBodyJson();
     } catch (error) {
-      console.error("Error parsing json when getting UserInfo:", error);
+      context.log("error", "Error parsing JSON:" + error);
+      return userInfo;
     }
   } else if (contentType && contentType.includes("application/x-www-form-urlencoded")) {
     try {
       const bodyText = await req.getBodyText();
-      const formData = new URLSearchParams(bodyText);
-      const accountId = accountIdField ? (formData.get(accountIdField) ?? undefined) : undefined;
-      const username = usernameField ? (formData.get(usernameField) ?? undefined) : undefined;
+      requestBody = Object.fromEntries(new URLSearchParams(bodyText));
+    } catch (error) {
+      context.log("error", "Error parsing form data:" + error);
+      return userInfo;
+    }
+  } else {
+    context.log("debug", "Unsupported content type:" + contentType);
+    return userInfo;
+  }
 
-      if (accountId) {
-        userInfo = {
-          accountId,
-          userIds: username ? [{ username }] : [],
-        };
+  // Evaluate the user information against the configuration
+  for (const key in userInfoConfig) {
+    const expression = userInfoConfig[key];
+    try {
+      const parsedExpression = parseCel(expression);
+      if (!parsedExpression.isSuccess) {
+        context.log("error", `Invalid CEL expression for ${key}`);
+        continue;
+      }
+      // Evaluate if target_user matches the field.
+      const result = evaluate(parsedExpression.cst, { user: requestBody }); // Use requestBody here
+
+      // Check if the field exists based on the CEL evaluation
+      if (result === true) {
+        if (key === "accountId") {
+          // Extract field name
+          const fieldName = expression.split("(")[1].split(")")[0];
+          userInfo.accountId = requestBody[fieldName]; // Access from requestBody
+        }
+        if (key === "userIds") {
+          const userIdsResult = evaluate(expression, {
+            user: requestBody,
+          });
+          // Type assertion for userIdsResult
+          userInfo.userIds = userIdsResult as UserInfo["userIds"];
+        }
+      } else {
+        context.log("debug", "Field not found in user data");
       }
     } catch (error) {
-      console.error("Error parsing form data when getting UserInfo:", error);
+      context.log("error", `Error evaluating CEL expression for ${key}:` + error);
     }
   }
+
+  // Validate the final userInfo against the schema
+  const parsedUserInfo = UserInfoSchema.safeParse(userInfo);
+  if (parsedUserInfo.success) {
+    context.log("error", "UserInfo is valid: " + parsedUserInfo.data);
+  } else {
+    context.log("error", "UserInfo is invalid:" + parsedUserInfo.error);
+  }
+
   return userInfo;
 }
 
@@ -227,7 +280,7 @@ export async function callCreateAssessment(
   const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = await context.buildEvent(req);
   if (req.method === "POST" && new URL(req.url).pathname === context.config.credentialPath) {
-    site_features.userInfo = await getUserInfo(req, context.config.accountId, context.config.username);
+    site_features.userInfo = await getUserInfo(context, req);
   }
 
   const event = {
