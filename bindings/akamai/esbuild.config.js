@@ -4,7 +4,7 @@ await esbuild.build({
   entryPoints: ["src/edge_worker.ts"],
   bundle: true,
   outdir: "dist",
-  external: ["create-response", "http-request", "html-rewriter", "streams", "log", "encoding", "lodash-es"],
+  external: ["create-response", "http-request", "html-rewriter", "streams", "log", "encoding"],
   platform: "neutral",
   format: "esm",
 });
