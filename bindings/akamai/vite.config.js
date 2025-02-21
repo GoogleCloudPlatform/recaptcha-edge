@@ -22,4 +22,7 @@ export default defineConfig({
     include: ["src/*.test.ts"],
     testTimeout: 10000,
   },
+  unstable_allowDynamic: [
+    "/node_modules/lodash/",
+  ],
 });
