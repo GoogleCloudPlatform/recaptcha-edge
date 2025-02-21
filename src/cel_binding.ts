@@ -27,7 +27,7 @@ for (const key in userInfoConfig) {
   try {
     const parsedExpression = parse(expression);
     if (!parsedExpression.isSuccess) {
-      console.error(`Invalid CEL expression for ${key}:`, parsedExpression.errors);
+      console.error(`Invalid CEL expression for ${key}`);
       continue;
     }
     // Evaluate if target_user matches the field.
