@@ -1,43 +1,27 @@
 import { evaluate, parse } from "cel-js";
-import { z } from "zod";
+import { UserInfo, UserInfoSchema } from "./assessment";
 
-// UserInfo used in Assessment
-const UserInfoSchema = z.object({
-  accountId: z.string().optional(),
-  userIds: z
-    .array(
-      z.object({
-        email: z.string().optional(),
-        phoneNumber: z.string().optional(),
-        username: z.string().optional(),
-      }),
-    )
-    .optional(),
-});
-
-type UserInfo = z.infer<typeof UserInfoSchema>;
-
-// Sample User Info Config (provided by clients; probably stored in WAF first)
-// Format should be: user_info_account_id: <cel_expr>
+// Sample User Info Config (Fieldname should be provided by clients; probably stored in WAF first)
+// Syntax should be: user_info_account_id: <cel_expr>
 const userInfoConfig: {
   [key: string]: string; // Index signature
   accountId: string;
-  email: string;
-  phoneNumber: string;
+  userIds: string;
 } = {
   accountId: "has(accountIdField)",
-  email: "has(emailField)",
-  phoneNumber: "has(phoneNumberField)",
+  userIds: `[{email: user.emailField, phoneNumber: user.phoneNumberField, username: user.usernameField}]`,
 };
 
-// Example userinfo from an incoming POST request
+// Example userinfo from an incoming POST request body
 const target_user: { [key: string]: string } = {
   accountIdField: "testuser",
   emailField: "test@example.com",
   phoneNumberField: "123-456-7890",
+  usernameField: "abcdef",
 };
 
 // Evaluate the user information against the configuration
+let userInfo: UserInfo = { accountId: "", userIds: [] };
 for (const key in userInfoConfig) {
   const expression = userInfoConfig[key];
   try {
@@ -51,12 +35,25 @@ for (const key in userInfoConfig) {
 
     // Check if the field exists based on the CEL evaluation
     if (result === true) {
-      // Extract field name
-      const fieldName = expression.split("(")[1].split(")")[0];
-      // Assign the value of target_user[fieldName] in getUserInfo before CreateAssessment
-      // Something like:
-      let userInfo: UserInfo = { accountId: "", userIds: [] };
-      userInfo = target_user[fieldName];
+      if (key === "accountId") {
+        // Extract field name
+        const fieldName = expression.split("(")[1].split(")")[0];
+        userInfo.accountId = target_user[fieldName];
+      }
+      if (key === "userIds") {
+        const userIdsResult = evaluate(expression, {
+          target_user: target_user,
+        });
+        // Type assertion for userIdsResult
+        userInfo.userIds = userIdsResult as UserInfo["userIds"];
+      }
+      // Validate the final userInfo against the schema
+      const parsedUserInfo = UserInfoSchema.safeParse(userInfo);
+      if (parsedUserInfo.success) {
+        console.log("UserInfo is valid:", parsedUserInfo.data);
+      } else {
+        console.error("UserInfo is invalid:", parsedUserInfo.error);
+      }
     } else {
       console.error("Field not found in user data");
     }
