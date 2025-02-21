@@ -30,6 +30,7 @@
     "coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "cel-js": "^0.3.1",
     "ipaddr.js": "^2.2.0",
     "parse-multipart-form-data": "^1.0.0",
     "picomatch": "^4.0.2",
