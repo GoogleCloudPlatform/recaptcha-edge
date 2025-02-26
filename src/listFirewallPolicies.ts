@@ -53,6 +53,7 @@ export async function callListFirewallPolicies(context: RecaptchaContext): Promi
         .json()
         .then((json) => {
           const ret = ListFirewallPoliciesResponseSchema.safeParse(json);
+          // context.log_performance_debug("[content] listFirewallPolicies " + JSON.stringify(ret));
           if (ret.success && Object.keys(ret.data).length > 0) {
             context.debug_trace.list_firewall_policies = "ok";
             context.debug_trace.policy_count = ret.data.firewallPolicies.length;
@@ -71,6 +72,7 @@ export async function callListFirewallPolicies(context: RecaptchaContext): Promi
     })
     .catch((reason) => {
       context.debug_trace.list_firewall_policies = "err";
+      context.log_performance_debug("[rpc] listFirewallPolicies (fail) " + reason.message);
       context.log("debug", "[rpc] listFirewallPolicies (fail)");
       if (reason instanceof error.RecaptchaError) {
         throw reason;

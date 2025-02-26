@@ -21,7 +21,7 @@
   },
   "scripts": {
     "prebuild": "tsc",
-    "build": "fastly compute build --enable-http-cache",
+    "build": "fastly compute build",
     "test": "vitest --disableConsoleIntercept",
     "devclean": "rm -rf node_nodules && rm -rf dist && rm package-lock.json",
     "deploy": "fastly compute publish",
