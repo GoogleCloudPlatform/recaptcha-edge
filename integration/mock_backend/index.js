@@ -26,7 +26,7 @@ function setCacheControl(res, value) {
 }
 
 app.get("/token/action", (req, res) => {
-  setCacheControl(res, "no-store"); // Example: Don't cache this route
+  setCacheControl(res, "public, max-age=3600"); // no-store: Don't cache this route
   res.render("action", { siteKey: config.actionSiteKey });
 });
 
@@ -46,7 +46,7 @@ app.get("/token/credentials", (req, res) => {
 });
 
 app.get("*", (req, res) => {
-  setCacheControl(res, "no-store"); // Example: Don't cache this route
+  setCacheControl(res, "public, max-age=3600"); // Example: Don't cache this route
   res.send({
     url: req.url,
     method: req.method,

@@ -18,6 +18,7 @@
 import { ConfigStore } from "fastly:config-store";
 import { Dictionary } from "fastly:dictionary";
 import { CacheOverride } from "fastly:cache-override";
+import { SimpleCache } from "fastly:cache";
 
 const RECAPTCHA_JS = "https://www.google.com/recaptcha/enterprise.js";
 // Firewall Policies API is currently only available in the public preview.
@@ -198,10 +199,34 @@ export class FastlyContext extends RecaptchaContext {
    * Parameters and outputs are the same as the 'fetch' function.
    */
   async fetch_list_firewall_policies(req: EdgeRequest): Promise<EdgeResponse> {
-    return this.fetch(req, {
-      backend: "recaptcha",
-      cacheOverride: new CacheOverride("override", { ttl: 600, swr: 300 }),
+    // return this.fetch(req, {
+    //   backend: "recaptcha",
+    //   cacheOverride: new CacheOverride("override", { ttl: 600, swr: 300 }),
+    // });
+    const url = new URL(req.url);
+    const path = url.pathname; // Use the full path as the cache key
+
+    const content = await SimpleCache.getOrSet(path, async () => {
+      // Fetch from the origin (recaptcha backend in this case)
+      const originResponse = await this.fetch(req, { backend: "recaptcha" });
+      const body = await originResponse.json();
+
+      // Extract headers you want to cache
+      const headers = originResponse.getHeaders();
+      return {
+        value: JSON.stringify({ body, headers }), // Store both body and headers
+        ttl: 600, // Cache for 10 minutes (as in your example)
+      };
     });
+
+    // Reconstruct the response from the cached data
+    const response = new FetchApiResponse(await content.text(), {
+      status: 200, // Or get the status from the cached headers if needed
+      headers: {'content-type': 'text/plain;charset=UTF-8'},
+    });
+
+    return response;
+
     // return this.fetch(req, {
     //   backend: "recaptcha",
     //   cacheOverride: new CacheOverride({
@@ -289,12 +314,12 @@ async function handleRequest(event: FetchEvent): Promise<Response> {
   if (url.pathname.includes("/assessments/")) {
     return createMockResponse(JSON.stringify(mockAssessmentsResponse), {
       status: 200,
-      headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=3600" },
+      headers: { "Content-Type": "application/json", "Surrogate-Control": "public, max-age=3600" },
     });
   } else if (url.pathname.includes("/firewallpolicies/")) {
     return createMockResponse(JSON.stringify(mockFirewallPoliciesResponse), {
       status: 200,
-      headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=3600" },
+      headers: { "Content-Type": "application/json", "Surrogate-Control": "public, max-age=3600" },
     });
   }
 

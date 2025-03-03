@@ -39,6 +39,7 @@ export async function callListFirewallPolicies(context: RecaptchaContext): Promi
     method: "GET",
     headers: {
       "content-type": "application/json;charset=UTF-8",
+      "cache-control": "public, max-age=3600",
     },
   };
   const endpoint = context.config.recaptchaEndpoint;
