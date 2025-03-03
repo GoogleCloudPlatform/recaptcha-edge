@@ -258,12 +258,15 @@ export async function callCreateAssessment(
   return context
     .fetch_create_assessment(ca_req)
     .then((response) => {
+      if (context.config.debug) {
+        context.debug_trace._create_assessment_headers = response.getHeaders();
+      }
       return response
         .json()
         .then((json) => {
           const ret = AssessmentSchema.safeParse(json);
           if (ret.success && Object.keys(ret.data).length > 0) {
-            context.debug_trace.create_assessment = "ok";
+            context.debug_trace.create_assessment_status = "ok";
             return ret.data;
           }
           const err_ret = RpcErrorSchema.required().safeParse(json);
@@ -278,7 +281,7 @@ export async function callCreateAssessment(
     })
     .catch((reason) => {
       context.log("debug", "[rpc] createAssessment (fail)");
-      context.debug_trace.create_assessment = "err";
+      context.debug_trace.create_assessment_status = "err";
       if (reason instanceof error.RecaptchaError) {
         throw reason;
       }
