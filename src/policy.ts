@@ -291,6 +291,12 @@ export async function processRequest(context: RecaptchaContext, req: EdgeRequest
           {
             logs: context.log_messages,
             exceptions: context.exceptions,
+            list_firewall_policies_headers: Array.from(
+              (context.debug_trace._list_firewall_policies_headers ?? new Map()).entries(),
+            ),
+            create_assessment_headers: Array.from(
+              (context.debug_trace._create_assessment_headers ?? new Map()).entries(),
+            ),
           },
           null,
           2,

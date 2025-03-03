@@ -1045,7 +1045,7 @@ test("processRequest-block", async () => {
 });
 
 test("processRequest-dump", async () => {
-  const context = new TestContext({ ...testConfig, unsafe_debug_dump_logs: true });
+  const context = new TestContext({ ...testConfig, debug: true, unsafe_debug_dump_logs: true });
   const req = new FetchApiRequest("https://www.example.com/nomatch");
   req.addHeader("Content-Type", "application/json");
   req.addHeader("Hello", "World");
@@ -1069,7 +1069,7 @@ test("processRequest-dump", async () => {
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
-      headers: new Headers(),
+      headers: new Headers({ hello: "world", A: "B" }),
       json: () => Promise.resolve({ firewallPolicies: testPolicies }),
     }),
   );
@@ -1088,6 +1088,11 @@ test("processRequest-dump", async () => {
       ["debug", ["terminalAction: allow"]],
     ],
     exceptions: [],
+    create_assessment_headers: [],
+    list_firewall_policies_headers: [
+      ["a", "B"],
+      ["hello", "world"],
+    ],
   });
 });
 
@@ -1356,10 +1361,10 @@ test("DebugTrace-format", () => {
   context.config.apiKey = "";
   context.config.recaptchaEndpoint = "";
   const trace = new DebugTrace(context);
-  trace.list_firewall_policies = "ok";
+  trace.list_firewall_policies_status = "ok";
   trace.policy_count = 10;
   trace.site_key_used = "session";
   expect(trace.formatAsHeaderValue()).toEqual(
-    "list_firewall_policies=ok;policy_count=10;site_key_used=session;site_keys_present=asce;empty_config=apikey,endpoint;performance_counters=",
+    "list_firewall_policies_status=ok;policy_count=10;site_key_used=session;site_keys_present=asce;empty_config=apikey,endpoint;performance_counters=",
   );
 });
