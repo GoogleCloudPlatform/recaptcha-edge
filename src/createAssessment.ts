@@ -262,6 +262,7 @@ export async function callCreateAssessment(
         .json()
         .then((json) => {
           const ret = AssessmentSchema.safeParse(json);
+          console.log(ret);
           if (ret.success && Object.keys(ret.data).length > 0) {
             context.debug_trace.create_assessment = "ok";
             return ret.data;

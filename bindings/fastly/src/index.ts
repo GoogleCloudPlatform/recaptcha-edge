@@ -17,6 +17,7 @@
 /// <reference types="@fastly/js-compute" />
 import { ConfigStore } from "fastly:config-store";
 import { Dictionary } from "fastly:dictionary";
+import { CacheOverride } from "fastly:cache-override";
 
 const RECAPTCHA_JS = "https://www.google.com/recaptcha/enterprise.js";
 // Firewall Policies API is currently only available in the public preview.
@@ -36,7 +37,6 @@ import {
   Event,
 } from "@google-cloud/recaptcha";
 import pkg from "../package.json";
-import { CacheOverride } from "fastly:cache-override";
 
 const streamReplace = (
   inputStream: ReadableStream<Uint8Array>,
@@ -89,6 +89,21 @@ const streamReplace = (
   });
 
   return outputStream;
+};
+
+// Mock responses (same as before)
+const mockAssessmentsResponse = {
+  assessments: [
+    { id: "123", name: "Assessment 1" },
+    { id: "2223", name: "Assessment 2" },
+  ],
+};
+
+const mockFirewallPoliciesResponse = {
+  policies: [
+    { id: "A12", name: "Policy A" },
+    { id: "B12", name: "Policy B" },
+  ],
 };
 
 export {
@@ -263,7 +278,26 @@ export function recaptchaConfigFromConfigStore(name: string): RecaptchaConfig {
 
 addEventListener("fetch", (event) => event.respondWith(handleRequest(event)));
 
+function createMockResponse(body: string, options?: EdgeResponseInit): Response {
+  return new Response(body, options);
+}
+
 async function handleRequest(event: FetchEvent): Promise<Response> {
+  const req = event.request;
+
+  const url = new URL(req.url);
+  if (url.pathname.includes("/assessments/")) {
+    return createMockResponse(JSON.stringify(mockAssessmentsResponse), {
+      status: 200,
+      headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=3600" },
+    });
+  } else if (url.pathname.includes("/firewallpolicies/")) {
+    return createMockResponse(JSON.stringify(mockFirewallPoliciesResponse), {
+      status: 200,
+      headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=3600" },
+    });
+  }
+
   try {
     const config = recaptchaConfigFromConfigStore("recaptcha");
     const fastly_ctx = new FastlyContext(event, config);
