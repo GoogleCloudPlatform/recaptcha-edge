@@ -1045,7 +1045,7 @@ test("processRequest-block", async () => {
 });
 
 test("processRequest-dump", async () => {
-  const context = new TestContext({ ...testConfig, unsafe_debug_dump_logs: true });
+  const context = new TestContext({ ...testConfig, debug: true, unsafe_debug_dump_logs: true });
   const req = new FetchApiRequest("https://www.example.com/nomatch");
   req.addHeader("Content-Type", "application/json");
   req.addHeader("Hello", "World");
@@ -1069,7 +1069,7 @@ test("processRequest-dump", async () => {
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
-      headers: new Headers(),
+      headers: new Headers({ hello: "world", A: "B" }),
       json: () => Promise.resolve({ firewallPolicies: testPolicies }),
     }),
   );
@@ -1088,6 +1088,11 @@ test("processRequest-dump", async () => {
       ["debug", ["terminalAction: allow"]],
     ],
     exceptions: [],
+    create_assessment_headers: [],
+    list_firewall_policies_headers: [
+      ["a", "B"],
+      ["hello", "world"],
+    ],
   });
 });
 
