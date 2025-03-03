@@ -117,8 +117,10 @@ export interface RecaptchaConfig {
 
 export class DebugTrace {
   exception_count?: number;
-  list_firewall_policies?: "ok" | "err";
-  create_assessment?: "ok" | "err";
+  list_firewall_policies_status?: "ok" | "err";
+  create_assessment_status?: "ok" | "err";
+  _list_firewall_policies_headers?: Map<string, string>;
+  _create_assessment_headers?: Map<string, string>;
   policy_count?: number;
   policy_match?: boolean;
   inject_js_match?: boolean;
@@ -172,7 +174,7 @@ export class DebugTrace {
       // Iterate over property names
       const value = this[key as keyof this]; // Access value using key and type assertion
 
-      if (value) {
+      if (value && !key.startsWith("_")) {
         parts.push(`${key}=${value}`);
       }
     }
