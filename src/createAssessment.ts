@@ -19,7 +19,7 @@
  */
 
 import * as action from "./action";
-import { Assessment, AssessmentSchema, Event, EventSchema, RpcErrorSchema, UserInfo } from "./assessment";
+import { Assessment, Event, isRpcError, RpcError, UserInfo } from "./assessment";
 import * as error from "./error";
 import { EdgeRequest, EdgeRequestInit, EdgeResponse, RecaptchaContext } from "./index";
 import picomatch from "picomatch";
@@ -264,16 +264,10 @@ export async function callCreateAssessment(
       return response
         .json()
         .then((json) => {
-          const ret = AssessmentSchema.safeParse(json);
-          if (ret.success && Object.keys(ret.data).length > 0) {
-            context.debug_trace.create_assessment_status = "ok";
-            return ret.data;
+          if (isRpcError(json)) {
+            throw json.error;
           }
-          const err_ret = RpcErrorSchema.required().safeParse(json);
-          if (err_ret.success) {
-            throw err_ret.data.error;
-          }
-          throw { message: "Response does not conform to Assesment schema: " + json };
+          return json as Assessment;
         })
         .catch((reason) => {
           throw new error.ParseError(reason.message, action.createAllowAction());

@@ -25,7 +25,6 @@ import {
   callListFirewallPolicies,
   createPartialEventWithSiteInfo,
   evaluatePolicyAssessment,
-  EventSchema,
   localPolicyAssessment,
   policyConditionMatch,
   policyPathMatch,
@@ -39,11 +38,20 @@ import {
   EdgeResponse,
   EdgeResponseInit,
   FirewallPolicy,
+  Event,
 } from "./index";
 
 import { FetchApiRequest, FetchApiResponse } from "./fetchApi";
 
-import { Action, ActionSchema, createBlockAction } from "./action";
+import {
+  Action,
+  AllowAction,
+  createAllowAction,
+  createBlockAction,
+  isBlockAction,
+  isAllowAction,
+  isSetHeaderAction,
+} from "./action";
 
 async function fetchHasRequest(o: Request): Promise<boolean> {
   let calls = (fetch as Mock).mock.calls;
@@ -100,10 +108,10 @@ class TestContext extends RecaptchaContext {
 
   buildEvent = async (req: EdgeRequest) => {
     const partialEvent = await createPartialEventWithSiteInfo(this, req);
-    const baseEvent = EventSchema.parse({
+    const baseEvent = {
       userIpAddress: "1.2.3.4",
       userAgent: "test-user-agent",
-    });
+    } as Event;
     return { ...baseEvent, ...partialEvent };
   };
   injectRecaptchaJs = async (resp: EdgeResponse) => {
@@ -279,10 +287,10 @@ test("callListFirewallPolicies-ok", async () => {
 });
 
 test("ActionSchema-parseOk", () => {
-  const allowaction: Action = ActionSchema.parse(JSON.parse('{"allow":{}}'));
-  expect(allowaction.type).toEqual("allow");
-  const shaction: Action = ActionSchema.parse(JSON.parse('{"setHeader":{"key":"test-key","value":"test-value"}}'));
-  expect(shaction.type).toEqual("setHeader");
+  const allowaction: Action = JSON.parse('{"allow":{}}');
+  expect(isAllowAction(allowaction));
+  const shaction: Action = JSON.parse('{"setHeader":{"key":"test-key","value":"test-value"}}');
+  expect(isSetHeaderAction(shaction));
   const shaction2 = shaction as SetHeaderAction;
   expect(shaction2.setHeader.key).toEqual("test-key");
   expect(shaction2.setHeader.value).toEqual("test-value");
@@ -295,7 +303,7 @@ test("ApplyActions-allow", async () => {
     "fetch",
     vi.fn(() => Promise.resolve({ status: 200, headers: new Headers(), text: () => "<HTML>Hello World</HTML>" })),
   );
-  const resp = await applyActions(context, req, [ActionSchema.parse({ allow: {} })]);
+  const resp = await applyActions(context, req, [createAllowAction()]);
   expect(resp.status).toEqual(200);
   expect(resp.text()).toEqual("<HTML>Hello World</HTML>");
   expect(fetch).toHaveBeenCalledTimes(1);
@@ -330,7 +338,7 @@ test("ApplyActions-setHeader", async () => {
     }),
   );
   const resp = await applyActions(context, req, [
-    ActionSchema.parse({ setHeader: { key: "test-key", value: "test-value" } }),
+    { setHeader: { key: "test-key", value: "test-value" } } as SetHeaderAction,
   ]);
   expect(resp.status).toEqual(200);
   expect(resp.text()).toEqual("<HTML>Hello World</HTML>");
@@ -355,7 +363,7 @@ test("ApplyActions-redirect", async () => {
       });
     }),
   );
-  const resp = await applyActions(context, req, [ActionSchema.parse({ redirect: {} })]);
+  const resp = await applyActions(context, req, [{ redirect: {} }]);
   expect(resp.status).toEqual(200);
   expect(resp.text()).toEqual("<HTML>Hello World</HTML>");
   expect(fetch).toHaveBeenCalledTimes(1);
@@ -374,7 +382,7 @@ test("ApplyActions-substitute", async () => {
       });
     }),
   );
-  const resp = await applyActions(context, req, [ActionSchema.parse({ substitute: { path: "/newdest" } })]);
+  const resp = await applyActions(context, req, [{ substitute: { path: "/newdest" } }]);
   expect(resp.status).toEqual(200);
   expect(resp.text()).toEqual("<HTML>Hello World</HTML>");
   expect(fetch).toHaveBeenCalledTimes(1);
@@ -394,7 +402,7 @@ test("ApplyActions-injectJs", async () => {
       });
     }),
   );
-  const resp = await applyActions(context, req, [ActionSchema.parse({ injectjs: {} })]);
+  const resp = await applyActions(context, req, [{ injectjs: {} }]);
   expect(resp.status).toEqual(200);
   // calls the TestContext injectRecaptchaJs.
   expect(await resp.text()).toEqual('<HTML><script src="test.js"/>Hello World</HTML>');
@@ -415,10 +423,7 @@ test("ApplyActions-injectJsOnlyOnce", async () => {
       });
     }),
   );
-  const resp = await applyActions(context, req, [
-    ActionSchema.parse({ injectjs: {} }),
-    ActionSchema.parse({ injectjs: {} }),
-  ]);
+  const resp = await applyActions(context, req, [{ injectjs: {} }, { injectjs: {} }]);
   expect(resp.status).toEqual(200);
   // calls the TestContext injectRecaptchaJs.
   expect(await resp.text()).toEqual('<HTML><script src="test.js"/>Hello World</HTML>');
@@ -434,15 +439,14 @@ test("localPolicyAssessment-matchTrivialCondition", async () => {
       description: "test-description",
       path: "/badpath",
       condition: "recaptcha.score > 0.5",
-      // 'type' isn't a part of the interface, but is added for testing.
-      actions: [{ allow: {}, type: "allow" }],
+      actions: [{ allow: {} }],
     },
     {
       name: "projects/12345/firewallpolicies/200",
       description: "test-description2",
       path: "/testlocal",
       condition: "true",
-      actions: [{ block: {}, type: "block" }],
+      actions: [{ block: {} }],
     },
   ];
   vi.stubGlobal(
@@ -462,7 +466,7 @@ test("localPolicyAssessment-matchTrivialCondition", async () => {
     }),
   );
   const localAssessment = await localPolicyAssessment(context, req);
-  expect(localAssessment as Action[]).toEqual([ActionSchema.parse({ block: {} })]);
+  expect(localAssessment as Action[]).toEqual([{ block: {} }]);
   expect(fetch).toHaveBeenCalledTimes(1);
 });
 
@@ -503,7 +507,7 @@ test("localPolicyAssessment-noMatch", async () => {
     }),
   );
   const localAssessment = await localPolicyAssessment(context, req);
-  expect(localAssessment as Action[]).toEqual([ActionSchema.parse({ allow: {} })]);
+  expect(localAssessment as Action[]).toEqual([{ allow: {} }]);
   expect(fetch).toHaveBeenCalledTimes(1);
 });
 
@@ -550,10 +554,10 @@ test("localPolicyAssessment-matchNontrivialCondition", async () => {
 test("localPolicyAssessment-performance", async () => {
   const numPolicies = 500;
   const testPolicies: FirewallPolicy[] = [];
-  const testPath = "test-path-performance";
+  const testPath = "/test-path-performance";
 
   const context = new TestContext(testConfig);
-  const req = new FetchApiRequest(`https://www.example.com/${testPath}`);
+  const req = new FetchApiRequest(`https://www.example.com${testPath}`);
 
   // Create a large array of non trivial policies that all match the test path.
   for (let i = 0; i < numPolicies; i++) {
@@ -562,7 +566,7 @@ test("localPolicyAssessment-performance", async () => {
       description: `Test policy ${i}`,
       path: testPath, // All policies match the path
       condition: `recaptcha.score < 0.${i}`,
-      actions: [{ block: {}, type: "block" }], // Simple action
+      actions: [{ block: {} }], // Simple action
     });
   }
 
@@ -578,10 +582,7 @@ test("localPolicyAssessment-performance", async () => {
         headers: new Headers(),
         json: () =>
           Promise.resolve({
-            name: "projects/12345/assessments/1234567890",
-            firewallPolicyAssessment: {
-              firewallPolicy: testPolicies,
-            },
+            firewallPolicies: testPolicies,
           }),
       });
     }),
@@ -606,7 +607,7 @@ test("policyPathMatch", async () => {
         path: "/goodpath",
         condition: "true",
         // 'type' isn't a part of the interface, but is added for testing.
-        actions: [{ allow: {}, type: "allow" }],
+        actions: [{ allow: {} }],
       },
       new FetchApiRequest("https://www.example.com/goodpath"),
     ),
@@ -671,7 +672,7 @@ test("policyConditionMatch", async () => {
         path: "/goodpath",
         condition: "true",
         // 'type' isn't a part of the interface, but is added for testing.
-        actions: [{ allow: {}, type: "allow" }],
+        actions: [{ allow: {} }],
       },
       new FetchApiRequest("https://www.example.com/goodpath"),
     ),
@@ -780,7 +781,7 @@ test("evaluatePolicyAssessment-ok", async () => {
     }),
   );
   const assessment = await evaluatePolicyAssessment(context, req);
-  expect(assessment[0].type).toEqual("block");
+  expect(isBlockAction(assessment[0]));
   expect(fetch).toHaveBeenCalledTimes(1);
 });
 
@@ -795,7 +796,7 @@ test("evaluatePolicyAssessment-failedRpc", async () => {
     }),
   );
   const assessment = await evaluatePolicyAssessment(context, req);
-  expect(assessment[0].type).toEqual("allow");
+  expect(isAllowAction(assessment[0]));
   expect(fetch).toHaveBeenCalledTimes(1);
 });
 
@@ -813,7 +814,7 @@ test("evaluatePolicyAssessment-badJson", async () => {
     }),
   );
   const assessment = await evaluatePolicyAssessment(context, req);
-  expect(assessment[0].type).toEqual("allow");
+  expect(isAllowAction(assessment[0]));
   expect(fetch).toHaveBeenCalledTimes(1);
 });
 
@@ -1124,7 +1125,7 @@ test("createPartialEventWithSiteInfo-actionToken", async () => {
   const req = new FetchApiRequest("https://www.example.com/teste2e");
   req.addHeader("X-Recaptcha-Token", "action-token");
   const site_info = await createPartialEventWithSiteInfo(context, req);
-  const site_features = EventSchema.parse(await context.buildEvent(req));
+  const site_features = await context.buildEvent(req);
   const event = {
     ...site_info,
     ...site_features,
@@ -1153,7 +1154,7 @@ test("createPartialEventWithSiteInfo-regularActionToken-json", async () => {
     }),
   );
   const site_info = await createPartialEventWithSiteInfo(context, req);
-  const site_features = EventSchema.parse(await context.buildEvent(req));
+  const site_features = await context.buildEvent(req);
   const event = {
     ...site_info,
     ...site_features,
@@ -1183,7 +1184,7 @@ test("createPartialEventWithSiteInfo-regularActionToken-form-urlencoded", async 
   );
 
   const site_info = await createPartialEventWithSiteInfo(context, req);
-  const site_features = EventSchema.parse(await context.buildEvent(req));
+  const site_features = await context.buildEvent(req);
   const event = {
     ...site_info,
     ...site_features,
@@ -1221,7 +1222,7 @@ test("createPartialEventWithSiteInfo-regularActionToken-multipart-form-data", as
   );
 
   const site_info = await createPartialEventWithSiteInfo(context, req);
-  const site_features = EventSchema.parse(await context.buildEvent(req));
+  const site_features = await context.buildEvent(req);
   const event = {
     ...site_info,
     ...site_features,
@@ -1241,7 +1242,7 @@ test("createPartialEventWithSiteInfo-sessionToken", async () => {
   const req = new FetchApiRequest("https://www.example.com/test");
   req.addHeader("cookie", "recaptcha-test-t=session-token");
   const site_info = await createPartialEventWithSiteInfo(context, req);
-  const site_features = EventSchema.parse(await context.buildEvent(req));
+  const site_features = await context.buildEvent(req);
   const event = {
     ...site_info,
     ...site_features,
@@ -1262,7 +1263,7 @@ test("createPartialEventWithSiteInfo-strictSessionToken", async () => {
   const req = new FetchApiRequest("https://www.example.com/test");
   req.addHeader("cookie", "recaptcha-example-t=session-token");
   const site_info = await createPartialEventWithSiteInfo(context, req);
-  const site_features = EventSchema.parse(await context.buildEvent(req));
+  const site_features = await context.buildEvent(req);
   const event = {
     ...site_info,
     ...site_features,
@@ -1282,7 +1283,7 @@ test("createPartialEventWithSiteInfo-nonStrictSessionToken", async () => {
   const req = new FetchApiRequest("https://www.example.com/test");
   req.addHeader("cookie", "recaptcha-example-t=session-token");
   const site_info = await createPartialEventWithSiteInfo(context, req);
-  const site_features = EventSchema.parse(await context.buildEvent(req));
+  const site_features = await context.buildEvent(req);
   const event = {
     ...site_info,
     ...site_features,
@@ -1302,7 +1303,7 @@ test("createPartialEventWithSiteInfo-challengeToken", async () => {
   const req = new FetchApiRequest("https://www.example.com/test");
   req.addHeader("cookie", "recaptcha-test-e=challenge-token");
   const site_info = await createPartialEventWithSiteInfo(context, req);
-  const site_features = EventSchema.parse(await context.buildEvent(req));
+  const site_features = await context.buildEvent(req);
   const event = {
     ...site_info,
     ...site_features,
@@ -1323,7 +1324,7 @@ test("createPartialEventWithSiteInfo-nonStrictChallengeToken", async () => {
   const req = new FetchApiRequest("https://www.example.com/test");
   req.addHeader("cookie", "recaptcha-example-e=challenge-token");
   const site_info = await createPartialEventWithSiteInfo(context, req);
-  const site_features = EventSchema.parse(await context.buildEvent(req));
+  const site_features = await context.buildEvent(req);
   const event = {
     ...site_info,
     ...site_features,
@@ -1342,7 +1343,7 @@ test("createPartialEventWithSiteInfo-express", async () => {
   const context = new TestContext(testConfig);
   const req = new FetchApiRequest("https://www.example.com/test");
   const site_info = await createPartialEventWithSiteInfo(context, req);
-  const site_features = EventSchema.parse(await context.buildEvent(req));
+  const site_features = await context.buildEvent(req);
   const event = {
     ...site_info,
     ...site_features,

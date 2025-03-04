@@ -18,31 +18,9 @@
  * @fileoverview reCAPTCHA Enterprise TypeScript Library.
  */
 export { InitError, NetworkError, ParseError, RecaptchaError } from "./error";
-export {
-  AllowAction,
-  AllowActionSchema,
-  BlockAction,
-  BlockActionSchema,
-  InjectJsAction,
-  InjectJsActionSchema,
-  RedirectAction,
-  RedirectActionSchema,
-  SetHeaderAction,
-  SetHeaderActionSchema,
-  SubstituteAction,
-  SubstituteActionSchema,
-} from "./action";
+export { AllowAction, BlockAction, InjectJsAction, RedirectAction, SetHeaderAction, SubstituteAction } from "./action";
 
-export {
-  Assessment,
-  AssessmentSchema,
-  Event,
-  EventSchema,
-  FirewallPolicy,
-  FirewallPolicySchema,
-  UserInfo,
-  UserInfoSchema,
-} from "./assessment";
+export { Assessment, Event, FirewallPolicy, UserInfo } from "./assessment";
 
 import { Event } from "./assessment";
 
@@ -52,7 +30,6 @@ export { FetchApiRequest, FetchApiResponse } from "./fetchApi";
 
 export {
   ListFirewallPoliciesResponse,
-  ListFirewallPoliciesResponseSchema,
   callListFirewallPolicies,
 } from "./listFirewallPolicies";
 
