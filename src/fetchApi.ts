@@ -113,6 +113,10 @@ export class FetchApiResponse implements EdgeResponse {
     return this.headers.get(key.toLowerCase()) ?? null;
   }
 
+  removeHeader(key: string): void {
+    this.headers.delete(key.toLowerCase());
+  }
+
   getHeaders(): Map<string, string> {
     return this.headers;
   }

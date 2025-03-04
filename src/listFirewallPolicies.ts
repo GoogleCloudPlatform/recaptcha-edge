@@ -34,45 +34,54 @@ export type ListFirewallPoliciesResponse = z.infer<typeof ListFirewallPoliciesRe
 /**
  * Call the reCAPTCHA API to list firewall policies.
  */
-export async function callListFirewallPolicies(context: RecaptchaContext): Promise<ListFirewallPoliciesResponse> {
+export async function callListFirewallPolicies(context: RecaptchaContext): Promise<any> {
   const options = {
     method: "GET",
     headers: {
       "content-type": "application/json;charset=UTF-8",
-      "cache-control": "public, max-age=3600",
+      "cache-control": "public, max-age=2400",
     },
   };
   const endpoint = context.config.recaptchaEndpoint;
   const projectNumber = context.config.projectNumber;
   const apiKey = context.config.apiKey;
   const policiesUrl = `${endpoint}/v1/projects/${projectNumber}/firewallpolicies?key=${apiKey}&page_size=1000`;
+  // const policiesUrl = `https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png`;
   const req = context.createRequest(policiesUrl, options);
   return context
     .fetch_list_firewall_policies(req)
     .then((response) => {
-      if (context.config.debug) {
-        context.debug_trace._list_firewall_policies_headers = response.getHeaders();
-      }
-      return response
-        .json()
-        .then((json) => {
-          const ret = ListFirewallPoliciesResponseSchema.safeParse(json);
-          // context.log_performance_debug("[content] listFirewallPolicies " + JSON.stringify(ret));
-          if (ret.success && Object.keys(ret.data).length > 0) {
-            context.debug_trace.list_firewall_policies_status = "ok";
-            context.debug_trace.policy_count = ret.data.firewallPolicies.length;
-            context.log("debug", "[rpc] listFirewallPolicies (ok)");
-            return ret.data;
-          }
-          const err_ret = RpcErrorSchema.required().safeParse(json);
-          if (err_ret.success) {
-            throw err_ret.data.error;
-          }
-          throw { message: "Response does not conform to ListFirewallPolicies schema: " + json };
-        })
-        .catch((reason) => {
-          throw new error.ParseError(reason.message);
-        });
+      response.addHeader("Surrogate-Control", "max-age=12000");
+      response.removeHeader("vary");
+      context.debug_trace._list_firewall_policies_headers = response.getHeaders();
+      context.log_performance_debug("response status " + response.status.toString());
+      // if (true) {
+      //   context.debug_trace._list_firewall_policies_headers = response.getHeaders();
+      // }
+
+      return response.json();
+      // return response
+      //   .json()
+      //   .then((json) => {
+      //     context.log_performance_debug("start parsing");
+      //     const ret = ListFirewallPoliciesResponseSchema.safeParse(json);
+      //     context.log_performance_debug("end parsing");
+      //     // context.log_performance_debug("[content] listFirewallPolicies " + JSON.stringify(ret));
+      //     if (ret.success && Object.keys(ret.data).length > 0) {
+      //       context.debug_trace.list_firewall_policies_status = "ok";
+      //       context.debug_trace.policy_count = ret.data.firewallPolicies.length;
+      //       context.log("debug", "[rpc] listFirewallPolicies (ok)");
+      //       return ret.data;
+      //     }
+      //     const err_ret = RpcErrorSchema.required().safeParse(json);
+      //     if (err_ret.success) {
+      //       throw err_ret.data.error;
+      //     }
+      //     throw { message: "Response does not conform to ListFirewallPolicies schema: " + json };
+      //   })
+      //   .catch((reason) => {
+      //     throw new error.ParseError(reason.message);
+      //   });
     })
     .catch((reason) => {
       context.log_performance_debug("[rpc] listFirewallPolicies (fail) " + reason.message);

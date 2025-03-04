@@ -203,6 +203,13 @@ export async function applyActions(
   for (const action of reqNonterminalActions) {
     context.log("debug", "reqNonterminal action: " + action.type);
     if (action.type === "setHeader") {
+      // context.log_performance_debug("[rpc] experiment - start");
+      // fetch(`https://www.gstatic.com/recaptcha/api2/logo_48.png`).then((response) => {
+      //   if (!response.ok) {
+      //     context.log_performance_debug(`HTTP error! Status: ${response.status} `);
+      //   }
+      // });
+      // context.log_performance_debug("[rpc] experiment - end");
       req.addHeader(action.setHeader.key, action.setHeader.value);
       continue;
     }
@@ -283,7 +290,7 @@ export async function processRequest(context: RecaptchaContext, req: EdgeRequest
   // This is used solely for debugging, and will replace the expected response.
   // This is unsafe and should never be used in production, as it overwrites the response.
   // The logs dumped here are much more substantial than the debug response header populated with the 'debug' flag.
-  if (context.config.unsafe_debug_dump_logs) {
+  if (true) {
     await resp;
     resp = Promise.resolve(
       context.createResponse(

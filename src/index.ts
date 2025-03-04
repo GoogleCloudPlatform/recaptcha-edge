@@ -89,6 +89,7 @@ export interface EdgeResponse {
   text(): Promise<string>;
   json(): Promise<unknown>;
   addHeader(key: string, value: string): void;
+  removeHeader(key: string): void;
   getHeader(key: string): string | null;
   getHeaders(): Map<string, string>;
   readonly status: number;
