@@ -18,18 +18,14 @@
  * @fileoverview Helper functions and types related to the ListFirewallPolicies RPC.
  */
 
-import { z } from "zod";
-import { FirewallPolicySchema, RpcErrorSchema } from "./assessment";
+import { FirewallPolicy, isRpcError, RpcError } from "./assessment";
 import * as error from "./error";
-import { EdgeResponse, RecaptchaContext } from "./index";
+import { RecaptchaContext } from "./index";
 
 /** Zod Schema for ListFirewallPoliciesResponse */
-export const ListFirewallPoliciesResponseSchema = z.object({
-  firewallPolicies: z.array(FirewallPolicySchema),
-});
-
-/** Response type from ListFirewallPolicies RPC */
-export type ListFirewallPoliciesResponse = z.infer<typeof ListFirewallPoliciesResponseSchema>;
+export interface ListFirewallPoliciesResponse {
+  firewallPolicies: FirewallPolicy[];
+}
 
 /**
  * Call the reCAPTCHA API to list firewall policies.
@@ -55,18 +51,11 @@ export async function callListFirewallPolicies(context: RecaptchaContext): Promi
       return response
         .json()
         .then((json) => {
-          const ret = ListFirewallPoliciesResponseSchema.safeParse(json);
-          if (ret.success && Object.keys(ret.data).length > 0) {
-            context.debug_trace.list_firewall_policies_status = "ok";
-            context.debug_trace.policy_count = ret.data.firewallPolicies.length;
-            context.log("debug", "[rpc] listFirewallPolicies (ok)");
-            return ret.data;
+          if (isRpcError(json)) {
+            throw json.error;
           }
-          const err_ret = RpcErrorSchema.required().safeParse(json);
-          if (err_ret.success) {
-            throw err_ret.data.error;
-          }
-          throw { message: "Response does not conform to ListFirewallPolicies schema: " + json };
+          context.log("debug", "[rpc] listFirewallPolicies (ok)");
+          return json as ListFirewallPoliciesResponse;
         })
         .catch((reason) => {
           throw new error.ParseError(reason.message);

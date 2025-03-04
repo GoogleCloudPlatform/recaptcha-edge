@@ -27,6 +27,16 @@ import { RecaptchaContext, EdgeRequest, EdgeResponse, FetchApiResponse } from ".
 import { callListFirewallPolicies } from "./listFirewallPolicies";
 import { createSoz } from "./soz";
 import URL from "url-parse";
+import {
+  isBlockAction,
+  isInjectJsAction,
+  isRedirectAction,
+  isRequestNonTerminalAction,
+  isResponseNonTerminalAction,
+  isSetHeaderAction,
+  isSubstituteAction,
+  isTerminalAction,
+} from "./action";
 
 type LocalAssessment = action.Action[] | "recaptcha-required";
 
@@ -148,34 +158,24 @@ export async function applyActions(
   // be processed before terminal actions, and will be ignored if erroniously
   // placed after terminal actions.
   filterActions: for (const action of actions) {
-    switch (action.type) {
-      case "allow":
-      case "block":
-      case "redirect":
-      case "challengepage":
-        terminalAction = action;
-        break filterActions;
-      case "setHeader":
-      case "substitute":
-        context.log("debug", "nonTerminalAction: " + action.type);
-        reqNonterminalActions.push(action);
-        continue;
-      case "injectjs":
-        context.log("debug", "nonTerminalAction: " + action.type);
-        respNonterminalActions.push(action);
-        continue;
-      default:
-        /* v8 ignore next */
-        throw new Error("Unsupported action: " + action);
+    if (isTerminalAction(action)) {
+      terminalAction = action;
+    } else if (isRequestNonTerminalAction(action)) {
+      reqNonterminalActions.push(action);
+    } else if (isResponseNonTerminalAction(action)) {
+      respNonterminalActions.push(action);
+    } else {
+      /* v8 ignore next */
+      throw new Error("Unsupported action: " + action);
     }
   }
-  context.log("debug", "terminalAction: " + terminalAction.type);
-
-  if (terminalAction.type === "block") {
+  if (isBlockAction(terminalAction)) {
+    context.log("debug", "terminalAction: block");
     return context.createResponse("", { status: 403 }); // TODO: custom html
   }
 
-  if (terminalAction.type === "redirect") {
+  if (isRedirectAction(terminalAction)) {
+    context.log("debug", "terminalAction: redirect");
     // TODO: consider caching event.
     const event = await context.buildEvent(req);
     const url = new URL(req.url);
@@ -201,12 +201,13 @@ export async function applyActions(
 
   // Handle Pre-Request actions.
   for (const action of reqNonterminalActions) {
-    context.log("debug", "reqNonterminal action: " + action.type);
-    if (action.type === "setHeader") {
-      req.addHeader(action.setHeader.key, action.setHeader.value);
+    context.log("debug", "reqNonterminal action: setHeader");
+    if (isSetHeaderAction(action)) {
+      req.addHeader(action.setHeader.key ?? "", action.setHeader.value ?? "");
       continue;
     }
-    if (action.type === "substitute") {
+    if (isSubstituteAction(action)) {
+      context.log("debug", "reqNonterminal action: substitute");
       const url = new URL(req.url);
       req.url = `${url.origin}${action.substitute.path}`;
       continue;
@@ -215,27 +216,24 @@ export async function applyActions(
     throw new Error("Unsupported pre-request action: " + action);
   }
 
+  context.log("debug", "terminalAction: allow");
   // Fetch from the backend, whether redirected or not.
   let resp = context.fetch_origin(req);
 
   // Handle Post-Response actions.
   const once = new Set<string>();
   for (const action of respNonterminalActions) {
-    context.log("debug", "respNonterminal action: " + action.type);
-    if (once.has(action.type)) {
-      continue; // TODO: should this throw an error?
-    }
-    switch (action.type) {
-      case "injectjs":
-        // Only inject JS once, even if multiple actions erroneously specify it.
-        once.add(action.type);
-        context.log_performance_debug("[func] injectJS - start");
-        resp = context.injectRecaptchaJs(await resp);
-        context.log_performance_debug("[func] injectJS - end");
-        continue;
-      /* v8 ignore next 2 lines */
-      default:
-        throw new Error("Unsupported post-response action: " + action);
+    if (isInjectJsAction(action)) {
+      if (once.has("injectjs")) {
+        continue; // TODO: should this throw an error?
+      }
+      once.add("injectjs");
+      context.log("debug", "respNonterminal action: injectjs");
+      context.log_performance_debug("[func] injectJS - start");
+      resp = context.injectRecaptchaJs(await resp);
+      context.log_performance_debug("[func] injectJS - end");
+    } else {
+      throw new Error("Unsupported post-response action: " + action);
     }
   }
 
