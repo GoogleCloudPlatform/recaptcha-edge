@@ -7,7 +7,7 @@ manifest_version = 3
 name = "recaptcha-fastly"
 
 [scripts]
-build = "npx js-compute-runtime dist/index.js bin/main.wasm"
+build = "npx js-compute-runtime dist/index.js bin/main.wasm --enable-http-cache"
 post_init = "npm install"
 
 [setup]
