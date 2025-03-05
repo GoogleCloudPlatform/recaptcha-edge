@@ -23,18 +23,13 @@ export { AllowAction, BlockAction, InjectJsAction, RedirectAction, SetHeaderActi
 export { Assessment, Event, FirewallPolicy, UserInfo } from "./assessment";
 
 import { Event } from "./assessment";
-import { EdgeRequest, EdgeRequestInit, EdgeResponse, EdgeResponseInit } from "./fetchApi";
+import { EdgeRequest, EdgeRequestInit, EdgeResponse, EdgeResponseInit } from "./request";
 
 export { callCreateAssessment, createPartialEventWithSiteInfo } from "./createAssessment";
 
-export {
-  EdgeRequest,
-  EdgeRequestInit,
-  EdgeResponse,
-  EdgeResponseInit,
-  FetchApiRequest,
-  FetchApiResponse,
-} from "./fetchApi";
+export { FetchApiRequest, FetchApiResponse } from "./fetchApi";
+
+export { EdgeRequest, EdgeRequestInit, EdgeResponse, EdgeResponseInit } from "./request";
 
 export { ListFirewallPoliciesResponse, callListFirewallPolicies } from "./listFirewallPolicies";
 
