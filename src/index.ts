@@ -23,15 +23,15 @@ export { AllowAction, BlockAction, InjectJsAction, RedirectAction, SetHeaderActi
 export { Assessment, Event, FirewallPolicy, UserInfo } from "./assessment";
 
 import { Event } from "./assessment";
+import { EdgeRequest, EdgeRequestInit, EdgeResponse, EdgeResponseInit } from "./request";
 
 export { callCreateAssessment, createPartialEventWithSiteInfo } from "./createAssessment";
 
 export { FetchApiRequest, FetchApiResponse } from "./fetchApi";
 
-export {
-  ListFirewallPoliciesResponse,
-  callListFirewallPolicies,
-} from "./listFirewallPolicies";
+export { EdgeRequest, EdgeRequestInit, EdgeResponse, EdgeResponseInit } from "./request";
+
+export { ListFirewallPoliciesResponse, callListFirewallPolicies } from "./listFirewallPolicies";
 
 export {
   applyActions,
@@ -41,35 +41,6 @@ export {
   policyPathMatch,
   processRequest,
 } from "./policy";
-
-export type EdgeRequestInit = {
-  method?: string;
-  headers?: Record<string, string>;
-  body?: string;
-};
-
-export interface EdgeRequest {
-  readonly method: string;
-  url: string;
-  addHeader(key: string, value: string): void;
-  getHeader(key: string): string | null;
-  getHeaders(): Map<string, string>;
-  getBodyText(): Promise<string>;
-  getBodyJson(): Promise<any>;
-}
-export type EdgeResponseInit = {
-  readonly status?: number;
-  readonly headers?: Record<string, string>;
-};
-
-export interface EdgeResponse {
-  text(): Promise<string>;
-  json(): Promise<unknown>;
-  addHeader(key: string, value: string): void;
-  getHeader(key: string): string | null;
-  getHeaders(): Map<string, string>;
-  readonly status: number;
-}
 
 /**
  * reCAPTCHA Enterprise configuration.

@@ -1,4 +1,4 @@
-import { EdgeRequest, EdgeResponse, EdgeResponseInit, RecaptchaContext } from "./index";
+import { EdgeRequest, EdgeRequestInit, EdgeResponse, EdgeResponseInit } from "./request";
 
 export class FetchApiRequest implements EdgeRequest {
   req: Request;
