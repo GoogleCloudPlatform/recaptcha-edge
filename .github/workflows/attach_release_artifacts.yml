@@ -18,6 +18,9 @@ jobs:
   build-fastly:
     needs: build-core
     uses: ./.github/workflows/build_fastly.yml
+  build-akamai:
+    needs: build-core
+    uses: ./.github/workflows/build_akamai.yml
   package:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -32,9 +35,10 @@ jobs:
           LIB_VERSION=$(cat package.json | jq -r .version)
           CF_VERSION=$(cat bindings/cloudflare/package.json | jq -r .version)
           FASTLY_VERSION=$(cat bindings/fastly/package.json | jq -r .version)
-          if [ "$LIB_VERSION" != "$TAG_VERSION" ] || [ "$LIB_VERSION" != "$CF_VERSION" ] || [ "$LIB_VERSION" != "$FASTLY_VERSION" ]; then
+          AKAMAI_VERSION=$(cat bindings/akamai/package.json | jq -r .version)
+          if [ "$LIB_VERSION" != "$TAG_VERSION" ] || [ "$LIB_VERSION" != "$CF_VERSION" ] || [ "$LIB_VERSION" != "$FASTLY_VERSION" ] || [ "$LIB_VERSION" != "$AKAMAI_VERSION" ]; then
             echo "Error: package.json versions do not match."
-            echo "Tag Version: $TAG_VERSION, Library: $LIB_VERSION, Cloudflare: $CF_VERSION, Fastly: $FASTLY_VERSION"
+            echo "Tag Version: $TAG_VERSION, Library: $LIB_VERSION, Cloudflare: $CF_VERSION, Fastly: $FASTLY_VERSION, Akamai: $AKAMAI_VERSION"
             exit 1
           fi
           echo "using version: $LIB_VERSION"
@@ -52,9 +56,14 @@ jobs:
         with:
           name: fastly-package
           path: bindings/fastly/pkg
+      - uses: actions/download-artifact@v4
+        with:
+          name: akamai-dist
+          path: bindings/akamai/dist
       - uses: softprops/action-gh-release@v2
         with:
           files: |
             pkg/recaptcha_library.tar.gz
             bindings/cloudflare/pkg/cloudflare_client.tar.gz
             bindings/fastly/pkg/fastly_client.tar.gz
+            bindings/akamai/dist/akamai.tgz
