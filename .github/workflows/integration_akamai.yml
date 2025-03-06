@@ -53,9 +53,9 @@ jobs:
           echo "{\"edgeworker-version\": \"${{ steps.get-next-version.outputs.NEXT_VERSION }}\"}" > dist/bundle.json
           npm run pack
           echo package created.
-          akamai ew validate dist/akamai.tgz
+          akamai ew validate pkg/akamai_client.tar.gz
       - name: Upload Bundle
-        run: akamai ew upload --edgerc ~/.edgerc --jsonout --bundle dist/akamai.tgz ${{ secrets.AKAMAI_INTEGRATION_EW_ID }}
+        run: akamai ew upload --edgerc ~/.edgerc --jsonout --bundle pkg/akamai_client.tar.gz ${{ secrets.AKAMAI_INTEGRATION_EW_ID }}
       - name: Activate Bundle
         run: akamai ew activate --edgerc ~/.edgerc --jsonout ${{ secrets.AKAMAI_INTEGRATION_EW_ID }} production ${{ steps.get-next-version.outputs.NEXT_VERSION }}
       - name: Wait for Activation
