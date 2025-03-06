@@ -22,9 +22,9 @@
   },
   "scripts": {
     "build": "node esbuild.config.js && mv dist/edge_worker.js dist/main.js && cp src/bundle.json dist/",
-    "pack": "cd dist && tar -czvf akamai.tgz bundle.json main.js",
+    "pack": "mkdir pkg && cd dist && tar -czvf akamai.tgz bundle.json main.js && mv akamai.tgz ../pkg/akamai_client.tar.gz",
     "deploy": "",
-    "devclean": "rm -rf node_nodules && rm -rf dist && rm package-lock.json",
+    "devclean": "rm -rf node_nodules && rm -rf dist && rm -rf pkg && rm package-lock.json",
     "test": "vitest"
   },
   "dependencies": {

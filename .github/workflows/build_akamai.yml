@@ -38,7 +38,12 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
+      - run: npm run pack
       - uses: actions/upload-artifact@v4
         with:
           name: akamai-dist
           path: bindings/akamai/dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: akamai-package
+          path: bindings/akamai/pkg/akamai_client.tar.gz
