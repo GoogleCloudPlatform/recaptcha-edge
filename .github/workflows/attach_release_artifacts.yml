@@ -24,7 +24,7 @@ jobs:
   package:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [build-core, build-cloudflare, build-fastly]
+    needs: [build-core, build-cloudflare, build-fastly, build-akamai]
     permissions:
       contents: write
     steps:
@@ -58,12 +58,12 @@ jobs:
           path: bindings/fastly/pkg
       - uses: actions/download-artifact@v4
         with:
-          name: akamai-dist
-          path: bindings/akamai/dist
+          name: akamai-package
+          path: bindings/akamai/pkg
       - uses: softprops/action-gh-release@v2
         with:
           files: |
             pkg/recaptcha_library.tar.gz
             bindings/cloudflare/pkg/cloudflare_client.tar.gz
             bindings/fastly/pkg/fastly_client.tar.gz
-            bindings/akamai/dist/akamai.tgz
+            bindings/akamai/pkg/akamai_client.tar.gz
