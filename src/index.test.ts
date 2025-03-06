@@ -1240,7 +1240,7 @@ test("createPartialEventWithSiteInfo-regularActionToken-multipart-form-data", as
 test("createPartialEventWithSiteInfo-sessionToken", async () => {
   const context = new TestContext(testConfig);
   const req = new FetchApiRequest("https://www.example.com/test");
-  req.addHeader("cookie", "recaptcha-test-t=session-token");
+  req.addHeader("cookie", "blah=example; recaptcha-test-t=session=token; test=hithere");
   const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = await context.buildEvent(req);
   const event = {
@@ -1248,7 +1248,7 @@ test("createPartialEventWithSiteInfo-sessionToken", async () => {
     ...site_features,
   };
   expect(event).toEqual({
-    token: "session-token",
+    token: "session=token",
     siteKey: "session-site-key",
     userAgent: "test-user-agent",
     wafTokenAssessment: true,
@@ -1261,7 +1261,7 @@ test("createPartialEventWithSiteInfo-strictSessionToken", async () => {
   const context = new TestContext(testConfig);
   context.config.strict_cookie = true;
   const req = new FetchApiRequest("https://www.example.com/test");
-  req.addHeader("cookie", "recaptcha-example-t=session-token");
+  req.addHeader("cookie", "recaptcha-example-t=session=token");
   const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = await context.buildEvent(req);
   const event = {
@@ -1281,7 +1281,7 @@ test("createPartialEventWithSiteInfo-nonStrictSessionToken", async () => {
   const context = new TestContext(testConfig);
   context.config.strict_cookie = false;
   const req = new FetchApiRequest("https://www.example.com/test");
-  req.addHeader("cookie", "recaptcha-example-t=session-token");
+  req.addHeader("cookie", "recaptcha-example-t=session=token");
   const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = await context.buildEvent(req);
   const event = {
@@ -1289,7 +1289,7 @@ test("createPartialEventWithSiteInfo-nonStrictSessionToken", async () => {
     ...site_features,
   };
   expect(event).toEqual({
-    token: "session-token",
+    token: "session=token",
     siteKey: "session-site-key",
     userAgent: "test-user-agent",
     wafTokenAssessment: true,
@@ -1301,7 +1301,7 @@ test("createPartialEventWithSiteInfo-nonStrictSessionToken", async () => {
 test("createPartialEventWithSiteInfo-challengeToken", async () => {
   const context = new TestContext(testConfig);
   const req = new FetchApiRequest("https://www.example.com/test");
-  req.addHeader("cookie", "recaptcha-test-e=challenge-token");
+  req.addHeader("cookie", "recaptcha-test-e=challenge=token");
   const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = await context.buildEvent(req);
   const event = {
@@ -1309,7 +1309,7 @@ test("createPartialEventWithSiteInfo-challengeToken", async () => {
     ...site_features,
   };
   expect(event).toEqual({
-    token: "challenge-token",
+    token: "challenge=token",
     siteKey: "challenge-page-site-key",
     userAgent: "test-user-agent",
     wafTokenAssessment: true,
@@ -1322,7 +1322,7 @@ test("createPartialEventWithSiteInfo-nonStrictChallengeToken", async () => {
   const context = new TestContext(testConfig);
   context.config.strict_cookie = false;
   const req = new FetchApiRequest("https://www.example.com/test");
-  req.addHeader("cookie", "recaptcha-example-e=challenge-token");
+  req.addHeader("cookie", "recaptcha-example-e=challenge=token");
   const site_info = await createPartialEventWithSiteInfo(context, req);
   const site_features = await context.buildEvent(req);
   const event = {
@@ -1330,7 +1330,7 @@ test("createPartialEventWithSiteInfo-nonStrictChallengeToken", async () => {
     ...site_features,
   };
   expect(event).toEqual({
-    token: "challenge-token",
+    token: "challenge=token",
     siteKey: "challenge-page-site-key",
     userAgent: "test-user-agent",
     wafTokenAssessment: true,

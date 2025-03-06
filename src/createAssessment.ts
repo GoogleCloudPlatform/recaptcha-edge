@@ -140,7 +140,9 @@ export async function createPartialEventWithSiteInfo(context: RecaptchaContext, 
   let challengeToken: string | undefined;
   let sessionToken: string | undefined;
   for (const cookie of req.getHeader("cookie")?.split(";") ?? []) {
-    const [key, value] = cookie.split("=");
+    const delim = cookie.indexOf("=");
+    const key = cookie.substring(0, delim);
+    const value = cookie.substring(delim + 1);
     cookieMap.set(key.trim(), value.trim());
 
     // Non-strict cookie parsing will match any 'recaptcha-*-t' token.
