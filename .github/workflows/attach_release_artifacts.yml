@@ -24,7 +24,7 @@ jobs:
   package:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [build-core, build-cloudflare, build-fastly]
+    needs: [build-core, build-cloudflare, build-fastly, build-akamai]
     permissions:
       contents: write
     steps:
