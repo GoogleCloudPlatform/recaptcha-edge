@@ -109,11 +109,13 @@ export async function localPolicyAssessment(context: RecaptchaContext, req: Edge
         return "recaptcha-required";
       } else if (conditionMatch) {
         // TODO: handle multiple policies.
+        context.log_performance_debug("conditionMatch");
         context.log("debug", "local assessment condition matched");
         return policy?.actions ?? [];
       }
     }
   }
+  context.log_performance_debug("no conditionMatch");
   // No policies were found to match in the cache. This default to 'allow'.
   return [action.createAllowAction()];
 }
@@ -231,6 +233,10 @@ export async function applyActions(
       context.log("debug", "respNonterminal action: injectjs");
       context.log_performance_debug("[func] injectJS - start");
       resp = context.injectRecaptchaJs(await resp);
+      // If 'debug' is enabled, await the response to get reasonable performance metrics.
+      if(context.config.debug) {
+        resp = Promise.resolve(await resp);
+      }
       context.log_performance_debug("[func] injectJS - end");
     } else {
       throw new Error("Unsupported post-response action: " + action);
@@ -274,7 +280,9 @@ export async function processRequest(context: RecaptchaContext, req: EdgeRequest
     }
   }
 
+  context.log_performance_debug("[func] applyActions - start");
   let resp = applyActions(context, req, actions);
+  context.log_performance_debug("[func] applyActions - end");
 
   // Create a response that dumps the exceptions and log messages.
   // This response will look like a JSON object like { logs: ["log msg 1", "log msg 2"], exceptions: ["exception1"]}
