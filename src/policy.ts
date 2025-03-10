@@ -234,7 +234,7 @@ export async function applyActions(
       context.log_performance_debug("[func] injectJS - start");
       resp = context.injectRecaptchaJs(await resp);
       // If 'debug' is enabled, await the response to get reasonable performance metrics.
-      if(context.config.debug) {
+      if(true) {
         resp = Promise.resolve(await resp);
       }
       context.log_performance_debug("[func] injectJS - end");
@@ -312,7 +312,7 @@ export async function processRequest(context: RecaptchaContext, req: EdgeRequest
   }
   // Create a debug response header.
   // This header has some useful stats like what action was chose, what site key was used, how many policies were loaded, etc.
-  if (context.config.debug) {
+  if (true) {
     let resolved_resp = await resp;
     context.debug_trace.exception_count = context.exceptions.length;
     resolved_resp.addHeader("X-RECAPTCHA-DEBUG", context.debug_trace.formatAsHeaderValue());

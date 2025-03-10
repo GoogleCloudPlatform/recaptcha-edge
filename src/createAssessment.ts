@@ -163,7 +163,7 @@ export async function createPartialEventWithSiteInfo(context: RecaptchaContext, 
   if (!sessionToken) {
     sessionToken = cookieMap.get(context.sessionPageCookie);
   }
-  if (context.config.debug) {
+  if (true) {
     // eslint-disable-next-line  @typescript-eslint/no-unused-vars
     for (const [key, value] of cookieMap.entries()) {
       if (key.startsWith("recaptcha") && key !== context.challengePageCookie && key !== context.sessionPageCookie) {
@@ -260,7 +260,7 @@ export async function callCreateAssessment(
   return context
     .fetch_create_assessment(ca_req)
     .then((response) => {
-      if (context.config.debug) {
+      if (true) {
         context.debug_trace._create_assessment_headers = response.getHeaders();
       }
       return response

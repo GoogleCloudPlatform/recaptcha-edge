@@ -45,7 +45,7 @@ export async function callListFirewallPolicies(context: RecaptchaContext): Promi
   return context
     .fetch_list_firewall_policies(req)
     .then((response) => {
-      if (context.config.debug) {
+      if (true) {
         context.debug_trace._list_firewall_policies_headers = response.getHeaders();
       }
       return response
