@@ -4,9 +4,6 @@ on:
   workflow_dispatch:
   workflow_call:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-core
-
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
