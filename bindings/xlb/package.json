@@ -5,7 +5,9 @@
     "keywords": [
         "recaptcha",
         "bot",
-        "security"
+        "security",
+        "cloud",
+        "networking"
     ],
     "license": "Apache-2.0",
     "author": "reCAPTCHA Team <no-reply@google.com>",
