@@ -4,6 +4,7 @@ bindings/**/dist/*
 bindings/**/pkg/*
 bindings/**/bin/*
 bindings/**/node_modules/*
+bindings/**/gen/*/
 .DS_Store
 node_modules
 coverage/
