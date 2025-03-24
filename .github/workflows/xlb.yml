@@ -34,9 +34,6 @@ jobs:
         with:
           name: core-library-dist
           path: dist
-      #- uses: arduino/setup-protoc@v3
-      #  with:
-      #    version: "23.x"
       - run: npm ci
       - run: npm run protogen
       - run: npm test
