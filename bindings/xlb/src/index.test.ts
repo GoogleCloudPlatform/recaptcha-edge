@@ -28,7 +28,7 @@ import {
   ProcessingResponseSchema,
 } from "../gen/envoy/service/ext_proc/v3/external_processor_pb.js";
 
-type calloutEvent =
+type CalloutEvent =
   | "requestHeaders"
   | "requestBody"
   | "requestTrailers"
@@ -59,7 +59,7 @@ describe("WAF Callouts Suite", async function () {
   ])("can handle event: $type", async (event) => {
     const resp = await sendRequest(client, {
       request: {
-        case: event.type as calloutEvent,
+        case: event.type as CalloutEvent,
         value: {},
       },
     });
@@ -68,7 +68,7 @@ describe("WAF Callouts Suite", async function () {
     expect(processingResponse).toStrictEqual(
       create(ProcessingResponseSchema, {
         response: {
-          case: event.type as calloutEvent,
+          case: event.type as CalloutEvent,
           value: {},
         },
       }),

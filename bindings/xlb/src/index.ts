@@ -45,6 +45,7 @@ class CalloutProcessor implements ServiceImpl<typeof ExternalProcessor> {
           yield await this.handleResponseBody(req.request.value);
           break;
         default:
+          // Returning a default empty result for requestTrailers and responseTrailers.
           yield create(ProcessingResponseSchema, {
             response: {
               case: req.request.case ?? "immediateResponse",
@@ -92,7 +93,7 @@ class CalloutProcessor implements ServiceImpl<typeof ExternalProcessor> {
   }
 }
 
-function getPort(defaultPort: number) {
+function getPort(defaultPort: number): number {
   const asString = process.env.PORT || "";
   return parseInt(asString) || defaultPort;
 }
