@@ -35,6 +35,7 @@ export { ListFirewallPoliciesResponse, callListFirewallPolicies } from "./listFi
 
 export {
   applyActions,
+  getActions,
   evaluatePolicyAssessment,
   localPolicyAssessment,
   policyConditionMatch,

@@ -21,6 +21,7 @@ import { expect, test, vi, Mock } from "vitest";
 
 import {
   applyActions,
+  getActions,
   callCreateAssessment,
   callListFirewallPolicies,
   createPartialEventWithSiteInfo,
@@ -83,7 +84,7 @@ class TestContext extends RecaptchaContext {
   log_messages: Array<[LogLevel, string[]]> = [];
 
   constructor(config: RecaptchaConfig) {
-    super(config);
+    super(JSON.parse(JSON.stringify(config)));
   }
 
   createRequest(url: string, options: any): EdgeRequest {
@@ -344,6 +345,7 @@ test("ApplyActions-setHeader", async () => {
   expect(resp.text()).toEqual("<HTML>Hello World</HTML>");
   expect(fetch).toHaveBeenCalledTimes(1);
 });
+
 test("ApplyActions-redirect", async () => {
   const context = new TestContext(testConfig);
   const req = new FetchApiRequest("https://www.example.com/originalreq");
@@ -1368,4 +1370,95 @@ test("DebugTrace-format", () => {
   expect(trace.formatAsHeaderValue()).toEqual(
     "list_firewall_policies_status=ok;policy_count=10;site_key_used=session;site_keys_present=asce;empty_config=apikey,endpoint;performance_counters=",
   );
+});
+
+test("getActions-localAssessment", async () => {
+  const context = new TestContext(testConfig);
+  context.config.sessionJsInjectPath = "/teste2e;/another/path";
+  const req = new FetchApiRequest("https://www.example.com/teste2e");
+  const testPolicies = [
+    {
+      name: "test-policy",
+      description: "test-description",
+      path: "/teste2e",
+      // 'type' isn't a part of the interface, but is added for testing.
+      actions: [{ block: {}, type: "block" }],
+    },
+    {
+      name: "test-policy2",
+      description: "test-description2",
+      path: "/teste2e",
+      actions: [{ block: {}, type: "redirect" }],
+    },
+  ];
+  vi.stubGlobal("fetch", vi.fn());
+  (fetch as Mock).mockImplementationOnce(() =>
+    Promise.resolve({
+      status: 200,
+      headers: new Headers(),
+      json: () => Promise.resolve({ firewallPolicies: testPolicies }),
+    }),
+  );
+  const actions = await getActions(context, req);
+  expect(actions).toEqual([
+    {
+      injectjs: {},
+    },
+    {
+      block: {},
+      type: "block",
+    },
+  ]);
+  expect(fetch).toHaveBeenCalledTimes(1);
+});
+
+test("getActions-createAssessment", async () => {
+  const context = new TestContext(testConfig);
+  const req = new FetchApiRequest("https://www.example.com/testlocal");
+  vi.stubGlobal("fetch", vi.fn());
+  (fetch as Mock)
+    .mockImplementationOnce((req) => {
+      console.log("firewallpolicies: ", req.url);
+      expect(req.url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/fetchFirewallPolicies");
+      const testPolicies = [
+        {
+          name: "test-policy",
+          description: "test-description",
+          path: "/testlocal",
+          // 'type' isn't a part of the interface, but is added for testing.
+          condition: "test-condition",
+          actions: [{ block: {}, type: "block" }],
+        },
+      ];
+      Promise.resolve({
+        status: 200,
+        headers: new Headers(),
+        json: () => Promise.resolve({ firewallPolicies: testPolicies }),
+      });
+    })
+    .mockImplementationOnce((req) => {
+      console.log("assessment: ", req.url);
+      expect(req.url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123");
+      return Promise.resolve({
+        status: 200,
+        headers: new Headers(),
+        json: () =>
+          Promise.resolve({
+            name: "projects/12345/assessments/1234567890",
+            firewallPolicyAssessment: {
+              firewallPolicy: {
+                actions: [{ block: {}, type: "block" }],
+              },
+            },
+          }),
+      });
+    });
+  const actions = await getActions(context, req);
+  expect(fetch).toHaveBeenCalledTimes(2);
+  expect(actions).toEqual([
+    {
+      block: {},
+      type: "block",
+    },
+  ]);
 });

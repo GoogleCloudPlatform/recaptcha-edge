@@ -247,9 +247,10 @@ export async function applyActions(
 }
 
 /**
- * Process reCAPTCHA request.
+ * 
+ * Get a list of the applicable actions, given a request.
  */
-export async function processRequest(context: RecaptchaContext, req: EdgeRequest): Promise<EdgeResponse> {
+export async function getActions(context: RecaptchaContext, req: EdgeRequest): Promise<action.Action[]> {
   let actions: action.Action[] = [];
   try {
     const localAssessment = await localPolicyAssessment(context, req);
@@ -279,7 +280,14 @@ export async function processRequest(context: RecaptchaContext, req: EdgeRequest
       }
     }
   }
+  return actions;
+}
 
+/**
+ * Process reCAPTCHA request.
+ */
+export async function processRequest(context: RecaptchaContext, req: EdgeRequest): Promise<EdgeResponse> {
+  const actions = await getActions(context, req);
   context.log_performance_debug("[func] applyActions - start");
   let resp = applyActions(context, req, actions);
   context.log_performance_debug("[func] applyActions - end");
