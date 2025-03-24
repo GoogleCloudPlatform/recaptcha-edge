@@ -1,0 +1,42 @@
+name: Build and Test XLB
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+  workflow_call:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-xlb
+  cancel-in-progress: true
+
+jobs:
+  build-core:
+    uses: ./.github/workflows/build_core.yml
+
+  xlb:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build-core
+    defaults:
+      run:
+        working-directory: ./bindings/xlb
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: "npm"
+      - uses: actions/download-artifact@v4
+        with:
+          name: core-library-dist
+          path: dist
+      - uses: arduino/setup-protoc@v3
+        with:
+          version: "23.x"
+      - run: npm ci
+      - run: npm run protogen
+      - run: npm test
