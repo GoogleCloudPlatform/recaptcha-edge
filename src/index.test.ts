@@ -40,6 +40,8 @@ import {
   EdgeResponseInit,
   FirewallPolicy,
   Event,
+  applyPreRequestActions,
+  applyPostResponseActions,
 } from "./index";
 
 import { FetchApiRequest, FetchApiResponse } from "./fetchApi";
@@ -1089,6 +1091,7 @@ test("processRequest-dump", async () => {
       ["debug", ["[rpc] listFirewallPolicies (ok)"]],
       ["debug", ["local assessment succeeded"]],
       ["debug", ["terminalAction: allow"]],
+      ["debug", ["Applying response actions, ignoring request action"]],
     ],
     exceptions: [],
     create_assessment_headers: [],
@@ -1418,7 +1421,6 @@ test("getActions-createAssessment", async () => {
   vi.stubGlobal("fetch", vi.fn());
   (fetch as Mock)
     .mockImplementationOnce((req) => {
-      console.log("firewallpolicies: ", req.url);
       expect(req.url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/fetchFirewallPolicies");
       const testPolicies = [
         {
@@ -1437,7 +1439,6 @@ test("getActions-createAssessment", async () => {
       });
     })
     .mockImplementationOnce((req) => {
-      console.log("assessment: ", req.url);
       expect(req.url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123");
       return Promise.resolve({
         status: 200,
@@ -1461,4 +1462,39 @@ test("getActions-createAssessment", async () => {
       type: "block",
     },
   ]);
+});
+
+test("applyPreRequestActions - terminal", async () => {
+  const context = new TestContext(testConfig);
+  const req = new FetchApiRequest("https://www.example.com/teste2e");
+  const resp = (await applyPreRequestActions(context, req, [{ block: {} }])) as EdgeResponse;
+  expect(resp.status).toEqual(403);
+});
+
+test("applyPreRequestActions - non-terminal", async () => {
+  const context = new TestContext(testConfig);
+  const req = new FetchApiRequest("https://www.example.com/teste2e");
+  expect(req.getHeader("my-custom-header")).toBeNull();
+  const resp = await applyPreRequestActions(context, req, [
+    {
+      setHeader: {
+        key: "my-custom-header",
+        value: "test123",
+      },
+    },
+  ]);
+  expect(resp).toBeNull();
+  expect(req.getHeader("my-custom-header")).toEqual("test123");
+});
+
+test("applyPostResponseActions", async () => {
+  const context = new TestContext(testConfig);
+  const inputResp: Promise<EdgeResponse> = Promise.resolve({
+    status: 200,
+    headers: new Headers(),
+    text: () => "<HTML>Hello World</HTML>",
+  });
+
+  const resp = await applyPostResponseActions(context, await inputResp, [{injectjs: {}}]);
+  expect(await resp.text()).toEqual('<HTML><script src="test.js"/>Hello World</HTML>');
 });
