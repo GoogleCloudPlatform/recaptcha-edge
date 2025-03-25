@@ -35,7 +35,9 @@ import {
   EdgeResponseInit,
   EdgeRequestInit,
   Event,
-  Assessment
+  Assessment,
+  ListFirewallPoliciesResponse,
+  CHALLENGE_PAGE_URL
 } from "@google-cloud/recaptcha";
 import pkg from "../package.json";
 import { CacheOverride } from "fastly:cache-override";
@@ -157,10 +159,6 @@ export class FastlyContext extends RecaptchaContext {
     super.log(level, msg);
   }
 
-  createRequest(url: string, options: any): EdgeRequest {
-    return new FetchApiRequest(new Request(url, options));
-  }
-
   createResponse(body: string, options?: EdgeResponseInit): EdgeResponse {
     return new FetchApiResponse(body, options);
   }
@@ -184,10 +182,12 @@ export class FastlyContext extends RecaptchaContext {
    * Call fetch for ListFirewallPolicies.
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_list_firewall_policies(req: EdgeRequest): Promise<EdgeResponse> {
+  async fetch_list_firewall_policies(options: EdgeRequestInit): Promise<ListFirewallPoliciesResponse> {
     let cacheOverride = new CacheOverride("override", { ttl: 600 });
-
-    return this.fetch(req, { backend: "recaptcha", cacheOverride });
+    const req = new FetchApiRequest(new Request(this.listFirewallPoliciesUrl, options));
+    return this.fetch(req, { backend: "recaptcha", cacheOverride }).then((response) =>
+      this.toListFirewallPoliciesResponse(response),
+    );
   }
 
   /**
@@ -195,16 +195,15 @@ export class FastlyContext extends RecaptchaContext {
    * Parameters and outputs are the same as the 'fetch' function.
    */
   async fetch_create_assessment(options: EdgeRequestInit): Promise<Assessment> {
-    const req = new FetchApiRequest(new Request(this.assessmentUrl, options))
-    return this.fetch(req, { backend: "recaptcha" }).then(response => this.toAssessment(response));
+    const req = new FetchApiRequest(new Request(this.assessmentUrl, options));
+    return this.fetch(req, { backend: "recaptcha" }).then((response) => this.toAssessment(response));
   }
 
   /**
    * Call fetch for getting the ChallengePage
-   * @param path: the URL to fetch the challenge page from.
-   * @param soz_base64: the base64 encoded soz.
    */
-  async fetch_challenge_page(req: EdgeRequest): Promise<EdgeResponse> {
+  async fetch_challenge_page(options: EdgeRequestInit): Promise<EdgeResponse> {
+    const req = new FetchApiRequest(new Request(CHALLENGE_PAGE_URL, options));
     return this.fetch(req, {
       backend: "google",
     });

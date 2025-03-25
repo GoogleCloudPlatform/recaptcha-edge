@@ -37,7 +37,9 @@ import {
   EdgeRequestInit,
   UserInfo,
   Event,
-  Assessment
+  Assessment,
+  ListFirewallPoliciesResponse,
+  CHALLENGE_PAGE_URL,
 } from "@google-cloud/recaptcha";
 import pkg from "../package.json";
 
@@ -110,10 +112,6 @@ export class CloudflareContext extends RecaptchaContext {
     );
   }
 
-  createRequest(url: string, options: any): EdgeRequest {
-    return new FetchApiRequest(new Request(url, options));
-  }
-
   createResponse(body: string, options?: EdgeResponseInit): EdgeResponse {
     return new FetchApiResponse(body, options);
   }
@@ -123,19 +121,24 @@ export class CloudflareContext extends RecaptchaContext {
     return fetch(base_req, options).then((v) => new FetchApiResponse(v));
   }
 
-  async fetch_list_firewall_policies(req: EdgeRequest, options?: RequestInit): Promise<EdgeResponse> {
+  async fetch_challenge_page(options: EdgeRequestInit): Promise<EdgeResponse> {
+    const req = new FetchApiRequest(new Request(CHALLENGE_PAGE_URL, options));
+    return this.fetch(req);
+  }
+
+  async fetch_list_firewall_policies(options: EdgeRequestInit): Promise<ListFirewallPoliciesResponse> {
+    const req = new FetchApiRequest(new Request(this.listFirewallPoliciesUrl, options));
     return this.fetch(req, {
-      ...options,
       cf: {
         cacheEverything: true,
         cacheTtlByStatus: { "200-299": 600, 404: 1, "500-599": 0 },
       },
-    });
+    }).then((response) => this.toListFirewallPoliciesResponse(response));
   }
 
   async fetch_create_assessment(options: EdgeRequestInit): Promise<Assessment> {
     const req = new FetchApiRequest(new Request(this.assessmentUrl, options));
-    return this.fetch(req).then(response => this.toAssessment(response));
+    return this.fetch(req).then((response) => this.toAssessment(response));
   }
 }
 

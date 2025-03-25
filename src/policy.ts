@@ -46,9 +46,6 @@ type LocalAssessment = action.Action[] | "recaptcha-required";
  */
 export const RECAPTCHA_JS = "https://www.google.com/recaptcha/enterprise.js";
 
-/** @type {string} */
-export const CHALLENGE_PAGE_URL = "https://www.google.com/recaptcha/challengepage";
-
 /**
  * Checks whether a particular policy path pattern matches the incoming request.
  */
@@ -188,14 +185,14 @@ export async function applyPreRequestActions(
       context.config.projectNumber,
       context.config.challengePageSiteKey ?? "", // TODO: default site key?
     );
-    let cp_req = context.createRequest(CHALLENGE_PAGE_URL, {
+    const reqOptions = {
       method: "POST",
       headers: {
         "content-type": "application/json;charset=UTF-8",
         "X-ReCaptcha-Soz": soz,
       },
-    });
-    return context.fetch_challenge_page(cp_req);
+    };
+    return context.fetch_challenge_page(reqOptions);
   }
 
   // Handle Pre-Request actions.

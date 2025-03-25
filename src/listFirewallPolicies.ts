@@ -37,36 +37,12 @@ export async function callListFirewallPolicies(context: RecaptchaContext): Promi
       "content-type": "application/json;charset=UTF-8",
     },
   };
-  const endpoint = context.config.recaptchaEndpoint;
-  const projectNumber = context.config.projectNumber;
-  const apiKey = context.config.apiKey;
-  const policiesUrl = `${endpoint}/v1/projects/${projectNumber}/firewallpolicies?key=${apiKey}&page_size=1000`;
-  const req = context.createRequest(policiesUrl, options);
-  return context
-    .fetch_list_firewall_policies(req)
-    .then((response) => {
-      if (context.config.debug) {
-        context.debug_trace._list_firewall_policies_headers = response.getHeaders();
-      }
-      return response
-        .json()
-        .then((json) => {
-          if (isRpcError(json)) {
-            throw json.error;
-          }
-          context.log("debug", "[rpc] listFirewallPolicies (ok)");
-          return json as ListFirewallPoliciesResponse;
-        })
-        .catch((reason) => {
-          throw new error.ParseError(reason.message);
-        });
-    })
-    .catch((reason) => {
-      context.debug_trace.list_firewall_policies_status = "err";
-      context.log("debug", "[rpc] listFirewallPolicies (fail)");
-      if (reason instanceof error.RecaptchaError) {
-        throw reason;
-      }
-      throw new error.NetworkError(reason.message);
-    });
+  return context.fetch_list_firewall_policies(options).catch((reason) => {
+    context.debug_trace.list_firewall_policies_status = "err";
+    context.log("debug", "[rpc] listFirewallPolicies (fail)");
+    if (reason instanceof error.RecaptchaError) {
+      throw reason;
+    }
+    throw new error.NetworkError(reason.message);
+  });
 }

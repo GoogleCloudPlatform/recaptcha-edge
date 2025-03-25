@@ -23,7 +23,9 @@ import {
   LogLevel,
   EdgeResponseInit,
   EdgeRequestInit,
-  Assessment
+  Assessment,
+  ListFirewallPoliciesResponse,
+  CHALLENGE_PAGE_URL
 } from "@google-cloud/recaptcha";
 import { httpRequest, HttpResponse } from "http-request";
 import { TextDecoder, TextEncoder } from "encoding";
@@ -374,10 +376,6 @@ export class AkamaiContext extends RecaptchaContext {
     }).then((v) => new AkamaiResponse(v));
   }
 
-  createRequest(url: string, options: EdgeRequestInit): EdgeRequest {
-    return new AkamaiRequest(url, options);
-  }
-
   createResponse(body: string, options?: EdgeResponseInit): EdgeResponse {
     return new AkamaiResponse(body, options?.status, options?.headers);
   }
@@ -411,8 +409,9 @@ export class AkamaiContext extends RecaptchaContext {
   // TODO: Cache the firewall policies.
   // https://techdocs.akamai.com/api-definitions/docs/caching
   // https://techdocs.akamai.com/property-mgr/docs/caching-2#how-it-works
-  async fetch_list_firewall_policies(req: EdgeRequest): Promise<EdgeResponse> {
-    return this.fetch(req);
+  async fetch_list_firewall_policies(options: EdgeRequestInit): Promise<ListFirewallPoliciesResponse> {
+    const req = new AkamaiRequest(this.listFirewallPoliciesUrl, options);
+    return this.fetch(req).then((response) => this.toListFirewallPoliciesResponse(response));
   }
 
   /**
@@ -420,16 +419,15 @@ export class AkamaiContext extends RecaptchaContext {
    * Parameters and outputs are the same as the 'fetch' function.
    */
   async fetch_create_assessment(options: EdgeRequestInit): Promise<Assessment> {
-    const req = new AkamaiRequest(this.assessmentUrl, options)
-    return this.fetch(req).then(response => this.toAssessment(response));
+    const req = new AkamaiRequest(this.assessmentUrl, options);
+    return this.fetch(req).then((response) => this.toAssessment(response));
   }
 
   /**
    * Call fetch for getting the ChallengePage
-   * @param path: the URL to fetch the challenge page from.
-   * @param soz_base64: the base64 encoded soz.
    */
-  async fetch_challenge_page(req: EdgeRequest): Promise<EdgeResponse> {
+  async fetch_challenge_page(options: EdgeRequestInit): Promise<EdgeResponse> {
+    const req = new AkamaiRequest(CHALLENGE_PAGE_URL, options);
     return this.fetch(req);
   }
 }
