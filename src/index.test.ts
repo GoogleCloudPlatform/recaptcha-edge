@@ -21,6 +21,7 @@ import { expect, test, vi, Mock } from "vitest";
 
 import {
   applyActions,
+  fetchActions,
   callCreateAssessment,
   callListFirewallPolicies,
   createPartialEventWithSiteInfo,
@@ -39,6 +40,8 @@ import {
   EdgeResponseInit,
   FirewallPolicy,
   Event,
+  applyPreRequestActions,
+  applyPostResponseActions,
 } from "./index";
 
 import { FetchApiRequest, FetchApiResponse } from "./fetchApi";
@@ -83,7 +86,8 @@ class TestContext extends RecaptchaContext {
   log_messages: Array<[LogLevel, string[]]> = [];
 
   constructor(config: RecaptchaConfig) {
-    super(config);
+    // Deep copy the config so it can be modified independently.
+    super(JSON.parse(JSON.stringify(config)));
   }
 
   createRequest(url: string, options: any): EdgeRequest {
@@ -344,6 +348,7 @@ test("ApplyActions-setHeader", async () => {
   expect(resp.text()).toEqual("<HTML>Hello World</HTML>");
   expect(fetch).toHaveBeenCalledTimes(1);
 });
+
 test("ApplyActions-redirect", async () => {
   const context = new TestContext(testConfig);
   const req = new FetchApiRequest("https://www.example.com/originalreq");
@@ -1087,6 +1092,7 @@ test("processRequest-dump", async () => {
       ["debug", ["[rpc] listFirewallPolicies (ok)"]],
       ["debug", ["local assessment succeeded"]],
       ["debug", ["terminalAction: allow"]],
+      ["debug", ["Applying response actions, ignoring request action"]],
     ],
     exceptions: [],
     create_assessment_headers: [],
@@ -1368,4 +1374,124 @@ test("DebugTrace-format", () => {
   expect(trace.formatAsHeaderValue()).toEqual(
     "list_firewall_policies_status=ok;policy_count=10;site_key_used=session;site_keys_present=asce;empty_config=apikey,endpoint;performance_counters=",
   );
+});
+
+test("fetchActions-localAssessment", async () => {
+  const context = new TestContext(testConfig);
+  context.config.sessionJsInjectPath = "/teste2e;/another/path";
+  const req = new FetchApiRequest("https://www.example.com/teste2e");
+  const testPolicies = [
+    {
+      name: "test-policy",
+      description: "test-description",
+      path: "/teste2e",
+      actions: [{ block: {} }],
+    },
+    {
+      name: "test-policy2",
+      description: "test-description2",
+      path: "/teste2e",
+      actions: [{ redirect: {} }],
+    },
+  ];
+  vi.stubGlobal("fetch", vi.fn());
+  (fetch as Mock).mockImplementationOnce(() =>
+    Promise.resolve({
+      status: 200,
+      headers: new Headers(),
+      json: () => Promise.resolve({ firewallPolicies: testPolicies }),
+    }),
+  );
+  const actions = await fetchActions(context, req);
+  expect(actions).toEqual([
+    {
+      injectjs: {},
+    },
+    {
+      block: {},
+    },
+  ]);
+  expect(fetch).toHaveBeenCalledTimes(1);
+});
+
+test("fetchActions-createAssessment", async () => {
+  const context = new TestContext(testConfig);
+  const req = new FetchApiRequest("https://www.example.com/testlocal");
+  vi.stubGlobal("fetch", vi.fn());
+  (fetch as Mock)
+    .mockImplementationOnce((req) => {
+      expect(req.url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/fetchFirewallPolicies");
+      const testPolicies = [
+        {
+          name: "test-policy",
+          description: "test-description",
+          path: "/testlocal",
+          condition: "test-condition",
+          actions: [{ block: {} }],
+        },
+      ];
+      Promise.resolve({
+        status: 200,
+        headers: new Headers(),
+        json: () => Promise.resolve({ firewallPolicies: testPolicies }),
+      });
+    })
+    .mockImplementationOnce((req) => {
+      expect(req.url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123");
+      return Promise.resolve({
+        status: 200,
+        headers: new Headers(),
+        json: () =>
+          Promise.resolve({
+            name: "projects/12345/assessments/1234567890",
+            firewallPolicyAssessment: {
+              firewallPolicy: {
+                actions: [{ block: {} }],
+              },
+            },
+          }),
+      });
+    });
+  const actions = await fetchActions(context, req);
+  expect(fetch).toHaveBeenCalledTimes(2);
+  expect(actions).toEqual([
+    {
+      block: {},
+    },
+  ]);
+});
+
+test("applyPreRequestActions - terminal", async () => {
+  const context = new TestContext(testConfig);
+  const req = new FetchApiRequest("https://www.example.com/teste2e");
+  const resp = (await applyPreRequestActions(context, req, [{ block: {} }])) as EdgeResponse;
+  expect(resp.status).toEqual(403);
+});
+
+test("applyPreRequestActions - non-terminal", async () => {
+  const context = new TestContext(testConfig);
+  const req = new FetchApiRequest("https://www.example.com/teste2e");
+  expect(req.getHeader("my-custom-header")).toBeNull();
+  const resp = await applyPreRequestActions(context, req, [
+    {
+      setHeader: {
+        key: "my-custom-header",
+        value: "test123",
+      },
+    },
+  ]);
+  expect(resp).toBeNull();
+  expect(req.getHeader("my-custom-header")).toEqual("test123");
+});
+
+test("applyPostResponseActions", async () => {
+  const context = new TestContext(testConfig);
+  const inputResp: Promise<EdgeResponse> = Promise.resolve({
+    status: 200,
+    headers: new Headers(),
+    text: () => "<HTML>Hello World</HTML>",
+  });
+
+  const resp = await applyPostResponseActions(context, await inputResp, [{injectjs: {}}]);
+  expect(await resp.text()).toEqual('<HTML><script src="test.js"/>Hello World</HTML>');
 });

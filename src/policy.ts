@@ -145,27 +145,24 @@ export async function evaluatePolicyAssessment(context: RecaptchaContext, req: E
 }
 
 /**
- * Apply actions to a request.
+ * Apply pre-request actions. If a terminal action is applied it will generate a response
+ * which will be returned. Non terminal actions will modify the request and return null;
  */
-export async function applyActions(
+export async function applyPreRequestActions(
   context: RecaptchaContext,
   req: EdgeRequest,
   actions: action.Action[],
-): Promise<EdgeResponse> {
+): Promise<EdgeResponse | null> {
   let terminalAction: action.Action = action.createAllowAction();
   const reqNonterminalActions: action.RequestNonTerminalAction[] = [];
-  const respNonterminalActions: action.ResponseNonTerminalAction[] = [];
 
-  // Actions are assumed to be in order of processing. Non-terminal actions must
-  // be processed before terminal actions, and will be ignored if erroniously
-  // placed after terminal actions.
-  filterActions: for (const action of actions) {
+  for (const action of actions) {
     if (isTerminalAction(action)) {
       terminalAction = action;
     } else if (isRequestNonTerminalAction(action)) {
       reqNonterminalActions.push(action);
     } else if (isResponseNonTerminalAction(action)) {
-      respNonterminalActions.push(action);
+      context.log("debug", "Applying request actions, ignoring response actions");
     } else {
       /* v8 ignore next */
       throw new Error("Unsupported action: " + action);
@@ -206,23 +203,38 @@ export async function applyActions(
     context.log("debug", "reqNonterminal action: setHeader");
     if (isSetHeaderAction(action)) {
       req.addHeader(action.setHeader.key ?? "", action.setHeader.value ?? "");
-      continue;
-    }
-    if (isSubstituteAction(action)) {
+    } else if (isSubstituteAction(action)) {
       context.log("debug", "reqNonterminal action: substitute");
       const url = new URL(req.url);
       req.url = `${url.origin}${action.substitute.path}`;
-      continue;
+    } else {
+      /* v8 ignore next 2 lines */
+      throw new Error("Unsupported pre-request action: " + action);
     }
-    /* v8 ignore next 2 lines */
-    throw new Error("Unsupported pre-request action: " + action);
   }
 
   context.log("debug", "terminalAction: allow");
-  // Fetch from the backend, whether redirected or not.
-  let resp = context.fetch_origin(req);
+  return null;
+}
+
+/**
+ * Apply post response actions. Returns a (possibly modified) response.
+*/
+export async function applyPostResponseActions(context: RecaptchaContext, resp: EdgeResponse, actions: action.Action[]): Promise<EdgeResponse> {
+  const respNonterminalActions: action.ResponseNonTerminalAction[] = [];
+  for (const action of actions) {
+    if (isTerminalAction(action) || isRequestNonTerminalAction(action)) {
+      context.log("debug", "Applying response actions, ignoring request action");
+    } else if (isResponseNonTerminalAction(action)) {
+      respNonterminalActions.push(action);
+    } else {
+      /* v8 ignore next */
+      throw new Error("Unsupported action: " + action);
+    }
+  }
 
   // Handle Post-Response actions.
+  let modifiedResp = resp;
   const once = new Set<string>();
   for (const action of respNonterminalActions) {
     if (isInjectJsAction(action)) {
@@ -232,24 +244,40 @@ export async function applyActions(
       once.add("injectjs");
       context.log("debug", "respNonterminal action: injectjs");
       context.log_performance_debug("[func] injectJS - start");
-      resp = context.injectRecaptchaJs(await resp);
+      modifiedResp = await context.injectRecaptchaJs(resp);
       // If 'debug' is enabled, await the response to get reasonable performance metrics.
-      if(context.config.debug) {
-        resp = Promise.resolve(await resp);
+      if (context.config.debug) {
+        modifiedResp = await Promise.resolve(resp);
       }
       context.log_performance_debug("[func] injectJS - end");
     } else {
       throw new Error("Unsupported post-response action: " + action);
     }
   }
-
-  return resp;
+  return modifiedResp;
 }
 
 /**
- * Process reCAPTCHA request.
+ * Apply actions to a request.
  */
-export async function processRequest(context: RecaptchaContext, req: EdgeRequest): Promise<EdgeResponse> {
+export async function applyActions(
+  context: RecaptchaContext,
+  req: EdgeRequest,
+  actions: action.Action[],
+): Promise<EdgeResponse> {
+  const response = await applyPreRequestActions(context, req, actions);
+  if (response !== null) {
+    return response;
+  }
+  let resp = await context.fetch_origin(req);
+  return applyPostResponseActions(context, resp, actions);
+}
+
+/**
+ *
+ * Fetches a list of the applicable actions, given a request.
+ */
+export async function fetchActions(context: RecaptchaContext, req: EdgeRequest): Promise<action.Action[]> {
   let actions: action.Action[] = [];
   try {
     const localAssessment = await localPolicyAssessment(context, req);
@@ -279,7 +307,14 @@ export async function processRequest(context: RecaptchaContext, req: EdgeRequest
       }
     }
   }
+  return actions;
+}
 
+/**
+ * Process reCAPTCHA request.
+ */
+export async function processRequest(context: RecaptchaContext, req: EdgeRequest): Promise<EdgeResponse> {
+  const actions = await fetchActions(context, req);
   context.log_performance_debug("[func] applyActions - start");
   let resp = applyActions(context, req, actions);
   context.log_performance_debug("[func] applyActions - end");
