@@ -1,3 +1,5 @@
+❗ Please contact [reCAPTCHA sales](https://cloud.google.com/contact/form?e=0) if you wish to use our Akamai integration.
+
 # reCAPTCHA Akamai Edge Worker Library
 
 [![Build and Test Akamai Binding](https://github.com/GoogleCloudPlatform/recaptcha-edge/actions/workflows/build_akamai.yml/badge.svg)](https://github.com/GoogleCloudPlatform/recaptcha-edge/actions/workflows/build_akamai.yml)
