@@ -1,6 +1,6 @@
 # reCAPTCHA Akamai Edge Worker Library
 
-[![Build and Test Akamai Binding](https://github.com/GoogleCloudPlatform/recaptcha-waf/actions/workflows/build_akamai.yml/badge.svg)](https://github.com/GoogleCloudPlatform/recaptcha-waf/actions/workflows/build_akamai.yml)
+[![Build and Test Akamai Binding](https://github.com/GoogleCloudPlatform/recaptcha-edge/actions/workflows/build_akamai.yml/badge.svg)](https://github.com/GoogleCloudPlatform/recaptcha-edge/actions/workflows/build_akamai.yml)
 
 A library to access reCAPTCHA Enterprise via [Akamai Edge Workers](https://techdocs.akamai.com/edgeworkers/docs/welcome-to-edgeworkers).
 
@@ -12,7 +12,7 @@ This project is intended to be used in one of two ways:
 
 ### Prebuilt Package
 
-Check the [Releases](https://github.com/GoogleCloudPlatform/recaptcha-waf/releases) page for the most recent build for Akamai.
+Check the [Releases](https://github.com/GoogleCloudPlatform/recaptcha-edge/releases) page for the most recent build for Akamai.
 
 This package is intended to be used in concert with [reCAPTCHA Firewall Policies](https://cloud.google.com/recaptcha/docs/firewall-policies-overview).
 
@@ -69,10 +69,10 @@ This package has not yet been added to the NPM package repository, and must be m
 
 ## Contribution
 
-Please see our [Contribution](https://github.com/GoogleCloudPlatform/recaptcha-waf/blob/main/CONTRIBUTING.md) guidelines.
+Please see our [Contribution](https://github.com/GoogleCloudPlatform/recaptcha-edge/blob/main/CONTRIBUTING.md) guidelines.
 
 ## Issues and Support
 
 For technical issues, please see the [reCAPTCHA Enterprise Support Documentation](https://cloud.google.com/recaptcha/docs/getting-support).
 
-For bugs or issues specifically with this codebase, please open a new [Github issue](https://github.com/GoogleCloudPlatform/recaptcha-waf/issues) in this project.
+For bugs or issues specifically with this codebase, please open a new [Github issue](https://github.com/GoogleCloudPlatform/recaptcha-edge/issues) in this project.
