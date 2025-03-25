@@ -1385,7 +1385,6 @@ test("fetchActions-localAssessment", async () => {
       name: "test-policy",
       description: "test-description",
       path: "/teste2e",
-      // 'type' isn't a part of the interface, but is added for testing.
       actions: [{ block: {} }],
     },
     {
@@ -1427,7 +1426,6 @@ test("fetchActions-createAssessment", async () => {
           name: "test-policy",
           description: "test-description",
           path: "/testlocal",
-          // 'type' isn't a part of the interface, but is added for testing.
           condition: "test-condition",
           actions: [{ block: {} }],
         },
