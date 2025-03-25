@@ -19,9 +19,9 @@
  */
 
 import * as action from "./action";
-import { Assessment, Event, isRpcError, RpcError, UserInfo } from "./assessment";
+import { Assessment, Event, UserInfo } from "./assessment";
 import * as error from "./error";
-import { EdgeRequest, EdgeRequestInit, EdgeResponse, RecaptchaContext } from "./index";
+import { EdgeRequest, EdgeRequestInit, RecaptchaContext } from "./index";
 import picomatch from "picomatch";
 import { extractBoundary, parse } from "parse-multipart-form-data";
 

@@ -23,8 +23,7 @@ import * as action from "./action";
 import { FirewallPolicy } from "./assessment";
 import { callCreateAssessment } from "./createAssessment";
 import * as error from "./error";
-import { RecaptchaContext, EdgeRequest, EdgeResponse, FetchApiResponse } from "./index";
-import { callListFirewallPolicies } from "./listFirewallPolicies";
+import { RecaptchaContext, EdgeRequest, EdgeResponse, ListFirewallPoliciesResponse } from "./index";
 import { createSoz } from "./soz";
 import URL from "url-parse";
 import {
@@ -81,6 +80,26 @@ export function policyConditionMatch(policy: FirewallPolicy, req: EdgeRequest): 
   }
   // TODO: handle non-recaptcha-namespace conditions like IP only.
   return "unknown";
+}
+
+/**
+ * Call the reCAPTCHA API to list firewall policies.
+ */
+export async function callListFirewallPolicies(context: RecaptchaContext): Promise<ListFirewallPoliciesResponse> {
+  const options = {
+    method: "GET",
+    headers: {
+      "content-type": "application/json;charset=UTF-8",
+    },
+  };
+  return context.fetch_list_firewall_policies(options).catch((reason) => {
+    context.debug_trace.list_firewall_policies_status = "err";
+    context.log("debug", "[rpc] listFirewallPolicies (fail)");
+    if (reason instanceof error.RecaptchaError) {
+      throw reason;
+    }
+    throw new error.NetworkError(reason.message);
+  });
 }
 
 /**
@@ -192,7 +211,7 @@ export async function applyPreRequestActions(
         "X-ReCaptcha-Soz": soz,
       },
     };
-    return context.fetch_challenge_page(reqOptions);
+    return context.fetch_challenge_response(reqOptions);
   }
 
   // Handle Pre-Request actions.
@@ -216,8 +235,12 @@ export async function applyPreRequestActions(
 
 /**
  * Apply post response actions. Returns a (possibly modified) response.
-*/
-export async function applyPostResponseActions(context: RecaptchaContext, resp: EdgeResponse, actions: action.Action[]): Promise<EdgeResponse> {
+ */
+export async function applyPostResponseActions(
+  context: RecaptchaContext,
+  resp: EdgeResponse,
+  actions: action.Action[],
+): Promise<EdgeResponse> {
   const respNonterminalActions: action.ResponseNonTerminalAction[] = [];
   for (const action of actions) {
     if (isTerminalAction(action) || isRequestNonTerminalAction(action)) {

@@ -24,17 +24,14 @@ export { Assessment, Event, FirewallPolicy, UserInfo } from "./assessment";
 
 import * as action from "./action";
 import * as error from "./error";
-import { Assessment, isRpcError, Event } from "./assessment";
+import { Assessment, isRpcError, Event, FirewallPolicy } from "./assessment";
 import { EdgeRequest, EdgeRequestInit, EdgeResponse, EdgeResponseInit } from "./request";
-import { ListFirewallPoliciesResponse } from "./listFirewallPolicies";
 
 export { callCreateAssessment, createPartialEventWithSiteInfo } from "./createAssessment";
 
 export { FetchApiRequest, FetchApiResponse } from "./fetchApi";
 
 export { EdgeRequest, EdgeRequestInit, EdgeResponse, EdgeResponseInit } from "./request";
-
-export { ListFirewallPoliciesResponse, callListFirewallPolicies } from "./listFirewallPolicies";
 
 export {
   applyActions,
@@ -46,10 +43,16 @@ export {
   policyConditionMatch,
   policyPathMatch,
   processRequest,
+  callListFirewallPolicies
 } from "./policy";
 
 /** @type {string} */
 export const CHALLENGE_PAGE_URL = "https://www.google.com/recaptcha/challengepage";
+
+/** Zod Schema for ListFirewallPoliciesResponse */
+export interface ListFirewallPoliciesResponse {
+  firewallPolicies: FirewallPolicy[];
+}
 
 /**
  * reCAPTCHA Enterprise configuration.
@@ -189,7 +192,7 @@ export abstract class RecaptchaContext {
   /**
    * Call fetch for getting the ChallengePage
    */
-  abstract fetch_challenge_page(options: EdgeRequestInit): Promise<EdgeResponse>;
+  abstract fetch_challenge_response(options: EdgeRequestInit): Promise<EdgeResponse>;
 
   /**
    * Log performance debug information.
