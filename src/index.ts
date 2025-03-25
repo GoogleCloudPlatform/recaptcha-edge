@@ -37,7 +37,7 @@ export {
   applyActions,
   applyPreRequestActions,
   applyPostResponseActions,
-  getActions,
+  fetchActions,
   evaluatePolicyAssessment,
   localPolicyAssessment,
   policyConditionMatch,

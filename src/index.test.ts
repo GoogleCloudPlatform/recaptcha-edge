@@ -21,7 +21,7 @@ import { expect, test, vi, Mock } from "vitest";
 
 import {
   applyActions,
-  getActions,
+  fetchActions,
   callCreateAssessment,
   callListFirewallPolicies,
   createPartialEventWithSiteInfo,
@@ -86,6 +86,7 @@ class TestContext extends RecaptchaContext {
   log_messages: Array<[LogLevel, string[]]> = [];
 
   constructor(config: RecaptchaConfig) {
+    // Deep copy the config so it can be modified independently.
     super(JSON.parse(JSON.stringify(config)));
   }
 
@@ -1375,7 +1376,7 @@ test("DebugTrace-format", () => {
   );
 });
 
-test("getActions-localAssessment", async () => {
+test("fetchActions-localAssessment", async () => {
   const context = new TestContext(testConfig);
   context.config.sessionJsInjectPath = "/teste2e;/another/path";
   const req = new FetchApiRequest("https://www.example.com/teste2e");
@@ -1385,13 +1386,13 @@ test("getActions-localAssessment", async () => {
       description: "test-description",
       path: "/teste2e",
       // 'type' isn't a part of the interface, but is added for testing.
-      actions: [{ block: {}, type: "block" }],
+      actions: [{ block: {} }],
     },
     {
       name: "test-policy2",
       description: "test-description2",
       path: "/teste2e",
-      actions: [{ block: {}, type: "redirect" }],
+      actions: [{ redirect: {} }],
     },
   ];
   vi.stubGlobal("fetch", vi.fn());
@@ -1402,20 +1403,19 @@ test("getActions-localAssessment", async () => {
       json: () => Promise.resolve({ firewallPolicies: testPolicies }),
     }),
   );
-  const actions = await getActions(context, req);
+  const actions = await fetchActions(context, req);
   expect(actions).toEqual([
     {
       injectjs: {},
     },
     {
       block: {},
-      type: "block",
     },
   ]);
   expect(fetch).toHaveBeenCalledTimes(1);
 });
 
-test("getActions-createAssessment", async () => {
+test("fetchActions-createAssessment", async () => {
   const context = new TestContext(testConfig);
   const req = new FetchApiRequest("https://www.example.com/testlocal");
   vi.stubGlobal("fetch", vi.fn());
@@ -1429,7 +1429,7 @@ test("getActions-createAssessment", async () => {
           path: "/testlocal",
           // 'type' isn't a part of the interface, but is added for testing.
           condition: "test-condition",
-          actions: [{ block: {}, type: "block" }],
+          actions: [{ block: {} }],
         },
       ];
       Promise.resolve({
@@ -1448,18 +1448,17 @@ test("getActions-createAssessment", async () => {
             name: "projects/12345/assessments/1234567890",
             firewallPolicyAssessment: {
               firewallPolicy: {
-                actions: [{ block: {}, type: "block" }],
+                actions: [{ block: {} }],
               },
             },
           }),
       });
     });
-  const actions = await getActions(context, req);
+  const actions = await fetchActions(context, req);
   expect(fetch).toHaveBeenCalledTimes(2);
   expect(actions).toEqual([
     {
       block: {},
-      type: "block",
     },
   ]);
 });
