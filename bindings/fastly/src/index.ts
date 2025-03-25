@@ -33,7 +33,9 @@ import {
   FetchApiResponse,
   FetchApiRequest,
   EdgeResponseInit,
+  EdgeRequestInit,
   Event,
+  Assessment
 } from "@google-cloud/recaptcha";
 import pkg from "../package.json";
 import { CacheOverride } from "fastly:cache-override";
@@ -192,8 +194,9 @@ export class FastlyContext extends RecaptchaContext {
    * Call fetch for CreateAssessment
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_create_assessment(req: EdgeRequest): Promise<EdgeResponse> {
-    return this.fetch(req, { backend: "recaptcha" });
+  async fetch_create_assessment(options: EdgeRequestInit): Promise<Assessment> {
+    const req = new FetchApiRequest(new Request(this.assessmentUrl, options))
+    return this.fetch(req, { backend: "recaptcha" }).then(response => this.toAssessment(response));
   }
 
   /**

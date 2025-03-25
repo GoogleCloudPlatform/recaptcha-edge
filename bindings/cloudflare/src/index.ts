@@ -34,8 +34,10 @@ import {
   FetchApiRequest,
   FetchApiResponse,
   EdgeResponseInit,
+  EdgeRequestInit,
   UserInfo,
   Event,
+  Assessment
 } from "@google-cloud/recaptcha";
 import pkg from "../package.json";
 
@@ -129,6 +131,11 @@ export class CloudflareContext extends RecaptchaContext {
         cacheTtlByStatus: { "200-299": 600, 404: 1, "500-599": 0 },
       },
     });
+  }
+
+  async fetch_create_assessment(options: EdgeRequestInit): Promise<Assessment> {
+    const req = new FetchApiRequest(new Request(this.assessmentUrl, options));
+    return this.fetch(req).then(response => this.toAssessment(response));
   }
 }
 

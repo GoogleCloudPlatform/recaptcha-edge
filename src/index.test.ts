@@ -42,6 +42,8 @@ import {
   Event,
   applyPreRequestActions,
   applyPostResponseActions,
+  Assessment,
+  EdgeRequestInit,
 } from "./index";
 
 import { FetchApiRequest, FetchApiResponse } from "./fetchApi";
@@ -102,9 +104,15 @@ class TestContext extends RecaptchaContext {
     let base_req = (req as FetchApiRequest).asRequest();
     return fetch(base_req).then((v) => new FetchApiResponse(v));
   }
+
+  async fetch_create_assessment(options: EdgeRequestInit): Promise<Assessment> {
+    return this.fetch(new FetchApiRequest(this.assessmentUrl, options)).then(response => this.toAssessment(response));
+  }
+
   logException = (e: any) => {
     this.exceptions.push(e);
   };
+
   log = (level: LogLevel, msg: string) => {
     this.log_messages.push([level, [msg]]);
   };

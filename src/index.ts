@@ -22,7 +22,9 @@ export { AllowAction, BlockAction, InjectJsAction, RedirectAction, SetHeaderActi
 
 export { Assessment, Event, FirewallPolicy, UserInfo } from "./assessment";
 
-import { Event } from "./assessment";
+import * as action from "./action";
+import * as error from "./error";
+import { Assessment, isRpcError, Event } from "./assessment";
 import { EdgeRequest, EdgeRequestInit, EdgeResponse, EdgeResponseInit } from "./request";
 
 export { callCreateAssessment, createPartialEventWithSiteInfo } from "./createAssessment";
@@ -181,9 +183,7 @@ export abstract class RecaptchaContext {
    * Call fetch for CreateAssessment
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_create_assessment(req: EdgeRequest): Promise<EdgeResponse> {
-    return this.fetch(req);
-  }
+  abstract fetch_create_assessment(options: EdgeRequestInit): Promise<Assessment>;
 
   /**
    * Call fetch for getting the ChallengePage
@@ -226,6 +226,30 @@ export abstract class RecaptchaContext {
    */
   log(level: LogLevel, msg: string) {
     this.log_messages.push([level, [msg]]);
+  }
+
+  toAssessment(response: EdgeResponse): Promise<Assessment> {
+    if (this.config.debug) {
+      this.debug_trace._create_assessment_headers = response.getHeaders();
+    }
+    return response
+      .json()
+      .then((json) => {
+        if (isRpcError(json)) {
+          throw json.error;
+        }
+        return json as Assessment;
+      })
+      .catch((reason) => {
+        throw new error.ParseError(reason.message, action.createAllowAction());
+      });
+  }
+
+  get assessmentUrl() {
+    const endpoint = this.config.recaptchaEndpoint;
+    const projectNumber = this.config.projectNumber;
+    const apiKey = this.config.apiKey;
+    return `${endpoint}/v1/projects/${projectNumber}/assessments?key=${apiKey}`;
   }
 
   abstract buildEvent(req: EdgeRequest): Promise<Event>;

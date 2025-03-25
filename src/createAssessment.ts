@@ -252,29 +252,8 @@ export async function callCreateAssessment(
     },
   };
 
-  const endpoint = context.config.recaptchaEndpoint;
-  const projectNumber = context.config.projectNumber;
-  const apiKey = context.config.apiKey;
-  const assessmentUrl = `${endpoint}/v1/projects/${projectNumber}/assessments?key=${apiKey}`;
-  const ca_req = context.createRequest(assessmentUrl, options);
   return context
-    .fetch_create_assessment(ca_req)
-    .then((response) => {
-      if (context.config.debug) {
-        context.debug_trace._create_assessment_headers = response.getHeaders();
-      }
-      return response
-        .json()
-        .then((json) => {
-          if (isRpcError(json)) {
-            throw json.error;
-          }
-          return json as Assessment;
-        })
-        .catch((reason) => {
-          throw new error.ParseError(reason.message, action.createAllowAction());
-        });
-    })
+    .fetch_create_assessment(options)
     .catch((reason) => {
       context.log("debug", "[rpc] createAssessment (fail)");
       context.debug_trace.create_assessment_status = "err";

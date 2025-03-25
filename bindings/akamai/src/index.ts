@@ -23,6 +23,7 @@ import {
   LogLevel,
   EdgeResponseInit,
   EdgeRequestInit,
+  Assessment
 } from "@google-cloud/recaptcha";
 import { httpRequest, HttpResponse } from "http-request";
 import { TextDecoder, TextEncoder } from "encoding";
@@ -418,8 +419,9 @@ export class AkamaiContext extends RecaptchaContext {
    * Call fetch for CreateAssessment
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_create_assessment(req: EdgeRequest): Promise<EdgeResponse> {
-    return this.fetch(req);
+  async fetch_create_assessment(options: EdgeRequestInit): Promise<Assessment> {
+    const req = new AkamaiRequest(this.assessmentUrl, options)
+    return this.fetch(req).then(response => this.toAssessment(response));
   }
 
   /**
