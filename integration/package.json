@@ -12,7 +12,7 @@
     "@playwright/test": "^1.49.0",
     "@types/node": "^22.10.0",
     "ts-node": "^10.9.2",
-    "tsx": "^4.19.2"
+    "tsx": "^4.19.3"
   },
   "workspaces": [
     "../"
