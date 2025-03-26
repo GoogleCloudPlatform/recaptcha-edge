@@ -42,13 +42,16 @@ import {
   Event,
   applyPreRequestActions,
   applyPostResponseActions,
+  Assessment,
+  EdgeRequestInit,
+  ListFirewallPoliciesResponse,
+  CHALLENGE_PAGE_URL,
 } from "./index";
 
 import { FetchApiRequest, FetchApiResponse } from "./fetchApi";
 
 import {
   Action,
-  AllowAction,
   createAllowAction,
   createBlockAction,
   isBlockAction,
@@ -90,10 +93,6 @@ class TestContext extends RecaptchaContext {
     super(JSON.parse(JSON.stringify(config)));
   }
 
-  createRequest(url: string, options: any): EdgeRequest {
-    return new FetchApiRequest(new Request(url, options));
-  }
-
   createResponse(body: string, options?: EdgeResponseInit): EdgeResponse {
     return new FetchApiResponse(body, options);
   }
@@ -102,9 +101,25 @@ class TestContext extends RecaptchaContext {
     let base_req = (req as FetchApiRequest).asRequest();
     return fetch(base_req).then((v) => new FetchApiResponse(v));
   }
+
+  async fetch_list_firewall_policies(options: EdgeRequestInit): Promise<ListFirewallPoliciesResponse> {
+    return this.fetch(new FetchApiRequest(this.listFirewallPoliciesUrl, options)).then((response) =>
+      this.toListFirewallPoliciesResponse(response),
+    );
+  }
+
+  async fetch_create_assessment(options: EdgeRequestInit): Promise<Assessment> {
+    return this.fetch(new FetchApiRequest(this.assessmentUrl, options)).then((response) => this.toAssessment(response));
+  }
+
+  async fetch_challenge_page(options: EdgeRequestInit): Promise<EdgeResponse> {
+    return this.fetch(new FetchApiRequest(new Request(CHALLENGE_PAGE_URL, options)));
+  }
+
   logException = (e: any) => {
     this.exceptions.push(e);
   };
+
   log = (level: LogLevel, msg: string) => {
     this.log_messages.push([level, [msg]]);
   };
@@ -1492,6 +1507,6 @@ test("applyPostResponseActions", async () => {
     text: () => "<HTML>Hello World</HTML>",
   });
 
-  const resp = await applyPostResponseActions(context, await inputResp, [{injectjs: {}}]);
+  const resp = await applyPostResponseActions(context, await inputResp, [{ injectjs: {} }]);
   expect(await resp.text()).toEqual('<HTML><script src="test.js"/>Hello World</HTML>');
 });

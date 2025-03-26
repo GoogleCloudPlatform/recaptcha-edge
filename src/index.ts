@@ -22,7 +22,9 @@ export { AllowAction, BlockAction, InjectJsAction, RedirectAction, SetHeaderActi
 
 export { Assessment, Event, FirewallPolicy, UserInfo } from "./assessment";
 
-import { Event } from "./assessment";
+import * as action from "./action";
+import * as error from "./error";
+import { Assessment, isRpcError, Event, FirewallPolicy } from "./assessment";
 import { EdgeRequest, EdgeRequestInit, EdgeResponse, EdgeResponseInit } from "./request";
 
 export { callCreateAssessment, createPartialEventWithSiteInfo } from "./createAssessment";
@@ -30,8 +32,6 @@ export { callCreateAssessment, createPartialEventWithSiteInfo } from "./createAs
 export { FetchApiRequest, FetchApiResponse } from "./fetchApi";
 
 export { EdgeRequest, EdgeRequestInit, EdgeResponse, EdgeResponseInit } from "./request";
-
-export { ListFirewallPoliciesResponse, callListFirewallPolicies } from "./listFirewallPolicies";
 
 export {
   applyActions,
@@ -43,7 +43,16 @@ export {
   policyConditionMatch,
   policyPathMatch,
   processRequest,
+  callListFirewallPolicies
 } from "./policy";
+
+/** @type {string} */
+export const CHALLENGE_PAGE_URL = "https://www.google.com/recaptcha/challengepage";
+
+/** Type definition for ListFirewallPoliciesResponse */
+export interface ListFirewallPoliciesResponse {
+  firewallPolicies: FirewallPolicy[];
+}
 
 /**
  * reCAPTCHA Enterprise configuration.
@@ -154,7 +163,6 @@ export abstract class RecaptchaContext {
     this.debug_trace = new DebugTrace(this);
   }
 
-  abstract createRequest(url: string, options: EdgeRequestInit): EdgeRequest;
   abstract createResponse(body: string, options?: EdgeResponseInit): EdgeResponse;
   encodeString(st: string): Uint8Array {
     return new TextEncoder().encode(st);
@@ -173,26 +181,18 @@ export abstract class RecaptchaContext {
    * Call fetch for ListFirewallPolicies.
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_list_firewall_policies(req: EdgeRequest): Promise<EdgeResponse> {
-    return this.fetch(req);
-  }
+  abstract fetch_list_firewall_policies(options: EdgeRequestInit): Promise<ListFirewallPoliciesResponse>;
 
   /**
    * Call fetch for CreateAssessment
    * Parameters and outputs are the same as the 'fetch' function.
    */
-  async fetch_create_assessment(req: EdgeRequest): Promise<EdgeResponse> {
-    return this.fetch(req);
-  }
+  abstract fetch_create_assessment(options: EdgeRequestInit): Promise<Assessment>;
 
   /**
    * Call fetch for getting the ChallengePage
-   * @param path: the URL to fetch the challenge page from.
-   * @param soz_base64: the base64 encoded soz.
    */
-  async fetch_challenge_page(req: EdgeRequest): Promise<EdgeResponse> {
-    return this.fetch(req);
-  }
+  abstract fetch_challenge_page(options: EdgeRequestInit): Promise<EdgeResponse>;
 
   /**
    * Log performance debug information.
@@ -226,6 +226,55 @@ export abstract class RecaptchaContext {
    */
   log(level: LogLevel, msg: string) {
     this.log_messages.push([level, [msg]]);
+  }
+
+  toAssessment(response: EdgeResponse): Promise<Assessment> {
+    if (this.config.debug) {
+      this.debug_trace._create_assessment_headers = response.getHeaders();
+    }
+    return response
+      .json()
+      .then((json) => {
+        if (isRpcError(json)) {
+          throw json.error;
+        }
+        return json as Assessment;
+      })
+      .catch((reason) => {
+        throw new error.ParseError(reason.message, action.createAllowAction());
+      });
+  }
+
+  toListFirewallPoliciesResponse(response: EdgeResponse): Promise<ListFirewallPoliciesResponse> {
+    if (this.config.debug) {
+      this.debug_trace._list_firewall_policies_headers = response.getHeaders();
+    }
+    return response
+      .json()
+      .then((json) => {
+        if (isRpcError(json)) {
+          throw json.error;
+        }
+        this.log("debug", "[rpc] listFirewallPolicies (ok)");
+        return json as ListFirewallPoliciesResponse;
+      })
+      .catch((reason) => {
+        throw new error.ParseError(reason.message);
+      });
+  }
+
+  get assessmentUrl() {
+    const endpoint = this.config.recaptchaEndpoint;
+    const projectNumber = this.config.projectNumber;
+    const apiKey = this.config.apiKey;
+    return `${endpoint}/v1/projects/${projectNumber}/assessments?key=${apiKey}`;
+  }
+
+  get listFirewallPoliciesUrl() {
+    const endpoint = this.config.recaptchaEndpoint;
+    const projectNumber = this.config.projectNumber;
+    const apiKey = this.config.apiKey;
+    return `${endpoint}/v1/projects/${projectNumber}/firewallpolicies?key=${apiKey}&page_size=1000`;
   }
 
   abstract buildEvent(req: EdgeRequest): Promise<Event>;
