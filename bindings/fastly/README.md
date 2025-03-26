@@ -1,6 +1,6 @@
 # reCAPTCHA Fastly Compute@Edge Library
 
-[![Build and Test Fastly Binding](https://github.com/GoogleCloudPlatform/recaptcha-waf/actions/workflows/build_fastly.yml/badge.svg)](https://github.com/GoogleCloudPlatform/recaptcha-waf/actions/workflows/build_fastly.yml)
+[![Build and Test Fastly Binding](https://github.com/GoogleCloudPlatform/recaptcha-edge/actions/workflows/build_fastly.yml/badge.svg)](https://github.com/GoogleCloudPlatform/recaptcha-edge/actions/workflows/build_fastly.yml)
 
 A library to access reCAPTCHA Enterprise via [Fastly Compute@Edge](https://www.fastly.com/documentation/guides/compute/).
 
@@ -12,7 +12,7 @@ This project is intended to be used in one of two ways:
 
 ### Prebuilt Package
 
-Check the [Releases](https://github.com/GoogleCloudPlatform/recaptcha-waf/releases) page for the most recent build for Fastly.
+Check the [Releases](https://github.com/GoogleCloudPlatform/recaptcha-edge/releases) page for the most recent build for Fastly.
 
 This package is intended to be used in concert with [reCAPTCHA Firewall Policies](https://cloud.google.com/recaptcha/docs/firewall-policies-overview).
 
@@ -65,14 +65,14 @@ Please see the [reCAPTCHA Google Cloud Documentation](https://cloud.google.com/r
 ### As a Library
 This package has not yet been added to the NPM package repository, and must be manually imported.
 
-Please see the examples in the [examples](https://github.com/GoogleCloudPlatform/recaptcha-waf/tree/main/bindings/fastly/examples) directory.
+Please see the examples in the [examples](https://github.com/GoogleCloudPlatform/recaptcha-edge/tree/main/bindings/fastly/examples) directory.
 
 ## Contribution
 
-Please see our [Contribution](https://github.com/GoogleCloudPlatform/recaptcha-waf/blob/main/CONTRIBUTING.md) guidelines.
+Please see our [Contribution](https://github.com/GoogleCloudPlatform/recaptcha-edge/blob/main/CONTRIBUTING.md) guidelines.
 
 ## Issues and Support
 
 For technical issues, please see the [reCAPTCHA Enterprise Support Documentation](https://cloud.google.com/recaptcha/docs/getting-support).
 
-For bugs or issues specifically with this codebase, please open a new [Github issue](https://github.com/GoogleCloudPlatform/recaptcha-waf/issues) in this project.
+For bugs or issues specifically with this codebase, please open a new [Github issue](https://github.com/GoogleCloudPlatform/recaptcha-edge/issues) in this project.
