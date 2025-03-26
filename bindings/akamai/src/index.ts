@@ -26,7 +26,7 @@ import {
   Assessment,
   ListFirewallPoliciesResponse,
   CHALLENGE_PAGE_URL
-} from "@google-cloud/recaptcha";
+} from "@google-cloud/recaptcha-edge";
 import { httpRequest, HttpResponse } from "http-request";
 import { TextDecoder, TextEncoder } from "encoding";
 import { createResponse } from "create-response";
@@ -130,7 +130,7 @@ export {
   processRequest,
   RecaptchaConfig,
   RecaptchaError,
-} from "@google-cloud/recaptcha";
+} from "@google-cloud/recaptcha-edge";
 
 type AkamaiRequestInit = {
   method?: string;

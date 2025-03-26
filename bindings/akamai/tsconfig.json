@@ -21,7 +21,7 @@
     "module": "es2022" /* Specify what module code is generated. */,
     "moduleResolution": "node10" /* Specify how TypeScript looks up a file from a given module specifier. */,
     "paths": {
-      "@google-cloud/recaptcha": ["../../recaptcha-lib/dist"]
+      "@google-cloud/recaptcha-edge": ["../../recaptcha-lib/dist"]
     } /* Specify a set of entries that re-map imports to additional lookup locations. */,
     "resolveJsonModule": true /* Enable importing .json files. */,
 

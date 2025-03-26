@@ -38,7 +38,7 @@ import {
   Assessment,
   ListFirewallPoliciesResponse,
   CHALLENGE_PAGE_URL
-} from "@google-cloud/recaptcha";
+} from "@google-cloud/recaptcha-edge";
 import pkg from "../package.json";
 import { CacheOverride } from "fastly:cache-override";
 
@@ -103,7 +103,7 @@ export {
   processRequest,
   RecaptchaConfig,
   RecaptchaError,
-} from "@google-cloud/recaptcha";
+} from "@google-cloud/recaptcha-edge";
 
 export class FastlyContext extends RecaptchaContext {
   readonly sessionPageCookie = "recaptcha-fastly-t";
