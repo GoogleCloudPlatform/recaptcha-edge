@@ -211,7 +211,7 @@ export async function applyPreRequestActions(
         "X-ReCaptcha-Soz": soz,
       },
     };
-    return context.fetch_challenge_response(reqOptions);
+    return context.fetch_challenge_page(reqOptions);
   }
 
   // Handle Pre-Request actions.

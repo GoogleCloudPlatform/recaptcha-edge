@@ -426,7 +426,7 @@ export class AkamaiContext extends RecaptchaContext {
   /**
    * Call fetch for getting the ChallengePage
    */
-  async fetch_challenge_response(options: EdgeRequestInit): Promise<EdgeResponse> {
+  async fetch_challenge_page(options: EdgeRequestInit): Promise<EdgeResponse> {
     const req = new AkamaiRequest(CHALLENGE_PAGE_URL, options);
     return this.fetch(req);
   }

@@ -112,7 +112,7 @@ class TestContext extends RecaptchaContext {
     return this.fetch(new FetchApiRequest(this.assessmentUrl, options)).then((response) => this.toAssessment(response));
   }
 
-  async fetch_challenge_response(options: EdgeRequestInit): Promise<EdgeResponse> {
+  async fetch_challenge_page(options: EdgeRequestInit): Promise<EdgeResponse> {
     return this.fetch(new FetchApiRequest(new Request(CHALLENGE_PAGE_URL, options)));
   }
 

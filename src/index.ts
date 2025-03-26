@@ -49,7 +49,7 @@ export {
 /** @type {string} */
 export const CHALLENGE_PAGE_URL = "https://www.google.com/recaptcha/challengepage";
 
-/** Zod Schema for ListFirewallPoliciesResponse */
+/** Type definition for ListFirewallPoliciesResponse */
 export interface ListFirewallPoliciesResponse {
   firewallPolicies: FirewallPolicy[];
 }
@@ -192,7 +192,7 @@ export abstract class RecaptchaContext {
   /**
    * Call fetch for getting the ChallengePage
    */
-  abstract fetch_challenge_response(options: EdgeRequestInit): Promise<EdgeResponse>;
+  abstract fetch_challenge_page(options: EdgeRequestInit): Promise<EdgeResponse>;
 
   /**
    * Log performance debug information.

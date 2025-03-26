@@ -121,7 +121,7 @@ export class CloudflareContext extends RecaptchaContext {
     return fetch(base_req, options).then((v) => new FetchApiResponse(v));
   }
 
-  async fetch_challenge_response(options: EdgeRequestInit): Promise<EdgeResponse> {
+  async fetch_challenge_page(options: EdgeRequestInit): Promise<EdgeResponse> {
     const req = new FetchApiRequest(new Request(CHALLENGE_PAGE_URL, options));
     return this.fetch(req);
   }
