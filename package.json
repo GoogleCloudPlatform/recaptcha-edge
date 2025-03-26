@@ -12,7 +12,7 @@
   "repository": "github:GoogleCloudPlatform/recaptcha-edge",
   "homepage": "https://github.com/GoogleCloudPlatform/recaptcha-edge#readme",
   "license": "Apache-2.0",
-  "author": "reCAPTCHA Team <no-reply@google.com>",
+  "author": "reCAPTCHA Team <recaptcha-enterprise-support@google.com>",
   "files": [
     "dist"
   ],
