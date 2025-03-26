@@ -11,7 +11,7 @@
   ],
   "homepage": "https://github.com/GoogleCloudPlatform/recaptcha-edge/tree/main/bindings/fastly#readme",
   "license": "Apache-2.0",
-  "author": "reCAPTCHA Team <no-reply@google.com>",
+  "author": "reCAPTCHA Team <recaptcha-enterprise-support@google.com>",
   "private": true,
   "type": "module",
   "repository": {
