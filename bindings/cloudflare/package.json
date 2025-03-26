@@ -9,7 +9,7 @@
     "bot",
     "security"
   ],
-  "homepage": "https://github.com/GoogleCloudPlatform/recaptcha-waf/tree/main/bindings/cloudflare#readme",
+  "homepage": "https://github.com/GoogleCloudPlatform/recaptcha-edge/tree/main/bindings/cloudflare#readme",
   "license": "Apache-2.0",
   "author": "reCAPTCHA Team <no-reply@google.com>",
   "private": true,
@@ -18,7 +18,7 @@
   "main": "dist/cloudflare_worker.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/GoogleCloudPlatform/recaptcha-waf.git",
+    "url": "https://github.com/GoogleCloudPlatform/recaptcha-edge.git",
     "directory": "bindings/cloudflare"
   },
   "scripts": {
@@ -33,7 +33,7 @@
     "devclean": "rm -rf dist && rm -rf pkg && rm package-lock.json && rm -rf node_modules"
   },
   "dependencies": {
-    "@google-cloud/recaptcha": "^1.0.0",
+    "@google-cloud/recaptcha-edge": "^1.0.0",
     "@worker-tools/html-rewriter": "^0.1.0-pre.19"
   },
   "devDependencies": {

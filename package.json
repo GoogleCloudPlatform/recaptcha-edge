@@ -1,5 +1,5 @@
 {
-  "name": "@google-cloud/recaptcha",
+  "name": "@google-cloud/recaptcha-edge",
   "version": "1.0.0",
   "description": "A reCAPTCHA Enterprise Typescript library for Edge Compute Platforms.",
   "keywords": [
@@ -9,8 +9,8 @@
     "bot",
     "security"
   ],
-  "repository": "github:GoogleCloudPlatform/recaptcha-waf",
-  "homepage": "https://github.com/GoogleCloudPlatform/recaptcha-waf#readme",
+  "repository": "github:GoogleCloudPlatform/recaptcha-edge",
+  "homepage": "https://github.com/GoogleCloudPlatform/recaptcha-edge#readme",
   "license": "Apache-2.0",
   "author": "reCAPTCHA Team <no-reply@google.com>",
   "files": [

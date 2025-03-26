@@ -40,7 +40,7 @@ import {
   Assessment,
   ListFirewallPoliciesResponse,
   CHALLENGE_PAGE_URL,
-} from "@google-cloud/recaptcha";
+} from "@google-cloud/recaptcha-edge";
 import pkg from "../package.json";
 
 export {
