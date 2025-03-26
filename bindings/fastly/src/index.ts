@@ -103,7 +103,7 @@ export {
   processRequest,
   RecaptchaConfig,
   RecaptchaError,
-} from "@google-cloud/recaptcha";
+} from "@google-cloud/recaptcha-edge";
 
 export class FastlyContext extends RecaptchaContext {
   readonly sessionPageCookie = "recaptcha-fastly-t";

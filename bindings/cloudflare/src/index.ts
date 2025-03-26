@@ -51,7 +51,7 @@ export {
   processRequest,
   RecaptchaConfig,
   RecaptchaError,
-} from "@google-cloud/recaptcha";
+} from "@google-cloud/recaptcha-edge";
 
 export class CloudflareContext extends RecaptchaContext {
   readonly sessionPageCookie = "recaptcha-cf-t";
