@@ -24,7 +24,7 @@ Typically, this involves:
 * Create the appropriate reCAPTCHA Site Keys in [Google Cloud reCAPTCHA Console](https://console.cloud.google.com/security/recaptcha).
 * Upload and install the package to your edge compute platform.
 * Configure the package to use the created reCAPTCHA Site Keys.
-* Create a set of Firewall Policies to protect sensative pages or actions.
+* Create a set of Firewall Policies to protect sensitive pages or actions.
 
 Please see the [reCAPTCHA Google Cloud Documentation](https://cloud.google.com/recaptcha/docs) for more details on each step.
 
