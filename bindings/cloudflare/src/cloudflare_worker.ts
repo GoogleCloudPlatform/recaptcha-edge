@@ -20,7 +20,7 @@
 
 type Env = any;
 
-import { FetchApiRequest, FetchApiResponse } from "@google-cloud/recaptcha";
+import { FetchApiRequest, FetchApiResponse } from "@google-cloud/recaptcha-edge";
 import { CloudflareContext, processRequest, recaptchaConfigFromEnv } from "./index";
 
 export default {

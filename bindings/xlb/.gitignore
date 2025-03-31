@@ -1,0 +1,6 @@
+dist
+pkg
+node_modules
+gen
+examples/**/node_modules
+examples/**/dist
