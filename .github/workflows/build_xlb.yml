@@ -34,6 +34,6 @@ jobs:
         with:
           name: core-library-dist
           path: dist
-      - run: npm ci
+      - run: npm install
       - run: npm run protogen
       - run: npm test
