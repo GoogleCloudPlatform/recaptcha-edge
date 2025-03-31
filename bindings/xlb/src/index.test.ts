@@ -323,13 +323,13 @@ describe("WAF Callouts Suite", async function () {
             headers: {
               headers: [
                 {
-                    key: ":scheme",
-                    rawValue: new TextEncoder().encode("https"),
-                  },
-                  {
-                    key: ":host",
-                    rawValue: new TextEncoder().encode("example.com"),
-                  },
+                  key: ":scheme",
+                  rawValue: new TextEncoder().encode("https"),
+                },
+                {
+                  key: ":host",
+                  rawValue: new TextEncoder().encode("example.com"),
+                },
                 {
                   key: ":path",
                   rawValue: new TextEncoder().encode("inject"),
