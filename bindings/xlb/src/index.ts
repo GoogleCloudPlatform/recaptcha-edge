@@ -29,7 +29,7 @@ import {
   applyPostResponseActions,
   Action,
   RecaptchaConfig,
-} from "@google-cloud/recaptcha";
+} from "@google-cloud/recaptcha-edge";
 
 import * as http2 from "http2";
 import { connectNodeAdapter } from "@connectrpc/connect-node";

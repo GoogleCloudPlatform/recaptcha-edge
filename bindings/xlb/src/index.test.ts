@@ -29,7 +29,7 @@ import {
 } from "../gen/envoy/service/ext_proc/v3/external_processor_pb.js";
 import { StatusCode } from "../gen/envoy/type/v3/http_status_pb.js";
 
-import { RecaptchaConfig } from "@google-cloud/recaptcha";
+import { RecaptchaConfig } from "@google-cloud/recaptcha-edge";
 
 type CalloutEvent =
   | "requestHeaders"

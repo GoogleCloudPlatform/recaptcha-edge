@@ -12,8 +12,9 @@ import {
   LogLevel,
   Assessment,
   CHALLENGE_PAGE_URL,
-} from "@google-cloud/recaptcha";
-import pkg from "../../../package.json";
+  ListFirewallPoliciesResponse
+} from "@google-cloud/recaptcha-edge";
+import pkg from "../package.json";
 import {
   ProcessingResponseSchema,
   HttpHeaders,
@@ -26,7 +27,6 @@ import {
 import { StatusCode } from "../gen/envoy/type/v3/http_status_pb.js";
 import { HeaderValueOption_HeaderAppendAction, HeaderValueOptionSchema } from "../gen/envoy/config/core/v3/base_pb.js";
 import * as cache from "memory-cache";
-import { ListFirewallPoliciesResponse } from "../../../src/index.js";
 
 const RECAPTCHA_JS = "https://www.google.com/recaptcha/enterprise.js";
 
