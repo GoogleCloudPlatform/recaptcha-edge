@@ -20,29 +20,40 @@ import {
   ExternalProcessor,
   ProcessingRequest,
   ProcessingResponse,
-  HttpHeaders,
-  HttpBody,
 } from "../gen/envoy/service/ext_proc/v3/external_processor_pb.js";
 import { ConnectRouter, ServiceImpl } from "@connectrpc/connect";
 
+import {
+  fetchActions,
+  applyPreRequestActions,
+  applyPostResponseActions,
+  Action,
+  RecaptchaConfig,
+} from "@google-cloud/recaptcha-edge";
+
 import * as http2 from "http2";
 import { connectNodeAdapter } from "@connectrpc/connect-node";
+import { CalloutHeadersRequest, CalloutBodyResponse, XlbContext } from "./edge_binding.js";
 
 class CalloutProcessor implements ServiceImpl<typeof ExternalProcessor> {
+  ctx: XlbContext;
+
+  constructor(ctx: XlbContext) {
+    this.ctx = ctx;
+  }
+
   async *process(requests: AsyncIterable<ProcessingRequest>): AsyncIterable<ProcessingResponse> {
+    let actions: Action[] = [];
     for await (const req of requests) {
       switch (req.request.case) {
         case "requestHeaders":
-          yield await this.handleRequestHeaders(req.request.value);
-          break;
-        case "requestBody":
-          yield await this.handleRequestBody(req.request.value);
-          break;
-        case "responseHeaders":
-          yield await this.handleResponseHeaders(req.request.value);
+          const headersRequest = new CalloutHeadersRequest(this.ctx, req.request.value);
+          actions = await fetchActions(this.ctx, headersRequest);
+          yield await this.handleRequestHeaders(headersRequest, actions);
           break;
         case "responseBody":
-          yield await this.handleResponseBody(req.request.value);
+          const bodyResponse = new CalloutBodyResponse(this.ctx, req.request.value);
+          yield await this.handleResponseBody(bodyResponse, actions);
           break;
         default:
           // Returning a default empty result for requestTrailers and responseTrailers.
@@ -56,40 +67,17 @@ class CalloutProcessor implements ServiceImpl<typeof ExternalProcessor> {
     }
   }
 
-  async handleRequestHeaders(httpHeaders: HttpHeaders): Promise<ProcessingResponse> {
-    return create(ProcessingResponseSchema, {
-      response: {
-        case: "requestHeaders",
-        value: {},
-      },
-    });
+  async handleRequestHeaders(headersRequest: CalloutHeadersRequest, actions: Action[]): Promise<ProcessingResponse> {
+    const resp = await applyPreRequestActions(this.ctx, headersRequest, actions);
+    if (resp === null) {
+      return headersRequest.toResponse();
+    }
+    return resp.toResponse();
   }
 
-  async handleRequestBody(httpBody: HttpBody): Promise<ProcessingResponse> {
-    return create(ProcessingResponseSchema, {
-      response: {
-        case: "requestBody",
-        value: {},
-      },
-    });
-  }
-
-  async handleResponseHeaders(headers: HttpHeaders): Promise<ProcessingResponse> {
-    return create(ProcessingResponseSchema, {
-      response: {
-        case: "responseHeaders",
-        value: {},
-      },
-    });
-  }
-
-  async handleResponseBody(httpBody: HttpBody): Promise<ProcessingResponse> {
-    return create(ProcessingResponseSchema, {
-      response: {
-        case: "responseBody",
-        value: {},
-      },
-    });
+  async handleResponseBody(resp: CalloutBodyResponse, actions: Action[]): Promise<ProcessingResponse> {
+    resp = await applyPostResponseActions(this.ctx, resp, actions);
+    return resp.toResponse();
   }
 }
 
@@ -98,12 +86,15 @@ function getPort(defaultPort: number): number {
   return parseInt(asString) || defaultPort;
 }
 
-export async function start(defaultPort: number, listeningListener?: () => void) {
+export async function start(config: RecaptchaConfig, defaultPort: number, listeningListener?: () => void) {
+  const ctx = new XlbContext(config);
   const routes = (router: ConnectRouter) => {
-      router.service(ExternalProcessor, new CalloutProcessor());
+    router.service(ExternalProcessor, new CalloutProcessor(ctx));
   };
 
-  http2.createServer(
-      connectNodeAdapter({ routes }) // responds with 404 for other requests
-    ).listen(getPort(defaultPort), '0.0.0.0', listeningListener);
+  http2
+    .createServer(
+      connectNodeAdapter({ routes }), // responds with 404 for other requests
+    )
+    .listen(getPort(defaultPort), "0.0.0.0", listeningListener);
 }
