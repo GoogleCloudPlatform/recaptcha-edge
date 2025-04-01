@@ -42,7 +42,7 @@ export class CalloutHeadersRequest implements EdgeRequest {
   }
 
   get url() {
-    return `${this.getHeader("origin")}${this.getHeader(":path")}`;
+    return `${this.getHeader(":scheme")}://${this.getHeader(":authority")}${this.getHeader(":path")}`;
   }
 
   set url(url: string) {

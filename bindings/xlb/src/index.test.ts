@@ -134,8 +134,12 @@ describe("WAF Callouts Suite", async function () {
           headers: {
             headers: [
               {
-                key: "origin",
-                rawValue: new TextEncoder().encode("https://example.com"),
+                key: ":scheme",
+                rawValue: new TextEncoder().encode("https"),
+              },
+              {
+                key: ":authority",
+                rawValue: new TextEncoder().encode("example.com"),
               },
               {
                 key: ":path",
@@ -169,8 +173,12 @@ describe("WAF Callouts Suite", async function () {
           headers: {
             headers: [
               {
-                key: "origin",
-                rawValue: new TextEncoder().encode("https://example.com"),
+                key: ":scheme",
+                rawValue: new TextEncoder().encode("https"),
+              },
+              {
+                key: ":authority",
+                rawValue: new TextEncoder().encode("example.com"),
               },
               {
                 key: ":path",
@@ -201,8 +209,12 @@ describe("WAF Callouts Suite", async function () {
           headers: {
             headers: [
               {
-                key: "origin",
-                rawValue: new TextEncoder().encode("https://example.com"),
+                key: ":scheme",
+                rawValue: new TextEncoder().encode("https"),
+              },
+              {
+                key: ":authority",
+                rawValue: new TextEncoder().encode("example.com"),
               },
               {
                 key: ":path",
@@ -233,8 +245,12 @@ describe("WAF Callouts Suite", async function () {
           headers: {
             headers: [
               {
-                key: "origin",
-                rawValue: new TextEncoder().encode("https://example.com"),
+                key: ":scheme",
+                rawValue: new TextEncoder().encode("https"),
+              },
+              {
+                key: ":authority",
+                rawValue: new TextEncoder().encode("example.com"),
               },
               {
                 key: ":path",
@@ -265,8 +281,12 @@ describe("WAF Callouts Suite", async function () {
           headers: {
             headers: [
               {
-                key: "origin",
-                rawValue: new TextEncoder().encode("https://example.com"),
+                key: ":scheme",
+                rawValue: new TextEncoder().encode("https"),
+              },
+              {
+                key: ":authority",
+                rawValue: new TextEncoder().encode("example.com"),
               },
               {
                 key: ":path",
@@ -303,8 +323,12 @@ describe("WAF Callouts Suite", async function () {
             headers: {
               headers: [
                 {
-                  key: "origin",
-                  rawValue: new TextEncoder().encode("https://example.com"),
+                  key: ":scheme",
+                  rawValue: new TextEncoder().encode("https"),
+                },
+                {
+                  key: ":authority",
+                  rawValue: new TextEncoder().encode("example.com"),
                 },
                 {
                   key: ":path",
