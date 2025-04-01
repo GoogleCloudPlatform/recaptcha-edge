@@ -134,16 +134,12 @@ describe("WAF Callouts Suite", async function () {
           headers: {
             headers: [
               {
-                key: ":scheme",
-                rawValue: new TextEncoder().encode("https"),
-              },
-              {
-                key: ":host",
-                rawValue: new TextEncoder().encode("example.com"),
+                key: "origin",
+                rawValue: new TextEncoder().encode("https://example.com"),
               },
               {
                 key: ":path",
-                rawValue: new TextEncoder().encode("redirect"),
+                rawValue: new TextEncoder().encode("/redirect"),
               },
               {
                 key: "X-Recaptcha-Token",
@@ -173,16 +169,12 @@ describe("WAF Callouts Suite", async function () {
           headers: {
             headers: [
               {
-                key: ":scheme",
-                rawValue: new TextEncoder().encode("https"),
-              },
-              {
-                key: ":host",
-                rawValue: new TextEncoder().encode("example.com"),
+                key: "origin",
+                rawValue: new TextEncoder().encode("https://example.com"),
               },
               {
                 key: ":path",
-                rawValue: new TextEncoder().encode("block"),
+                rawValue: new TextEncoder().encode("/block"),
               },
               {
                 key: "X-Recaptcha-Token",
@@ -209,16 +201,12 @@ describe("WAF Callouts Suite", async function () {
           headers: {
             headers: [
               {
-                key: ":scheme",
-                rawValue: new TextEncoder().encode("https"),
-              },
-              {
-                key: ":host",
-                rawValue: new TextEncoder().encode("example.com"),
+                key: "origin",
+                rawValue: new TextEncoder().encode("https://example.com"),
               },
               {
                 key: ":path",
-                rawValue: new TextEncoder().encode("setHeader"),
+                rawValue: new TextEncoder().encode("/setHeader"),
               },
               {
                 key: "X-Recaptcha-Token",
@@ -245,16 +233,12 @@ describe("WAF Callouts Suite", async function () {
           headers: {
             headers: [
               {
-                key: ":scheme",
-                rawValue: new TextEncoder().encode("https"),
-              },
-              {
-                key: ":host",
-                rawValue: new TextEncoder().encode("example.com"),
+                key: "origin",
+                rawValue: new TextEncoder().encode("https://example.com"),
               },
               {
                 key: ":path",
-                rawValue: new TextEncoder().encode("block"),
+                rawValue: new TextEncoder().encode("/block"),
               },
               {
                 key: "cookie",
@@ -281,16 +265,12 @@ describe("WAF Callouts Suite", async function () {
           headers: {
             headers: [
               {
-                key: ":scheme",
-                rawValue: new TextEncoder().encode("https"),
-              },
-              {
-                key: ":host",
-                rawValue: new TextEncoder().encode("example.com"),
+                key: "origin",
+                rawValue: new TextEncoder().encode("https://example.com"),
               },
               {
                 key: ":path",
-                rawValue: new TextEncoder().encode("redirect"),
+                rawValue: new TextEncoder().encode("/redirect"),
               },
               {
                 key: "cookie",
@@ -323,16 +303,12 @@ describe("WAF Callouts Suite", async function () {
             headers: {
               headers: [
                 {
-                  key: ":scheme",
-                  rawValue: new TextEncoder().encode("https"),
-                },
-                {
-                  key: ":host",
-                  rawValue: new TextEncoder().encode("example.com"),
+                  key: "origin",
+                  rawValue: new TextEncoder().encode("https://example.com"),
                 },
                 {
                   key: ":path",
-                  rawValue: new TextEncoder().encode("inject"),
+                  rawValue: new TextEncoder().encode("/inject"),
                 },
                 {
                   key: "X-Recaptcha-Token",
