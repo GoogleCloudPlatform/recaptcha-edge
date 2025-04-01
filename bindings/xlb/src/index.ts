@@ -33,12 +33,12 @@ import {
 
 import * as http2 from "http2";
 import { connectNodeAdapter } from "@connectrpc/connect-node";
-import { CalloutHeadersRequest, CalloutBodyResponse, Context } from "./edge_binding.js";
+import { CalloutHeadersRequest, CalloutBodyResponse, XlbContext } from "./edge_binding.js";
 
 class CalloutProcessor implements ServiceImpl<typeof ExternalProcessor> {
-  ctx: Context;
+  ctx: XlbContext;
 
-  constructor(ctx: Context) {
+  constructor(ctx: XlbContext) {
     this.ctx = ctx;
   }
 
@@ -87,7 +87,7 @@ function getPort(defaultPort: number): number {
 }
 
 export async function start(config: RecaptchaConfig, defaultPort: number, listeningListener?: () => void) {
-  const ctx = new Context(config);
+  const ctx = new XlbContext(config);
   const routes = (router: ConnectRouter) => {
     router.service(ExternalProcessor, new CalloutProcessor(ctx));
   };

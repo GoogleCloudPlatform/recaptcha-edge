@@ -244,7 +244,7 @@ export class ImmediateResponse implements EdgeResponse {
   }
 }
 
-export class Context extends RecaptchaContext {
+export class XlbContext extends RecaptchaContext {
   readonly sessionPageCookie = "recaptcha-gxlb-t";
   readonly challengePageCookie = "recaptcha-gxlb-e";
   readonly httpGetCachingEnabled = true;
