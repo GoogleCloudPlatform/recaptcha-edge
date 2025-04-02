@@ -28,18 +28,17 @@ jobs:
         with:
           node-version: 22.x
           cache: "npm"
+      - id: auth
+        name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          create_credentials_file: true
+          workload_identity_provider: "projects/507507455374/locations/global/workloadIdentityPools/github-integration-test"
+          service_account: ${{ secrets.SA_GCP_TEST }}
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: jordan-waf-lb
-          service_account_key: ${{ secrets.SA_GCP_TEST }}
-          export_default_credentials: true
-      - run: npm ci
-      - uses: actions/download-artifact@v4
-        with:
-          name: core-library-dist
-          path: dist
-
+      - name: set creditions file
+        run: gcloud auth login --cred-file=${{steps.auth.outputs.credentials_file_path}}
       - name: Publish to GCP
         run: gcloud builds submit --project jordan-waf-lb --region=us-central1 --config xlb.cloudbuild.yaml
         env:
