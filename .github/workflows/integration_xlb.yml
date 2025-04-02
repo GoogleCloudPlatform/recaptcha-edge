@@ -30,7 +30,7 @@ jobs:
           cache: "npm"
       - run: |
           sudo apt-get update
-          sudo apt-get install gcloud
+          sudo apt-get install google-cloud-cli
       - run: npm ci
       - uses: actions/download-artifact@v4
         with:
