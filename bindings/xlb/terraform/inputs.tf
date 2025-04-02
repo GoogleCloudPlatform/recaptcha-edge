@@ -14,7 +14,6 @@ variable "load_balancing_scheme" {
     type = string
 }
 
-# "request.host != 'example.com'"
 variable "extension_cel_match" {
     type = string
 }

@@ -88,7 +88,7 @@ resource "google_compute_region_network_endpoint_group" "serverless_neg" {
 }
 
 resource "google_compute_region_backend_service" "callouts_backend" {
-  name                  = "l7-ilb-callouts-backend"
+  name                  = "l7-recaptcha-callouts-backend"
   region                = var.region
   load_balancing_scheme = var.load_balancing_scheme
   port_name             = null

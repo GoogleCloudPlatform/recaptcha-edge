@@ -1,7 +1,6 @@
 import { RecaptchaConfig } from "@google-cloud/recaptcha-edge";
 import * as server from "./index";
 
-// TODO. Definitely need some validation here.
 function getConfig(): RecaptchaConfig {
     return {
         projectNumber: parseInt(process.env.PROJECT_NUMBER || ""),
