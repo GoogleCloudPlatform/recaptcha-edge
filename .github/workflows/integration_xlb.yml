@@ -38,7 +38,7 @@ jobs:
           path: dist
 
       - name: Publish to GCP
-        run: gcloud builds submit --region=us-central1 --config xlb.cloudbuild.yaml
+        run: gcloud builds submit --project jordan-waf-lb --region=us-central1 --config xlb.cloudbuild.yaml
         env:
           FASTLY_API_TOKEN: ${{ secrets.FASTLY_API_TOKEN }}
           FASTLY_SERVICE_ID: ${{ secrets.FASTLY_SERVICE_ID }}
