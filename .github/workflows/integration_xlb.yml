@@ -29,7 +29,7 @@ jobs:
           node-version: 22.x
           cache: "npm"
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@master
+        uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: jordan-waf-lb
           service_account_key: ${{ secrets.SA_GCP_TEST }}
