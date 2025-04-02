@@ -31,6 +31,9 @@ jobs:
       - run: |
           sudo apt-get update
           sudo apt-get install google-cloud-cli
+          gcloud init --console-only
+          gcloud config set account integration-test@jordan-waf-lb.iam.gserviceaccount.com
+          gcloud auth application - default login -- no - launch -browser
       - run: npm ci
       - uses: actions/download-artifact@v4
         with:
