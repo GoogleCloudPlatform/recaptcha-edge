@@ -1,0 +1,44 @@
+name: Integration Test Fastly
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-integrate-xlb
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/build_xlb.yml
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build]
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: "npm"
+      - run: |
+          sudo apt-get update
+          sudo apt-get install gcloud
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: core-library-dist
+          path: dist
+
+      - name: Publish to GCP
+        run: gcloud builds submit --region=us-central1 --config xlb.cloudbuild.yaml
+        env:
+          FASTLY_API_TOKEN: ${{ secrets.FASTLY_API_TOKEN }}
+          FASTLY_SERVICE_ID: ${{ secrets.FASTLY_SERVICE_ID }}
