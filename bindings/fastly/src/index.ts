@@ -232,7 +232,7 @@ export function recaptchaConfigFromConfigStore(name: string): RecaptchaConfig {
     challengePageSiteKey: cfg.get("challengepage_site_key") ?? undefined,
     enterpriseSiteKey: cfg.get("enterprise_site_key") ?? undefined,
     recaptchaEndpoint: cfg.get("recaptcha_endpoint") ?? DEFAULT_RECAPTCHA_ENDPOINT,
-    sessionJsInjectPath: cfg.get("session_js_install_path") ?? undefined,
+    sessionJsInjectPath: cfg.get("session_js_install_path") ?? cfg.get("recaptcha_js_install_path") ?? undefined,
     debug: (cfg.get("debug") ?? "false") == "true",
     unsafe_debug_dump_logs: (cfg.get("unsafe_debug_dump_logs") ?? "false") == "true",
   };
