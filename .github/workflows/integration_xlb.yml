@@ -36,7 +36,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           create_credentials_file: true
-          workload_identity_provider: "projects/507507455374/locations/global/workloadIdentityPools/github-integration-test/providers/integration-test"
+          workload_identity_provider: "projects/507507455374/locations/global/workloadIdentityPools/github-integration-test-pool/provider/github-idp"
           service_account: ${{ secrets.SA_GCP_TEST }}
       - name: Debug Creds
         run: cat ${{steps.auth.outputs.credentials_file_path}}
