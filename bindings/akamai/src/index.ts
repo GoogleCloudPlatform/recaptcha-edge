@@ -443,7 +443,7 @@ export function recaptchaConfigFromRequest(request: EW.ResponseProviderRequest):
     recaptchaEndpoint: request.getVariable("PMUSER_RECAPTCHAENDPOINT") || DEFAULT_RECAPTCHA_ENDPOINT,
     debug: request.getVariable("PMUSER_DEBUG") === "true",
     unsafe_debug_dump_logs: request.getVariable("PMUSER_UNSAFE_DEBUG_DUMP_LOGS") === "true",
-    sessionJsInjectPath: request.getVariable("PMUSER_SESSION_JS_INSTALL_PATH"),
+    sessionJsInjectPath: request.getVariable("PMUSER_SESSION_JS_INSTALL_PATH") || request.getVariable("PMUSER_RECAPTCHA_JS_INSTALL_PATH"),
     strict_cookie: (request.getVariable("PMUSER_STRICTCOOKIE") ?? "true") === "true", // default to true
   };
 }
