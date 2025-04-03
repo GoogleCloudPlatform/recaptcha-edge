@@ -152,7 +152,7 @@ export function recaptchaConfigFromEnv(env: Env): RecaptchaConfig {
     challengePageSiteKey: env.CHALLENGE_PAGE_SITE_KEY,
     enterpriseSiteKey: env.ENTERPRISE_SITE_KEY,
     recaptchaEndpoint: env.RECAPTCHA_ENDPOINT ?? DEFAULT_RECAPTCHA_ENDPOINT,
-    sessionJsInjectPath: env.SESSION_JS_INSTALL_PATH,
+    sessionJsInjectPath: env.SESSION_JS_INSTALL_PATH || env.RECAPTCHA_JS_INSTALL_PATH,
     credentialPath: env.CREDENTIAL_PATH,
     accountId: env.USER_ACCOUNT_ID,
     username: env.USERNAME,
