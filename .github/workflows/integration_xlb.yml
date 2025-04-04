@@ -15,7 +15,7 @@ jobs:
   build:
     uses: ./.github/workflows/build_xlb.yml
 
-  deploy:
+  deploy-artifact:
     runs-on: ubuntu-latest
     needs: [build]
     defaults:
@@ -38,14 +38,24 @@ jobs:
           create_credentials_file: true
           workload_identity_provider: "projects/507507455374/locations/global/workloadIdentityPools/github-integration-test-pool/providers/github-idp"
           service_account: ${{ secrets.SA_GCP_TEST }}
-      - name: Debug Creds
-        run: cat ${{steps.auth.outputs.credentials_file_path}}
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
-      - name: set creditions file
+      - name: Set Credentials File
         run: gcloud auth login --cred-file=${{steps.auth.outputs.credentials_file_path}}
-      - name: Publish to GCP
-        run: gcloud builds submit --project jordan-waf-lb --region=us-central1 --config xlb.cloudbuild.yaml
-        env:
-          FASTLY_API_TOKEN: ${{ secrets.FASTLY_API_TOKEN }}
-          FASTLY_SERVICE_ID: ${{ secrets.FASTLY_SERVICE_ID }}
+      - name: Publish build to GCP
+        run: gcloud builds submit --project jordan-waf-lb --region=us-central1 --config xlb.cloudbuild.yaml --label ${{ github.head_ref }}.${{ github.sha }}
+  deploy-extension:
+    runs-on: ubuntu-latest
+    needs: [deploy-artifact]
+    defaults:
+      run:
+        working-directory: ./bindings/xlb/integration/
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.5
+      - name: Init tf
+        run: terraform init
+      - name: Apply tf
+        run: terraform apply -var="project_id=${{secrets.GCP_PROJECT_ID_TEST}}" -var="project_number=${{secrets.GCP_PROJECT_NUMBER_TEST}}" -var="image_label=${{ github.head_ref }}.${{ github.sha }}" -var="api_key=${{secrets.GCP_API_KEY_TEST}}" -var="action_site_key=${{secrets.ACTION_SITE_KEY_TEST}}" -var="challenge_page_site_key=${{secrets.CHALLENGE_PAGE_SITE_KEY_TEST}}" -var="session_site_key=${{secrets.SESSION_SITE_KEY_TEST}}" --auto-approve
