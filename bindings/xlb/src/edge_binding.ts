@@ -26,7 +26,7 @@ import {
 
 import { StatusCode } from "../gen/envoy/type/v3/http_status_pb.js";
 import { HeaderValueOption_HeaderAppendAction, HeaderValueOptionSchema } from "../gen/envoy/config/core/v3/base_pb.js";
-import * as cache from "memory-cache";
+import { Cache }  from "memory-cache";
 
 const RECAPTCHA_JS = "https://www.google.com/recaptcha/enterprise.js";
 
@@ -249,6 +249,7 @@ export class XlbContext extends RecaptchaContext {
   readonly challengePageCookie = "recaptcha-gxlb-e";
   readonly httpGetCachingEnabled = true;
   readonly environment: [string, string] = [pkg.name, pkg.version];
+  readonly cache: Cache = new Cache();
 
   constructor(cfg: RecaptchaConfig) {
     super(cfg);
@@ -265,12 +266,12 @@ export class XlbContext extends RecaptchaContext {
   }
 
   async fetch_list_firewall_policies(options: EdgeRequestInit): Promise<ListFirewallPoliciesResponse> {
-    let policies = cache.get("firewallPolicies");
+    let policies = this.cache.get("firewallPolicies");
     if (policies === null) {
       this.log("debug", "Cache miss: fetch_list_firewall_policies");
       let fp = await this.fetch(new FetchApiRequest(new Request(this.listFirewallPoliciesUrl, options)));
       policies = this.toListFirewallPoliciesResponse(fp);
-      cache.put("firewallPolicies", policies, 600000 /* 10 min */);
+      this.cache.put("firewallPolicies", policies, 600000 /* 10 min */);
     } else {
       this.log("debug", "Cache hit: fetch_list_firewall_policies");
     }
