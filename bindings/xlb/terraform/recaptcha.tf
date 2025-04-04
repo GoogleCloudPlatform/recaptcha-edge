@@ -15,14 +15,14 @@ data "google_iam_policy" "noauth" {
   }
 }
 
-resource "google_cloud_run_service" "waf" {
-  name     = "recaptcha-waf"
+resource "google_cloud_run_service" "edge" {
+  name     = "recaptcha-edge"
   location = var.region
 
   template {
     spec {
       containers {
-        image = var.waf_container
+        image = var.edge_container
         env {
           name  = "PROJECT_NUMBER"
           value = var.callout_config.project_number
@@ -56,8 +56,12 @@ resource "google_cloud_run_service" "waf" {
           value = var.callout_config.recaptcha_endpoint
         }
         env {
-          name  = "SESSION_JS_INJECT_PATH"
-          value = var.callout_config.session_js_inject_path
+          name  = "SESSION_JS_INSTALL_PATH"
+          value = var.callout_config.session_js_install_path
+        }
+        env {
+          name  = "DEBUG"
+          value = var.callout_config.debug
         }
       }
     }
@@ -70,9 +74,9 @@ resource "google_cloud_run_service" "waf" {
 }
 
 resource "google_cloud_run_service_iam_policy" "noauth" {
-  location    = google_cloud_run_service.waf.location
-  project     = google_cloud_run_service.waf.project
-  service     = google_cloud_run_service.waf.name
+  location    = google_cloud_run_service.edge.location
+  project     = google_cloud_run_service.edge.project
+  service     = google_cloud_run_service.edge.name
 
   policy_data = data.google_iam_policy.noauth.policy_data
 }
@@ -83,7 +87,7 @@ resource "google_compute_region_network_endpoint_group" "serverless_neg" {
   network_endpoint_type = "SERVERLESS"
   region                = var.region
   cloud_run {
-    service = google_cloud_run_service.waf.name
+    service = google_cloud_run_service.edge.name
   }
 }
 
@@ -116,8 +120,8 @@ resource "google_network_services_lb_traffic_extension" "default" {
       }
 
       extensions {
-          name      = "recaptcha-waf"
-          authority = "recaptcha-waf"
+          name      = "recaptcha-edge"
+          authority = "recaptcha-edge"
           service   = google_compute_region_backend_service.callouts_backend.self_link
           timeout   = "0.5s"
           fail_open = true
