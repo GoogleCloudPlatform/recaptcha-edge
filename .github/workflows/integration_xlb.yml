@@ -43,7 +43,7 @@ jobs:
       - name: Set Credentials File
         run: gcloud auth login --cred-file=${{steps.auth.outputs.credentials_file_path}}
       - name: Publish build to GCP
-        run: gcloud builds submit --project jordan-waf-lb --region=us-central1 --config xlb.cloudbuild.yaml --label ${{ github.head_ref }}.${{ github.sha }}
+        run: gcloud builds submit --project jordan-waf-lb --region=us-central1 --config xlb.cloudbuild.yaml --tag ${{ github.head_ref }}.${{ github.sha }}
   deploy-extension:
     runs-on: ubuntu-latest
     needs: [deploy-artifact]
