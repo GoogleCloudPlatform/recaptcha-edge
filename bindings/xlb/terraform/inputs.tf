@@ -31,13 +31,13 @@ variable "callout_config" {
     type = object({
         project_number           = number
         api_key                  = string
-        action_site_key          = optional(string, null)
-        express_site_key         = optional(string, null)
-        challenge_page_site_key  = optional(string, null)
+        action_site_key          = optional(string)
+        express_site_key         = optional(string)
+        challenge_page_site_key  = optional(string)
         enterprise_site_key      = optional(string, null)
         recaptcha_endpoint       = optional(string, "https://public-preview-recaptchaenterprise.googleapis.com")
-        session_js_install_path  = optional(string, null)
-        session_site_sey         = optional(string, null)
+        session_js_install_path  = optional(string)
+        session_site_sey         = optional(string)
         debug                    = optional(bool, false)
     })
 }

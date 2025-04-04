@@ -3,7 +3,7 @@ import * as server from "./index";
 
 function getConfig(): RecaptchaConfig {
     return {
-        projectNumber: parseInt(process.env.PROJECT_NUMBER || "") || 0,
+        projectNumber: parseInt(process.env.PROJECT_NUMBER || "0"),
         apiKey: process.env.API_KEY || "",
         actionSiteKey: process.env.ACTION_SITE_KEY || undefined,
         expressSiteKey: process.env.EXPRESS_SITE_KEY || undefined,
