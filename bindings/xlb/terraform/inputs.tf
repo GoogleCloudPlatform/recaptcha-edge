@@ -34,7 +34,7 @@ variable "callout_config" {
         action_site_key          = optional(string)
         express_site_key         = optional(string)
         challenge_page_site_key  = optional(string)
-        enterprise_site_key      = optional(string, null)
+        enterprise_site_key      = optional(string)
         recaptcha_endpoint       = optional(string, "https://public-preview-recaptchaenterprise.googleapis.com")
         session_js_install_path  = optional(string)
         session_site_sey         = optional(string)
