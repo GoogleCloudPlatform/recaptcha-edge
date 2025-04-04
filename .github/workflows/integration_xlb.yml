@@ -43,7 +43,7 @@ jobs:
       - name: Set Credentials File
         run: gcloud auth login --cred-file=${{steps.auth.outputs.credentials_file_path}}
       - name: Publish build to GCP
-        run: gcloud builds submit --project jordan-waf-lb --region=us-central1 --config xlb.cloudbuild.yaml --tag ${{ github.head_ref }}.${{ github.sha }}
+        run: gcloud builds submit --project jordan-waf-lb --region=us-central1 --config xlb.cloudbuild.yaml
   deploy-extension:
     runs-on: ubuntu-latest
     needs: [deploy-artifact]
@@ -58,4 +58,4 @@ jobs:
       - name: Init tf
         run: terraform init
       - name: Apply tf
-        run: terraform apply -var="project_id=${{secrets.GCP_PROJECT_ID_TEST}}" -var="project_number=${{secrets.GCP_PROJECT_NUMBER_TEST}}" -var="image_label=${{ github.head_ref }}.${{ github.sha }}" -var="api_key=${{secrets.GCP_API_KEY_TEST}}" -var="action_site_key=${{secrets.ACTION_SITE_KEY_TEST}}" -var="challenge_page_site_key=${{secrets.CHALLENGE_PAGE_SITE_KEY_TEST}}" -var="session_site_key=${{secrets.SESSION_SITE_KEY_TEST}}" --auto-approve
+        run: terraform apply -var="project_id=${{secrets.GCP_PROJECT_ID_TEST}}" -var="project_number=${{secrets.GCP_PROJECT_NUMBER_TEST}}" -var="image_label=latest" -var="api_key=${{secrets.GCP_API_KEY_TEST}}" -var="action_site_key=${{secrets.ACTION_SITE_KEY_TEST}}" -var="challenge_page_site_key=${{secrets.CHALLENGE_PAGE_SITE_KEY_TEST}}" -var="session_site_key=${{secrets.SESSION_SITE_KEY_TEST}}" --auto-approve
