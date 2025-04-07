@@ -36,14 +36,14 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           create_credentials_file: true
-          workload_identity_provider: "projects/507507455374/locations/global/workloadIdentityPools/github-integration-test-pool/providers/github-idp"
+          workload_identity_provider: "projects/${{secrets.GCP_PROJECT_NUMBER_TEST}}/locations/global/workloadIdentityPools/github-integration-test-pool/providers/github-idp"
           service_account: ${{ secrets.SA_GCP_TEST }}
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
       - name: Set Credentials File
         run: gcloud auth login --cred-file=${{steps.auth.outputs.credentials_file_path}}
       - name: Publish build to GCP
-        run: gcloud builds submit --project jordan-waf-lb --region=us-central1 --config xlb.cloudbuild.yaml
+        run: gcloud builds submit --project ${{secrets.GCP_PROJECT_ID_TEST}} --region=us-central1 --config xlb.cloudbuild.yaml
       - name: Setup terraform
         uses: hashicorp/setup-terraform@v3
         with:
