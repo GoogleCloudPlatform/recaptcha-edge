@@ -55,5 +55,6 @@ jobs:
         working-directory: ./bindings/xlb/integration
         run: terraform apply -var="project_id=${{secrets.GCP_PROJECT_ID_TEST}}" -var="project_number=${{secrets.GCP_PROJECT_NUMBER_TEST}}" -var="image_label=latest" -var="api_key=${{secrets.GCP_API_KEY_TEST}}" -var="action_site_key=${{secrets.ACTION_SITE_KEY_TEST}}" -var="challenge_page_site_key=${{secrets.CHALLENGE_PAGE_SITE_KEY_TEST}}" -var="session_site_key=${{secrets.SESSION_SITE_KEY_TEST}}" --auto-approve
       - name: Destroy infra
+        working-directory: ./bindings/xlb/integration
         if: always()
         run: terraform destroy --auto-approve
