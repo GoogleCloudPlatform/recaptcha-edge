@@ -2,6 +2,8 @@
   # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', '$LOCATION-docker.pkg.dev/$PROJECT_ID/recaptcha-waf-repo/recaptcha-waf:latest', '--file', './xlb.Dockerfile', '.']
+    options:
+      defaultLogsBucketBehavior: REGIONAL_USER_OWNED_BUCKET
   # Push the container image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', '$LOCATION-docker.pkg.dev/$PROJECT_ID/recaptcha-waf-repo/recaptcha-waf:latest']
