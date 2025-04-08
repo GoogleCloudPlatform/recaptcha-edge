@@ -190,7 +190,7 @@ describe("WAF Callouts Suite", async function () {
               },
               {
                 key: "X-Forwarded-For",
-                rawValue: new TextEncoder().encode("127.0.0.1,34.45.56.666"),
+                rawValue: new TextEncoder().encode("garbage,127.0.0.1,34.45.56.666"),
               },
             ],
           },
@@ -226,7 +226,7 @@ describe("WAF Callouts Suite", async function () {
               },
               {
                 key: "X-Forwarded-For",
-                rawValue: new TextEncoder().encode("127.0.0.1,34.45.56.666"),
+                rawValue: new TextEncoder().encode("garbage, 127.0.0.1,34.45.56.666"),
               },
             ],
           },
@@ -262,7 +262,7 @@ describe("WAF Callouts Suite", async function () {
               },
               {
                 key: "X-Forwarded-For",
-                rawValue: new TextEncoder().encode("127.0.0.1,34.45.56.666"),
+                rawValue: new TextEncoder().encode("test, garbage, 127.0.0.1,34.45.56.666"),
               },
             ],
           },
@@ -298,7 +298,7 @@ describe("WAF Callouts Suite", async function () {
               },
               {
                 key: "X-Forwarded-For",
-                rawValue: new TextEncoder().encode("127.0.0.1,34.45.56.666"),
+                rawValue: new TextEncoder().encode("test,garbage, 127.0.0.1,34.45.56.666"),
               },
             ],
           },
