@@ -336,7 +336,7 @@ export class XlbContext extends RecaptchaContext {
       return undefined;
     }
     const clientIpIdx = Math.max(forwardedArr.length - 2, 0);
-    return forwardedArr[clientIpIdx];
+    return forwardedArr[clientIpIdx].trim();
   }
 
   logException(e: any) {
