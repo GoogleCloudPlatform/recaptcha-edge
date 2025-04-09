@@ -331,6 +331,9 @@ export class XlbContext extends RecaptchaContext {
   }
 
   getUserIp(req: EdgeRequest): string | undefined {
+    // The xlb will append to the x-forwarded-for header both the ip of the connected
+    // client and the ip of the destination server in this order. We want to extract the
+    // client ip so it will be the second last in the list.
     const forwardedArr = (req.getHeader("X-Forwarded-For") || "").split(",");
     if (forwardedArr.length == 0) {
       return undefined;
