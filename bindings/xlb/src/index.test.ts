@@ -53,11 +53,10 @@ describe("WAF Callouts Suite", async function () {
   // All tests must specify the firewall policy they match in url. For convenience,
   // the path attribute of the policy is ignored by the server implementation.
   rc_app.post("/v1/projects/:projectNumber/assessments", (req, res) => {
+    expect(req.body.event.userIpAddress).toBe("127.0.0.1");
     const uri = req.body.event.requestedUri;
     const key = req.body.event.siteKey;
     const token = req.body.event.token;
-    const policyKey = uri + "/" + key + "/" + token;
-    console.log("policy key: ", policyKey);
     const policy = testPolicies.get(uri + "/" + key + "/" + token);
     res.json({
       riskAnalysis: {
@@ -190,7 +189,7 @@ describe("WAF Callouts Suite", async function () {
               },
               {
                 key: "X-Forwarded-For",
-                rawValue: new TextEncoder().encode("127.0.0.1,34.45.56.666"),
+                rawValue: new TextEncoder().encode("garbage,127.0.0.1,34.45.56.666"),
               },
             ],
           },
@@ -226,7 +225,7 @@ describe("WAF Callouts Suite", async function () {
               },
               {
                 key: "X-Forwarded-For",
-                rawValue: new TextEncoder().encode("127.0.0.1,34.45.56.666"),
+                rawValue: new TextEncoder().encode("garbage, 127.0.0.1,34.45.56.666"),
               },
             ],
           },
@@ -262,7 +261,7 @@ describe("WAF Callouts Suite", async function () {
               },
               {
                 key: "X-Forwarded-For",
-                rawValue: new TextEncoder().encode("127.0.0.1,34.45.56.666"),
+                rawValue: new TextEncoder().encode("test, garbage, 127.0.0.1,34.45.56.666"),
               },
             ],
           },
@@ -298,7 +297,7 @@ describe("WAF Callouts Suite", async function () {
               },
               {
                 key: "X-Forwarded-For",
-                rawValue: new TextEncoder().encode("127.0.0.1,34.45.56.666"),
+                rawValue: new TextEncoder().encode("test,garbage, 127.0.0.1,34.45.56.666"),
               },
             ],
           },
