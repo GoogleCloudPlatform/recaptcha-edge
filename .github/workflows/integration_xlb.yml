@@ -1,0 +1,60 @@
+name: Integration Test XLB
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-integrate-xlb
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/build_xlb.yml
+
+  deploy-artifact:
+    runs-on: ubuntu-latest
+    needs: [build]
+    defaults:
+      run:
+        working-directory: .
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: "npm"
+      - id: auth
+        name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          create_credentials_file: true
+          workload_identity_provider: "projects/${{secrets.GCP_PROJECT_NUMBER_TEST}}/locations/global/workloadIdentityPools/github-integration-test-pool/providers/github-idp"
+          service_account: ${{ secrets.SA_GCP_TEST }}
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+      - name: Set Credentials File
+        run: gcloud auth login --cred-file=${{steps.auth.outputs.credentials_file_path}}
+      - name: Publish build to GCP
+        run: gcloud builds submit --project ${{secrets.GCP_PROJECT_ID_TEST}} --region=us-central1 --config xlb.cloudbuild.yaml
+      - name: Setup terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.5
+      - name: Init terraform
+        working-directory: ./bindings/xlb/integration
+        run: terraform init
+      - name: Apply infra
+        working-directory: ./bindings/xlb/integration
+        run: terraform apply -var="project_id=${{secrets.GCP_PROJECT_ID_TEST}}" -var="project_number=${{secrets.GCP_PROJECT_NUMBER_TEST}}" -var="image_label=latest" -var="api_key=${{secrets.GCP_API_KEY_TEST}}" -var="action_site_key=${{secrets.ACTION_SITE_KEY_TEST}}" -var="challenge_page_site_key=${{secrets.CHALLENGE_PAGE_SITE_KEY_TEST}}" -var="session_site_key=${{secrets.SESSION_SITE_KEY_TEST}}" --auto-approve
+      - name: Destroy infra
+        working-directory: ./bindings/xlb/integration
+        if: always()
+        run: terraform destroy -var="project_id=${{secrets.GCP_PROJECT_ID_TEST}}" -var="project_number=${{secrets.GCP_PROJECT_NUMBER_TEST}}" -var="image_label=latest" -var="api_key=${{secrets.GCP_API_KEY_TEST}}" -var="action_site_key=${{secrets.ACTION_SITE_KEY_TEST}}" -var="challenge_page_site_key=${{secrets.CHALLENGE_PAGE_SITE_KEY_TEST}}" -var="session_site_key=${{secrets.SESSION_SITE_KEY_TEST}}" --auto-approve
