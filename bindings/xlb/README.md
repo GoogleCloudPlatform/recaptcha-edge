@@ -10,13 +10,13 @@ Callouts supports serveral backend service types and typical service deployment 
 - [xlb.Dockerfile](../../xlb.Dockerfile)
 - [xlb.cloudbuild.yaml](../../xlb.cloudbuild.yaml)
 
-Deploying a container image to the Google Cloud Artifact Registry may be done with the following command from the repository root:
+These deployment files assume that Docker format [Google Cloud Artifact Registry](https://cloud.google.com/artifact-registry/docs/repositories/create-repos) repository named 'recaptcha-edge-repo' has been created in your project. Deploying a container image to the respository may be done with the following command from the repository root:
 
 ```
 gcloud builds submit --region={region} --config xlb.cloudbuild.yaml
 ```
 
-Running this command will, by default, create an image in this location: `{region}-docker.pkg.dev/{my-project}/recaptcha-waf-repo/recaptcha-waf:latest`
+Running this command will, by default, create an image in this location: `{region}-docker.pkg.dev/{my-project}/recaptcha-edge-repo/recaptcha-edge:latest`
 
 ### Manually deploying to Google Cloud Load Balancer
 Your load balancer can be configured with the reCAPTCHA External Processing server image by following the [Callouts documentation](https://cloud.google.com/service-extensions/docs/configure-callout-backend-service).
@@ -44,7 +44,7 @@ module "recaptcha_lb_extension" {
     extension_cel_match = "request.path.startsWith('/callout')"
 
     # Callout server configs
-    edge_container        = "us-central1-docker.pkg.dev/my-project-id/recaptcha-waf-repo/recaptcha-waf:label"
+    edge_container        = "us-central1-docker.pkg.dev/my-project-id/recaptcha-edge-repo/recaptcha-edge:label"
 
     callout_config      = {
         project_number          = 123456789
@@ -53,7 +53,7 @@ module "recaptcha_lb_extension" {
         challenge_page_site_key = "my-challenge-site-key"
         session_site_sey        = "my-session-site-key"
 
-        session_js_install_path  = "/callout/session;/blah2"
+        session_js_install_path  = "/callout/session.html;/anotherPage.html"
         debug                    = true
     }
 }

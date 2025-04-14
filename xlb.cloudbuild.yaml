@@ -1,7 +1,7 @@
   steps:
   # Build the container image
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', '$LOCATION-docker.pkg.dev/$PROJECT_ID/recaptcha-waf-repo/recaptcha-waf:latest', '--file', './xlb.Dockerfile', '.']
+    args: ['build', '-t', '$LOCATION-docker.pkg.dev/$PROJECT_ID/recaptcha-edge-repo/recaptcha-edge:latest', '--file', './xlb.Dockerfile', '.']
   # Push the container image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', '$LOCATION-docker.pkg.dev/$PROJECT_ID/recaptcha-waf-repo/recaptcha-waf:latest']
+    args: ['push', '$LOCATION-docker.pkg.dev/$PROJECT_ID/recaptcha-edge-repo/recaptcha-edge:latest']
