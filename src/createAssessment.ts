@@ -238,12 +238,10 @@ export async function callCreateAssessment(
     ...additionalParams,
   };
   const assessment: Assessment = { event };
-  if (environment) {
-    assessment.assessmentEnvironment = {
-      client: environment[0],
-      version: environment[1],
-    };
-  }
+  assessment.assessmentEnvironment = {
+    client: (environment ?? context.environment)[0],
+    version: (environment ?? context.environment)[1],
+  };
   const options: EdgeRequestInit = {
     method: "POST",
     body: JSON.stringify(assessment),
