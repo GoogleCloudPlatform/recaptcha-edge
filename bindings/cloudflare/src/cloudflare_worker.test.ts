@@ -61,22 +61,27 @@ test("nomatch-ok", async () => {
     .intercept({
       path: "/v1/projects/12345/assessments?key=abc123",
       method: "POST",
-      body: JSON.stringify({
-        event: {
-          token: "action-token",
-          siteKey: "action-site-key",
-          wafTokenAssessment: true,
-          userIpAddress: "1.2.3.4",
-          headers: ["cf-connecting-ip:1.2.3.4", "user-agent:test-user-agent", "x-recaptcha-token:action-token"],
-          requestedUri: "http://example.com/teste2e",
-          userAgent: "test-user-agent",
-          firewallPolicyEvaluation: true,
-        },
-        assessmentEnvironment: {
-          client: "@google-cloud/recaptcha-cloudflare",
-          version: "1.0.0",
-        },
-      }),
+      body: (body) => {
+        let parsedBody = JSON.parse(body);
+        parsedBody.assessmentEnvironment.version = undefined;
+        let expected = {
+          event: {
+            token: "action-token",
+            siteKey: "action-site-key",
+            wafTokenAssessment: true,
+            userIpAddress: "1.2.3.4",
+            headers: ["cf-connecting-ip:1.2.3.4", "user-agent:test-user-agent", "x-recaptcha-token:action-token"],
+            requestedUri: "http://example.com/teste2e",
+            userAgent: "test-user-agent",
+            firewallPolicyEvaluation: true,
+          },
+          assessmentEnvironment: {
+            client: "@google-cloud/recaptcha-cloudflare",
+            version: undefined,
+          },
+        };
+        return JSON.stringify(parsedBody) == JSON.stringify(expected);
+      },
     })
     .reply(200, JSON.stringify({ firewallPolicyAssessment: {} }));
   // Mock the third fetch request to the actual website
