@@ -5,6 +5,8 @@ bindings/**/pkg/*
 bindings/**/bin/*
 bindings/**/node_modules/*
 bindings/**/gen/*
+bindings/**/.terraform*
+bindings/**/terraform.tfstate*
 .DS_Store
 node_modules
 coverage/

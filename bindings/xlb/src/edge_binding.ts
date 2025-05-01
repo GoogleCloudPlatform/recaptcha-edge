@@ -1,3 +1,19 @@
+/**
+ * Copyright 2025 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 import { create } from "@bufbuild/protobuf";
 import {
   RecaptchaConfig,
@@ -12,7 +28,7 @@ import {
   LogLevel,
   Assessment,
   CHALLENGE_PAGE_URL,
-  ListFirewallPoliciesResponse
+  ListFirewallPoliciesResponse,
 } from "@google-cloud/recaptcha-edge";
 import pkg from "../package.json";
 import {
@@ -22,11 +38,12 @@ import {
   HeaderMutationSchema,
   HttpBody,
   CommonResponse_ResponseStatus,
+  ProcessingResponse,
 } from "../gen/envoy/service/ext_proc/v3/external_processor_pb.js";
 
 import { StatusCode } from "../gen/envoy/type/v3/http_status_pb.js";
 import { HeaderValueOption_HeaderAppendAction, HeaderValueOptionSchema } from "../gen/envoy/config/core/v3/base_pb.js";
-import * as cache from "memory-cache";
+import { Cache } from "memory-cache";
 
 const RECAPTCHA_JS = "https://www.google.com/recaptcha/enterprise.js";
 
@@ -50,7 +67,7 @@ export class CalloutHeadersRequest implements EdgeRequest {
   }
 
   get method() {
-    return this.getHeader(":method");
+    return this.getHeader(":method") || "";
   }
 
   addHeader(key: string, value: string) {
@@ -91,7 +108,7 @@ export class CalloutHeadersRequest implements EdgeRequest {
     return Promise.resolve(JSON.parse("{}"));
   }
 
-  toResponse() {
+  toResponse(): ProcessingResponse {
     return create(ProcessingResponseSchema, {
       response: {
         case: "requestHeaders",
@@ -109,7 +126,7 @@ export class CalloutHeadersRequest implements EdgeRequest {
 export class CalloutBodyResponse implements EdgeResponse {
   ctx: RecaptchaContext;
   httpBody: HttpBody;
-  newBody: string;
+  newBody?: string;
 
   constructor(ctx: RecaptchaContext, body: HttpBody) {
     this.ctx = ctx;
@@ -117,7 +134,7 @@ export class CalloutBodyResponse implements EdgeResponse {
   }
 
   get status() {
-    return null;
+    return 200;
   }
 
   addHeader(key: string, value: string) {}
@@ -130,11 +147,11 @@ export class CalloutBodyResponse implements EdgeResponse {
     return new Map<string, string>();
   }
 
-  get text(): Promise<string> {
+  text(): Promise<string> {
     return Promise.resolve(this.body as string);
   }
 
-  get json(): Promise<unknown> {
+  json(): Promise<unknown> {
     return Promise.resolve(JSON.parse(this.body as string));
   }
 
@@ -149,7 +166,7 @@ export class CalloutBodyResponse implements EdgeResponse {
     this.newBody = newBody;
   }
 
-  toResponse() {
+  toResponse(): ProcessingResponse {
     if (this.newBody === undefined) {
       return create(ProcessingResponseSchema, {
         response: {
@@ -180,18 +197,17 @@ export class ImmediateResponse implements EdgeResponse {
   bodyStr: string;
   headerMutation: HeaderMutation;
   options?: EdgeResponseInit;
-  decoder: TextDecoder = new TextDecoder();
-  encoder: TextEncoder = new TextEncoder();
+  decoder = new TextDecoder();
+  encoder = new TextEncoder();
 
   constructor(body: string, options?: EdgeResponseInit) {
     this.bodyStr = body;
     this.options = options;
     this.headerMutation = create(HeaderMutationSchema, {});
-    options.headers?.forEach((v, k, m) => this.addHeader(k, v));
   }
 
   get status() {
-    return this.options?.status;
+    return this.options?.status || 200;
   }
 
   addHeader(key: string, value: string) {
@@ -220,21 +236,21 @@ export class ImmediateResponse implements EdgeResponse {
     return result;
   }
 
-  get text(): Promise<string> {
+  text(): Promise<string> {
     return Promise.resolve(this.bodyStr);
   }
 
-  get json(): Promise<unknown> {
+  json(): Promise<unknown> {
     return Promise.resolve(JSON.parse(this.bodyStr));
   }
 
-  toResponse() {
+  toResponse(): ProcessingResponse {
     return create(ProcessingResponseSchema, {
       response: {
         case: "immediateResponse",
         value: {
           status: {
-            code: this.options.status as StatusCode,
+            code: this.status as StatusCode,
           },
           body: this.bodyStr,
           headers: this.headerMutation,
@@ -249,6 +265,7 @@ export class XlbContext extends RecaptchaContext {
   readonly challengePageCookie = "recaptcha-gxlb-e";
   readonly httpGetCachingEnabled = true;
   readonly environment: [string, string] = [pkg.name, pkg.version];
+  readonly cache: Cache = new Cache();
 
   constructor(cfg: RecaptchaConfig) {
     super(cfg);
@@ -265,12 +282,12 @@ export class XlbContext extends RecaptchaContext {
   }
 
   async fetch_list_firewall_policies(options: EdgeRequestInit): Promise<ListFirewallPoliciesResponse> {
-    let policies = cache.get("firewallPolicies");
+    let policies = this.cache.get("firewallPolicies");
     if (policies === null) {
       this.log("debug", "Cache miss: fetch_list_firewall_policies");
       let fp = await this.fetch(new FetchApiRequest(new Request(this.listFirewallPoliciesUrl, options)));
       policies = this.toListFirewallPoliciesResponse(fp);
-      cache.put("firewallPolicies", policies, 600000 /* 10 min */);
+      this.cache.put("firewallPolicies", policies, 600000 /* 10 min */);
     } else {
       this.log("debug", "Cache hit: fetch_list_firewall_policies");
     }
@@ -287,13 +304,14 @@ export class XlbContext extends RecaptchaContext {
       new FetchApiRequest(new Request(this.config.challengePageUrl || CHALLENGE_PAGE_URL, options)),
     );
     const text = await resp.text();
-    return new ImmediateResponse(text, { status: resp.status, headers: resp.getHeaders() });
+    const newResp = new ImmediateResponse(text, { status: resp.status });
+    resp.getHeaders().forEach((v, k) => newResp.addHeader(k, v));
+    return newResp;
   }
 
   async buildEvent(req: EdgeRequest): Promise<Event> {
-    const forwardedArr = req.getHeader("X-Forwarded-For").split(",");
     return {
-      userIpAddress: forwardedArr[0],
+      userIpAddress: this.getUserIp(req),
       headers: Array.from(req.getHeaders().entries()).map(([k, v]) => `${k}:${v}`),
       ja3: undefined,
       requestedUri: req.url,
@@ -307,8 +325,21 @@ export class XlbContext extends RecaptchaContext {
       return Promise.resolve(resp);
     }
     const recaptchaJsScript = `<script src="${RECAPTCHA_JS}?render=${sessionKey}&waf=session" async defer></script>`;
-    resp.body = (resp.body as string).replace("</head>", recaptchaJsScript + "</head>");
+    const calloutResp = resp as CalloutBodyResponse;
+    calloutResp.body = calloutResp.body.replace("</head>", recaptchaJsScript + "</head>");
     return Promise.resolve(resp);
+  }
+
+  getUserIp(req: EdgeRequest): string | undefined {
+    // The xlb will append to the x-forwarded-for header both the ip of the connected
+    // client and the ip of the destination server in this order. We want to extract the
+    // client ip so it will be the second last in the list.
+    const forwardedArr = (req.getHeader("X-Forwarded-For") || "").split(",");
+    if (forwardedArr.length == 0) {
+      return undefined;
+    }
+    const clientIpIdx = Math.max(forwardedArr.length - 2, 0);
+    return forwardedArr[clientIpIdx].trim();
   }
 
   logException(e: any) {

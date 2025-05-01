@@ -33,7 +33,12 @@ import {
 
 import * as http2 from "http2";
 import { connectNodeAdapter } from "@connectrpc/connect-node";
-import { CalloutHeadersRequest, CalloutBodyResponse, XlbContext } from "./edge_binding.js";
+import {
+  CalloutHeadersRequest,
+  CalloutBodyResponse,
+  XlbContext,
+  ImmediateResponse,
+} from "./edge_binding.js";
 
 class CalloutProcessor implements ServiceImpl<typeof ExternalProcessor> {
   ctx: XlbContext;
@@ -72,12 +77,15 @@ class CalloutProcessor implements ServiceImpl<typeof ExternalProcessor> {
     if (resp === null) {
       return headersRequest.toResponse();
     }
-    return resp.toResponse();
+    // An immediate response is always generated on terminal actions. The only other type of response, CalloutBodyResponse
+    // is generated when handling a response body.
+    return (resp as ImmediateResponse).toResponse();
   }
 
   async handleResponseBody(resp: CalloutBodyResponse, actions: Action[]): Promise<ProcessingResponse> {
-    resp = await applyPostResponseActions(this.ctx, resp, actions);
-    return resp.toResponse();
+    const newResp = await applyPostResponseActions(this.ctx, resp, actions);
+    // Only a CalloutBodyResponse is generated when handling a response body.
+    return (newResp as CalloutBodyResponse).toResponse();
   }
 }
 

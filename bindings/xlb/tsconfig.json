@@ -12,7 +12,7 @@
       "target": "ES2022",
       "moduleResolution": "node",
       "lib": ["es2022"],
-      "rootDir": "src",
+      "rootDir": ".",
       "outDir": "./dist",
       "skipLibCheck": true,
       "paths": {

@@ -19,28 +19,43 @@
  * make decisions based on score.
  */
 
-import { CloudflareContext, recaptchaConfigFromEnv } from "@google-cloud/recaptcha-cloudflare";
+import {
+  CloudflareContext,
+  recaptchaConfigFromEnv,
+  callCreateAssessment,
+  RecaptchaError,
+} from "@google-cloud/recaptcha-cloudflare";
+
+/**
+ * A basic function that will call recaptcha's CreateAssessment with all appropriate
+ * data extracted from the incoming request and registered config context. A simple
+ * Allow/Block verdict will be made based on the risk score in the Assessment.
+ * @param request The incoming Cloudflare Request.
+ * @param rcctx A recaptcha.CloudflareContext object.
+ * @returns "allow" or "block".
+ */
+async function recaptchaRiskVerdict(rcctx: CloudflareContext, request: Request): Promise<"allow" | "block"> {
+  try {
+    const assessment = await callCreateAssessment(rcctx, request);
+    if (assessment.risk_analysis.score <= 0.3) {
+      return "block";
+    }
+  } catch (e: RecaptchaError) {
+    // a RecaptchaError can occur due to misconfiguration, network issues or parsing errors.
+    // Depending on the cause, each RecaptchaError has a recommended action of {allow | block}.
+    return e.recommended_action_enum();
+  }
+  return "allow";
+}
 
 export default {
   async fetch(request, env, ctx): Promise<Response> {
-    const cfctx = new CloudflareContext(env, ctx, recaptchaConfigFromEnv(env));
-    let block = false;
-    try {
-      // TODO: check validity of token.
-      const assessment = await callCreateAssessment(cfctx, request);
-      if (assessment.risk_analysis.score <= 0.3) {
-        block = true;
-      }
-    } catch (e: RecaptchaError) {
-      if (e.recommended_action.type === "block") {
-        block = true;
-      }
-    }
-    if (block) {
+    const rcctx = new CloudflareContext(env, ctx, recaptchaConfigFromEnv(env));
+
+    if ((await recaptchaRiskVerdict(rcctx, request)) == "block") {
       // Or return a templated HTML page.
       return new Response("This request has been blocked for security reasons.");
-    } else {
-      return fetch(request);
     }
+    return fetch(request);
   },
 } satisfies ExportedHandler<Env>;

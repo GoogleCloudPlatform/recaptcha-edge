@@ -18,17 +18,22 @@
  * Library specific errors.
  */
 
-import { Action, createAllowAction } from "./action";
+import { Action, AllowAction, BlockAction, createAllowAction, isBlockAction } from "./action";
 
 /**
  * Error type for reCAPTCHA processing.
  */
 export class RecaptchaError extends Error {
-  recommendedAction?: Action;
+  recommendedAction?: AllowAction | BlockAction;
 
-  constructor(message: string, recommendedAction?: Action) {
+  constructor(message: string, recommendedAction?: AllowAction | BlockAction) {
     super(message);
     this.recommendedAction = recommendedAction;
+  }
+
+  recommended_action_enum(): "block" | "allow" {
+    let action = this.recommendedAction ?? createAllowAction();
+    return isBlockAction(action) ? "block" : "allow"
   }
 
   toJSON(): object {
@@ -42,21 +47,21 @@ export class RecaptchaError extends Error {
 
 /** An Error that occurs during initialization. */
 export class InitError extends RecaptchaError {
-  constructor(message: string, recommendedAction?: Action) {
+  constructor(message: string, recommendedAction?: AllowAction | BlockAction) {
     super(message, recommendedAction ?? createAllowAction());
   }
 }
 
 /** An Error that occurs during response parsing. */
 export class ParseError extends RecaptchaError {
-  constructor(message: string, recommendedAction?: Action) {
+  constructor(message: string, recommendedAction?: AllowAction | BlockAction) {
     super(message, recommendedAction);
   }
 }
 
 /** An Error that occurs when reCAPTCHA is unreachable. */
 export class NetworkError extends RecaptchaError {
-  constructor(message: string, recommendedAction?: Action) {
+  constructor(message: string, recommendedAction?: AllowAction | BlockAction) {
     super(message, recommendedAction);
   }
 }
