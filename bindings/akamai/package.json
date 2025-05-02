@@ -27,7 +27,7 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@google-cloud/recaptcha-edge": "^1.0.0",
+    "@google-cloud/recaptcha-edge": "workspace:*",
     "url-parse": "^1.5.10"
   },
   "devDependencies": {

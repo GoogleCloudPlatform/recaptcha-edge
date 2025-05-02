@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@fastly/js-compute": "^3.7.0",
-    "@google-cloud/recaptcha-edge": "^1.0.0",
+    "@google-cloud/recaptcha-edge": "workspace:*",
     "@worker-tools/html-rewriter": "^0.1.0-pre.19"
   },
   "devDependencies": {
