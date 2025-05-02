@@ -14,12 +14,16 @@
   "author": "reCAPTCHA Team <recaptcha-enterprise-support@google.com>",
   "type": "module",
   "main": "dist/edge_worker.js",
+  "files": [
+    "dist/"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/GoogleCloudPlatform/recaptcha-edge.git",
     "directory": "bindings/akamai"
   },
   "scripts": {
+    "prepare": "npm run build",
     "build": "node esbuild.config.js && mv dist/edge_worker.js dist/main.js && cp src/bundle.json dist/",
     "pack": "mkdir pkg && cd dist && tar -czvf akamai.tgz bundle.json main.js && mv akamai.tgz ../pkg/akamai_client.tar.gz",
     "deploy": "",

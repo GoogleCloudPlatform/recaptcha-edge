@@ -15,7 +15,7 @@
     "dependencies": {
         "@bufbuild/protobuf": "^2.2.3",
         "@connectrpc/connect-node": "^2.0.1",
-        "@google-cloud/recaptcha-edge": "^1.0.0",
+        "@google-cloud/recaptcha-edge": "workspace:*",
         "memory-cache": "^0.2.0"
     },
     "scripts": {
