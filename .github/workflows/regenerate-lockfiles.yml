@@ -1,4 +1,4 @@
-name: Regenerate package-lock.json
+name: Regenerate package-lock.json files
 
 on:
   workflow_dispatch:
@@ -28,40 +28,33 @@ jobs:
           node-version: '20'
           cache: 'npm' # Enable caching for npm dependencies
 
-      - name: Delete existing lock file
-        run: rm -f package-lock.json # -f ignores errors if file doesn't exist
+      - name: Delete existing lock files
+        run: |
+          rm -f package-lock.json # -f ignores errors if file doesn't exist
+          rm -f bindings/akamai/package-lock.json
+          rm -f bindings/cloudflare/package-lock.json
+          rm -f bindings/fastly/package-lock.json
+          rm -f bindings/xlb/package-lock.json
 
       - name: Install dependencies to generate new lock file
-        run: npm install
-
-      - name: Check for changes in lock file
-        id: check_changes
         run: |
-          # Use git diff --quiet to check for uncommitted changes. Exit code 1 means changes exist.
-          if ! git diff --quiet --exit-code package-lock.json; then
-            echo "Lockfile changed."
-            echo "changed=true" >> $GITHUB_OUTPUT
-          else
-            echo "Lockfile unchanged."
-            echo "changed=false" >> $GITHUB_OUTPUT
-          fi
+          npm install
+          cd bindings/akamai && npm install && cd ../..
+          cd bindings/cloudflare && npm install && cd ../..
+          cd bindings/fastly && npm install && cd ../..
+          cd bindings/xlb && npm install && cd ../..
 
       - name: Configure Git
-        if: steps.check_changes.outputs.changed == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Commit and push changes
-        if: steps.check_changes.outputs.changed == 'true'
         run: |
           git add package-lock.json
+          git add bindings/akamai/package-lock.json
+          git add bindings/cloudflare/package-lock.json
+          git add bindings/fastly/package-lock.json
+          git add bindings/xlb/package-lock.json
           git commit -m "Regenerate package-lock.json"
-          # Use --force-with-lease for safer pushes if needed, but direct push to head ref should be okay here
           git push origin ${{ github.head_ref }}
-        # env:
-          # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # GITHUB_TOKEN is automatically available
-
-      - name: No changes detected
-        if: steps.check_changes.outputs.changed == 'false'
-        run: echo "No changes to package-lock.json detected after npm install."
