@@ -21,9 +21,9 @@
   "main": "dist/index.esm.js",
   "types": "dist/index.d.ts",
   "scripts": {
+    "prepublishOnly": "npm run build",
     "build": "rollup -c",
     "pack": "mkdir pkg && tar -czvf pkg/recaptcha_library.tar.gz dist/*",
-    "prepublishOnly": "npm run build",
     "test": "vitest",
     "devbuild": "npm install && npm run build",
     "devclean": "rm -rf dist && rm -rf pkg && rm -rf node_modules && rm -rf coverage && rm package-lock.json",

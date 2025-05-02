@@ -15,12 +15,16 @@
   "type": "module",
   "exports": "./dist/index.js",
   "main": "dist/cloudflare_worker.js",
+  "files": [
+    "dist/"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/GoogleCloudPlatform/recaptcha-edge.git",
     "directory": "bindings/cloudflare"
   },
   "scripts": {
+    "prepare": "npm run build && npm run build:worker",
     "build": "node esbuild.config.js",
     "build:worker": "wrangler deploy --dry-run --outdir=dist",
     "deploy": "wrangler deploy src/cloudflare_worker.ts",
