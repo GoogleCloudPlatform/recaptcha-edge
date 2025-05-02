@@ -37,18 +37,15 @@ jobs:
           sudo dpkg -i fastly_10.15.0_linux_amd64.deb
           sudo apt-get update
           sudo apt-get install -y --fix-missing
-
+      - uses: actions/download-artifact@v4
+        with:
+          name: core-library-dist
+          path: dist
       - run: npm ci
       - uses: actions/download-artifact@v4
         with:
           name: fastly-package
           path: bindings/fastly/pkg
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: core-library-dist
-          path: dist
-
       - name: Publish to Fastly
         run: fastly compute deploy --token ${{ secrets.FASTLY_API_TOKEN }} --service-id ${{ secrets.FASTLY_SERVICE_ID }} --package pkg/fastly_client.tar.gz
         env:

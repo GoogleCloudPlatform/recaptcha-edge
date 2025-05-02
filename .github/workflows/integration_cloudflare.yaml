@@ -28,6 +28,10 @@ jobs:
         with:
           node-version: 22.x
           cache: "npm"
+      - uses: actions/download-artifact@v4
+        with:
+          name: core-library-dist
+          path: dist
       - run: npm ci
       - uses: actions/download-artifact@v4
         with:
