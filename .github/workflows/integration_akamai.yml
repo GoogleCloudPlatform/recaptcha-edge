@@ -1,10 +1,6 @@
 name: Integration Test Akamai
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
