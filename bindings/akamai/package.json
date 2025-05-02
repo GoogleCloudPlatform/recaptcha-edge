@@ -23,7 +23,7 @@
     "directory": "bindings/akamai"
   },
   "scripts": {
-    "prepare": "npm run build",
+    "prepack": "npm run build",
     "build": "node esbuild.config.js && mv dist/edge_worker.js dist/main.js && cp src/bundle.json dist/",
     "pack": "mkdir pkg && cd dist && tar -czvf akamai.tgz bundle.json main.js && mv akamai.tgz ../pkg/akamai_client.tar.gz",
     "deploy": "",
