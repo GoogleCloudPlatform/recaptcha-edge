@@ -39,6 +39,7 @@ jobs:
       - name: Install dependencies to generate new lock file
         run: |
           npm install
+          npm run build # required for subpackages
           cd bindings/akamai && npm install && cd ../..
           cd bindings/cloudflare && npm install && cd ../..
           cd bindings/fastly && npm install && cd ../..
