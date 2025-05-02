@@ -23,7 +23,7 @@
     "directory": "bindings/fastly"
   },
   "scripts": {
-    "prepare": "npm run build",
+    "prepack": "npm run build",
     "prebuild": "tsc",
     "build": "fastly compute build",
     "test": "vitest --disableConsoleIntercept",
