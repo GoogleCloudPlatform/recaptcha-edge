@@ -1,0 +1,67 @@
+name: Regenerate package-lock.json
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+# Permissions needed to commit back to the PR branch
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    # Prevent running on commits made by this workflow itself
+    # Checks if the commit author that triggered the workflow is the Actions bot
+    if: github.actor != 'github-actions[bot]'
+
+    steps:
+      - name: Checkout PR Branch
+        uses: actions/checkout@v4
+        with:
+          # Check out the head of the PR branch, not the merge commit
+          ref: ${{ github.head_ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm' # Enable caching for npm dependencies
+
+      - name: Delete existing lock file
+        run: rm -f package-lock.json # -f ignores errors if file doesn't exist
+
+      - name: Install dependencies to generate new lock file
+        run: npm install
+
+      - name: Check for changes in lock file
+        id: check_changes
+        run: |
+          # Use git diff --quiet to check for uncommitted changes. Exit code 1 means changes exist.
+          if ! git diff --quiet --exit-code package-lock.json; then
+            echo "Lockfile changed."
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "Lockfile unchanged."
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Configure Git
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit and push changes
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          git add package-lock.json
+          git commit -m "Regenerate package-lock.json"
+          # Use --force-with-lease for safer pushes if needed, but direct push to head ref should be okay here
+          git push origin ${{ github.head_ref }}
+        # env:
+          # GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # GITHUB_TOKEN is automatically available
+
+      - name: No changes detected
+        if: steps.check_changes.outputs.changed == 'false'
+        run: echo "No changes to package-lock.json detected after npm install."
