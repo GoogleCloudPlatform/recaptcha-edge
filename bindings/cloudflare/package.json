@@ -36,7 +36,7 @@
     "devclean": "rm -rf dist && rm -rf pkg && rm package-lock.json && rm -rf node_modules"
   },
   "dependencies": {
-    "@google-cloud/recaptcha-edge": "workspace:*",
+    "@google-cloud/recaptcha-edge": "^1.0.*",
     "@worker-tools/html-rewriter": "^0.1.0-pre.19"
   },
   "devDependencies": {
