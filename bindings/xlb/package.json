@@ -20,7 +20,7 @@
     },
     "scripts": {
         "test": "vitest run",
-        "protogen": "npx buf generate https://github.com/envoyproxy/envoy.git#subdir=api,branch=release/create/v1.31 --path envoy/service/ext_proc/v3/external_processor.proto --include-imports"
+        "protogen": "npx buf generate https://github.com/envoyproxy/envoy.git#subdir=api,branch=release/v1.30 --path envoy/service/ext_proc/v3/external_processor.proto --include-imports"
     },
     "devDependencies": {
         "@bufbuild/buf": "^1.50.0",
