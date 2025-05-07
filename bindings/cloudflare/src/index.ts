@@ -51,6 +51,8 @@ export {
   processRequest,
   RecaptchaConfig,
   RecaptchaError,
+  testing,
+  FetchApiRequest
 } from "@google-cloud/recaptcha-edge";
 
 export class CloudflareContext extends RecaptchaContext {

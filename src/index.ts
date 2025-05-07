@@ -34,6 +34,8 @@ import * as action from "./action";
 import * as error from "./error";
 import { Assessment, isRpcError, Event, FirewallPolicy } from "./assessment";
 import { EdgeRequest, EdgeRequestInit, EdgeResponse, EdgeResponseInit } from "./request";
+import * as testing_ from './testing';
+export const testing = testing_;
 
 export { callCreateAssessment, createPartialEventWithSiteInfo } from "./createAssessment";
 
