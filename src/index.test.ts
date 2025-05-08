@@ -46,6 +46,7 @@ import {
   EdgeRequestInit,
   ListFirewallPoliciesResponse,
   CHALLENGE_PAGE_URL,
+  testing
 } from "./index";
 
 import { FetchApiRequest, FetchApiResponse } from "./fetchApi";
@@ -256,30 +257,13 @@ test("callCreateAssessmentWithUserInfo-ok", async () => {
 });
 
 test("callListFirewallPolicies-ok", async () => {
-  const testPolicies = [
-    {
-      name: "test-policy",
-      description: "test-description",
-      path: "test-path",
-      condition: "test-condition",
-      // 'type' isn't a part of the interface, but is added for testing.
-      actions: [{ allow: {}, type: "allow" }],
-    },
-    {
-      name: "test-policy2",
-      description: "test-description2",
-      path: "test-path2",
-      condition: "test-condition2",
-      actions: [{ block: {}, type: "block" }],
-    },
-  ];
   vi.stubGlobal(
     "fetch",
     vi.fn(() =>
       Promise.resolve({
         json: () =>
           Promise.resolve({
-            firewallPolicies: testPolicies,
+            firewallPolicies: testing.policies,
           }),
         headers: new Headers(),
       }),
@@ -301,7 +285,7 @@ test("callListFirewallPolicies-ok", async () => {
     ),
   );
   expect(resp).toEqual({
-    firewallPolicies: testPolicies,
+    firewallPolicies: testing.policies,
   });
 });
 
@@ -452,23 +436,7 @@ test("ApplyActions-injectJsOnlyOnce", async () => {
 
 test("localPolicyAssessment-matchTrivialCondition", async () => {
   const context = new TestContext(testConfig);
-  const req = new FetchApiRequest("https://www.example.com/testlocal");
-  const testPolicies = [
-    {
-      name: "projects/12345/firewallpolicies/100",
-      description: "test-description",
-      path: "/badpath",
-      condition: "recaptcha.score > 0.5",
-      actions: [{ allow: {} }],
-    },
-    {
-      name: "projects/12345/firewallpolicies/200",
-      description: "test-description2",
-      path: "/testlocal",
-      condition: "true",
-      actions: [{ block: {} }],
-    },
-  ];
+  const req = new FetchApiRequest("https://www.example.com/action/block");
   vi.stubGlobal(
     "fetch",
     vi.fn((req) => {
@@ -480,7 +448,7 @@ test("localPolicyAssessment-matchTrivialCondition", async () => {
         headers: new Headers(),
         json: () =>
           Promise.resolve({
-            firewallPolicies: testPolicies,
+            firewallPolicies: testing.policies,
           }),
       });
     }),
@@ -492,24 +460,7 @@ test("localPolicyAssessment-matchTrivialCondition", async () => {
 
 test("localPolicyAssessment-noMatch", async () => {
   const context = new TestContext(testConfig);
-  const req = new FetchApiRequest("https://www.example.com/testlocal");
-  const testPolicies = [
-    {
-      name: "projects/12345/firewallpolicies/100",
-      description: "test-description",
-      path: "/badpath",
-      condition: "true",
-      // 'type' isn't a part of the interface, but is added for testing.
-      actions: [{ block: {}, type: "block" }],
-    },
-    {
-      name: "projects/12345/firewallpolicies/200",
-      description: "test-description2",
-      path: "/blahblah",
-      condition: "true",
-      actions: [{ block: {}, type: "block" }],
-    },
-  ];
+  const req = new FetchApiRequest("https://www.example.com/nomatch");
   vi.stubGlobal(
     "fetch",
     vi.fn((req) => {
@@ -521,7 +472,7 @@ test("localPolicyAssessment-noMatch", async () => {
         headers: new Headers(),
         json: () =>
           Promise.resolve({
-            firewallPolicies: testPolicies,
+            firewallPolicies: testing.policies,
           }),
       });
     }),
@@ -533,24 +484,7 @@ test("localPolicyAssessment-noMatch", async () => {
 
 test("localPolicyAssessment-matchNontrivialCondition", async () => {
   const context = new TestContext(testConfig);
-  const req = new FetchApiRequest("https://www.example.com/testlocal");
-  const testPolicies = [
-    {
-      name: "projects/12345/firewallpolicies/100",
-      description: "test-description",
-      path: "/badpath",
-      condition: "true",
-      // 'type' isn't a part of the interface, but is added for testing.
-      actions: [{ allow: {}, type: "allow" }],
-    },
-    {
-      name: "projects/12345/firewallpolicies/200",
-      description: "test-description2",
-      path: "/testlocal",
-      condition: "recaptcha.score > 0.5",
-      actions: [{ block: {}, type: "block" }],
-    },
-  ];
+  const req = new FetchApiRequest("https://www.example.com/condition/scorelow");
   vi.stubGlobal(
     "fetch",
     vi.fn((url) => {
@@ -561,7 +495,7 @@ test("localPolicyAssessment-matchNontrivialCondition", async () => {
         status: 200,
         json: () =>
           Promise.resolve({
-            firewallPolicies: testPolicies,
+            firewallPolicies: testing.policies,
           }),
       });
     }),
@@ -859,30 +793,13 @@ test("evaluatePolicyAssessment-errJson", async () => {
 
 test("processRequest-ok", async () => {
   const context = new TestContext(testConfig);
-  const req = new FetchApiRequest("https://www.example.com/teste2e");
-  const testPolicies = [
-    {
-      name: "test-policy",
-      description: "test-description",
-      path: "/teste2e",
-      condition: "recaptcha.score > 0.5",
-      // 'type' isn't a part of the interface, but is added for testing.
-      actions: [{ allow: {}, type: "allow" }],
-    },
-    {
-      name: "test-policy2",
-      description: "test-description2",
-      path: "test-path2",
-      condition: "test-condition2",
-      actions: [{ block: {}, type: "block" }],
-    },
-  ];
+  const req = new FetchApiRequest("https://www.example.com/condition/scorehigh");
   vi.stubGlobal("fetch", vi.fn());
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
       headers: new Headers(),
-      json: () => Promise.resolve({ firewallPolicies: testPolicies }),
+      json: () => Promise.resolve({ firewallPolicies: testing.policies }),
     }),
   );
   (fetch as Mock).mockImplementationOnce(() =>
@@ -913,30 +830,13 @@ test("processRequest-ok", async () => {
 
 test("processRequest-nomatch", async () => {
   const context = new TestContext(testConfig);
-  const req = new FetchApiRequest("https://www.example.com/teste2e");
-  const testPolicies = [
-    {
-      name: "test-policy",
-      description: "test-description",
-      path: "/badpath1",
-      condition: "recaptcha.score > 0.5",
-      // 'type' isn't a part of the interface, but is added for testing.
-      actions: [{ allow: {}, type: "allow" }],
-    },
-    {
-      name: "test-policy2",
-      description: "test-description2",
-      path: "/badpath2",
-      condition: "test-condition2",
-      actions: [{ block: {}, type: "block" }],
-    },
-  ];
+  const req = new FetchApiRequest("https://www.example.com/nomatch");
   vi.stubGlobal("fetch", vi.fn());
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
       headers: new Headers(),
-      json: () => Promise.resolve({ firewallPolicies: testPolicies }),
+      json: () => Promise.resolve({ firewallPolicies: testing.policies }),
     }),
   );
   (fetch as Mock).mockImplementationOnce(() =>
@@ -953,31 +853,14 @@ test("processRequest-nomatch", async () => {
 
 test("processRequest-inject", async () => {
   const context = new TestContext(testConfig);
-  context.config.sessionJsInjectPath = "/somepath;/some/other/path;/teste2e;/another/path";
-  const req = new FetchApiRequest("https://www.example.com/teste2e");
-  const testPolicies = [
-    {
-      name: "test-policy",
-      description: "test-description",
-      path: "/badpath1",
-      condition: "recaptcha.score > 0.5",
-      // 'type' isn't a part of the interface, but is added for testing.
-      actions: [{ allow: {}, type: "allow" }],
-    },
-    {
-      name: "test-policy2",
-      description: "test-description2",
-      path: "/badpath2",
-      condition: "test-condition2",
-      actions: [{ block: {}, type: "block" }],
-    },
-  ];
+  context.config.sessionJsInjectPath = "/somepath;/some/other/path;/nomatch;/another/path";
+  const req = new FetchApiRequest("https://www.example.com/nomatch");
   vi.stubGlobal("fetch", vi.fn());
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
       headers: new Headers(),
-      json: () => Promise.resolve({ firewallPolicies: testPolicies }),
+      json: () => Promise.resolve({ firewallPolicies: testing.policies }),
     }),
   );
   (fetch as Mock).mockImplementationOnce(() =>
@@ -995,30 +878,13 @@ test("processRequest-inject", async () => {
 test("processRequest-noinject", async () => {
   const context = new TestContext(testConfig);
   context.config.sessionJsInjectPath = "/somepath;/some/other/path;/another/path";
-  const req = new FetchApiRequest("https://www.example.com/teste2e");
-  const testPolicies = [
-    {
-      name: "test-policy",
-      description: "test-description",
-      path: "/badpath1",
-      condition: "recaptcha.score > 0.5",
-      // 'type' isn't a part of the interface, but is added for testing.
-      actions: [{ allow: {}, type: "allow" }],
-    },
-    {
-      name: "test-policy2",
-      description: "test-description2",
-      path: "/badpath2",
-      condition: "test-condition2",
-      actions: [{ block: {}, type: "block" }],
-    },
-  ];
+  const req = new FetchApiRequest("https://www.example.com/nomatch");
   vi.stubGlobal("fetch", vi.fn());
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
       headers: new Headers(),
-      json: () => Promise.resolve({ firewallPolicies: testPolicies }),
+      json: () => Promise.resolve({ firewallPolicies: testing.policies }),
     }),
   );
   (fetch as Mock).mockImplementationOnce(() =>
@@ -1035,29 +901,13 @@ test("processRequest-noinject", async () => {
 
 test("processRequest-block", async () => {
   const context = new TestContext(testConfig);
-  const req = new FetchApiRequest("https://www.example.com/teste2e");
-  const testPolicies = [
-    {
-      name: "test-policy",
-      description: "test-description",
-      path: "/teste2e",
-      // 'type' isn't a part of the interface, but is added for testing.
-      actions: [{ block: {}, type: "block" }],
-    },
-    {
-      name: "test-policy2",
-      description: "test-description2",
-      path: "/badpath2",
-      condition: "test-condition2",
-      actions: [{ block: {}, type: "block" }],
-    },
-  ];
+  const req = new FetchApiRequest("https://www.example.com/action/block");
   vi.stubGlobal("fetch", vi.fn());
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
       headers: new Headers(),
-      json: () => Promise.resolve({ firewallPolicies: testPolicies }),
+      json: () => Promise.resolve({ firewallPolicies: testing.policies }),
     }),
   );
   const resp = await processRequest(context, req);
@@ -1070,28 +920,12 @@ test("processRequest-dump", async () => {
   const req = new FetchApiRequest("https://www.example.com/nomatch");
   req.addHeader("Content-Type", "application/json");
   req.addHeader("Hello", "World");
-  const testPolicies = [
-    {
-      name: "test-policy",
-      description: "test-description",
-      path: "/teste2e",
-      // 'type' isn't a part of the interface, but is added for testing.
-      actions: [{ block: {}, type: "block" }],
-    },
-    {
-      name: "test-policy2",
-      description: "test-description2",
-      path: "/badpath2",
-      condition: "test-condition2",
-      actions: [{ block: {}, type: "block" }],
-    },
-  ];
   vi.stubGlobal("fetch", vi.fn());
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
       headers: new Headers({ hello: "world", A: "B" }),
-      json: () => Promise.resolve({ firewallPolicies: testPolicies }),
+      json: () => Promise.resolve({ firewallPolicies: testing.policies }),
     }),
   );
   (fetch as Mock).mockImplementationOnce(() =>
@@ -1393,28 +1227,14 @@ test("DebugTrace-format", () => {
 
 test("fetchActions-localAssessment", async () => {
   const context = new TestContext(testConfig);
-  context.config.sessionJsInjectPath = "/teste2e;/another/path";
-  const req = new FetchApiRequest("https://www.example.com/teste2e");
-  const testPolicies = [
-    {
-      name: "test-policy",
-      description: "test-description",
-      path: "/teste2e",
-      actions: [{ block: {} }],
-    },
-    {
-      name: "test-policy2",
-      description: "test-description2",
-      path: "/teste2e",
-      actions: [{ redirect: {} }],
-    },
-  ];
+  context.config.sessionJsInjectPath = "/action/block;/another/path";
+  const req = new FetchApiRequest("https://www.example.com/action/block");
   vi.stubGlobal("fetch", vi.fn());
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
       status: 200,
       headers: new Headers(),
-      json: () => Promise.resolve({ firewallPolicies: testPolicies }),
+      json: () => Promise.resolve({ firewallPolicies: testing.policies }),
     }),
   );
   const actions = await fetchActions(context, req);
@@ -1431,43 +1251,27 @@ test("fetchActions-localAssessment", async () => {
 
 test("fetchActions-createAssessment", async () => {
   const context = new TestContext(testConfig);
-  const req = new FetchApiRequest("https://www.example.com/testlocal");
+  //context.config.sessionJsInjectPath = "/another/path";
+  const req = new FetchApiRequest("https://www.example.com/condition/scorelow");
   vi.stubGlobal("fetch", vi.fn());
-  (fetch as Mock)
-    .mockImplementationOnce((req) => {
-      expect(req.url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/fetchFirewallPolicies");
-      const testPolicies = [
-        {
-          name: "test-policy",
-          description: "test-description",
-          path: "/testlocal",
-          condition: "test-condition",
-          actions: [{ block: {} }],
-        },
-      ];
+    (fetch as Mock).mockImplementationOnce(() =>
       Promise.resolve({
         status: 200,
         headers: new Headers(),
-        json: () => Promise.resolve({ firewallPolicies: testPolicies }),
-      });
-    })
+        json: () => Promise.resolve({ firewallPolicies: testing.policies }),
+      }),
+    )
     .mockImplementationOnce((req) => {
       expect(req.url).toEqual("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123");
       return Promise.resolve({
         status: 200,
         headers: new Headers(),
         json: () =>
-          Promise.resolve({
-            name: "projects/12345/assessments/1234567890",
-            firewallPolicyAssessment: {
-              firewallPolicy: {
-                actions: [{ block: {} }],
-              },
-            },
-          }),
+          Promise.resolve(testing.bad_assessment),
       });
     });
   const actions = await fetchActions(context, req);
+  //throw JSON.stringify(context.log_messages);
   expect(fetch).toHaveBeenCalledTimes(2);
   expect(actions).toEqual([
     {
