@@ -1,31 +1,30 @@
-import { Assessment } from "./assessment";
+import { Assessment, FirewallPolicy } from "./assessment";
 
-export const policies = [
+export const policies: FirewallPolicy[] = [
     {
         name: "test-action-allow",
         description: "test-description",
         path: "/action/allow",
-        // 'type' isn't a part of the interface, but is added for testing.
-        actions: [{ allow: {}, type: "allow" }],
+        actions: [{ allow: {} }],
     },
     {
         name: "test-action-block",
         description: "test-description",
         path: "/action/block",
-        actions: [{ block: {}, type: "block" }],
+        actions: [{ block: {} }],
     },
     {
         name: "test-action-redirect",
         description: "test-description",
         path: "/action/redirect",
-        actions: [{ redirect: {}, type: "redirect" }],
+        actions: [{ redirect: {} }],
     },
     {
         name: "condition-block-score-low",
         description: "test-description",
         path: "/condition/scorelow",
         condition: "recaptcha.score < 0.3",
-        actions: [{ block: {}, type: "block" }],
+        actions: [{ block: {} }],
     },
 ];
 
