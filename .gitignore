@@ -1,5 +1,6 @@
 node_modules/*
 dist/*
+pkg/*
 bindings/**/dist/*
 bindings/**/pkg/*
 bindings/**/bin/*

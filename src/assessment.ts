@@ -135,7 +135,7 @@ export interface Assessment {
     score?: number;
   };
   firewallPolicyAssessment?: {
-    error: {
+    error?: {
       code?: number;
       message?: string;
       status?: number | string;

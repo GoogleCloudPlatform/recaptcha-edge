@@ -21,6 +21,7 @@
 
 import {
   CloudflareContext,
+  FetchApiRequest,
   recaptchaConfigFromEnv,
   callCreateAssessment,
   RecaptchaError,
@@ -36,14 +37,18 @@ import {
  */
 async function recaptchaRiskVerdict(rcctx: CloudflareContext, request: Request): Promise<"allow" | "block"> {
   try {
-    const assessment = await callCreateAssessment(rcctx, request);
-    if (assessment.risk_analysis.score <= 0.3) {
+    const assessment = await callCreateAssessment(rcctx, new FetchApiRequest(request));
+    let score = assessment?.riskAnalysis?.score ?? 0.1;
+    if (score <= 0.3) {
       return "block";
     }
-  } catch (e: RecaptchaError) {
+  } catch (e) {
+    if (e instanceof RecaptchaError) {
     // a RecaptchaError can occur due to misconfiguration, network issues or parsing errors.
     // Depending on the cause, each RecaptchaError has a recommended action of {allow | block}.
-    return e.recommended_action_enum();
+      return e.recommended_action_enum();
+    }
+    throw e;
   }
   return "allow";
 }

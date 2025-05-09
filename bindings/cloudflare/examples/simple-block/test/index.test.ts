@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-import { testing } from './index'
-import { createExecutionContext, env, fetchMock, SELF, waitOnExecutionContext } from "cloudflare:test";
-import { afterEach, beforeAll, expect, test } from "vitest";
+// test/index.spec.ts
+import { createExecutionContext, env, SELF, fetchMock, waitOnExecutionContext } from "cloudflare:test";
+import { expect, test, beforeAll, afterEach } from "vitest";
+import worker from "../src/index";
+import { testing } from "@google-cloud/recaptcha-cloudflare";
 
-// @ts-expect-error
+// For now, you'll need to do something like this to get a correctly-typed
+// `Request` to pass to `worker.fetch()`.
 const IncomingRequest = Request<unknown, IncomingRequestCfProperties>;
 
 beforeAll(() => {
@@ -30,15 +33,14 @@ beforeAll(() => {
 // Ensure we matched every mock we defined
 afterEach(() => fetchMock.assertNoPendingInterceptors());
 
-test("nomatch-ok", async () => {
-  // Mock the first fetch request to get firewall policies
-  fetchMock
-    .get("https://recaptchaenterprise.googleapis.com")
-    .intercept({
-      path: "/v1/projects/12345/firewallpolicies?key=abc123&page_size=1000",
-    })
-    .reply(200, JSON.stringify({ firewallPolicies: testing.policies }));
-  // Mock the second fetch request to get assessment
+test("allow", async () => {
+  const request = new IncomingRequest("http://example.com/condition/scorelow", {
+    headers: {
+      "X-Recaptcha-Token": "action-token",
+      "CF-Connecting-IP": "1.2.3.4",
+      "user-agent": "test-user-agent",
+    },
+  });
   fetchMock
     .get("https://recaptchaenterprise.googleapis.com")
     .intercept({
@@ -56,7 +58,6 @@ test("nomatch-ok", async () => {
             headers: ["cf-connecting-ip:1.2.3.4", "user-agent:test-user-agent", "x-recaptcha-token:action-token"],
             requestedUri: "http://example.com/condition/scorelow",
             userAgent: "test-user-agent",
-            firewallPolicyEvaluation: true,
           },
           assessmentEnvironment: {
             client: "@google-cloud/recaptcha-cloudflare",
@@ -66,21 +67,14 @@ test("nomatch-ok", async () => {
         return JSON.stringify(parsedBody) == JSON.stringify(expected);
       },
     })
-    .reply(200, JSON.stringify({ firewallPolicyAssessment: {} }));
-  // Mock the third fetch request to the actual website
+    .reply(200, JSON.stringify(testing.good_assessment));
+
   fetchMock.get("http://example.com").intercept({ path: "/condition/scorelow" }).reply(200, "<HTML>Hello World</HTML>");
-  // @ts-expect-error
-  const req = new IncomingRequest("http://example.com/condition/scorelow", {
-    headers: {
-      "X-Recaptcha-Token": "action-token",
-      "CF-Connecting-IP": "1.2.3.4",
-      "user-agent": "test-user-agent",
-    },
-  });
-  // Create an empty context to pass to `worker.fetch()`
+
+  // Create an empty context to pass to `worker.fetch()`.
   const ctx = createExecutionContext();
-  const res = await SELF.fetch(req, env, ctx);
+  const response = await worker.fetch(request, env, ctx);
   // Wait for all `Promise`s passed to `ctx.waitUntil()` to settle before running test assertions
   await waitOnExecutionContext(ctx);
-  expect(await res.text()).toBe("<HTML>Hello World</HTML>");
+  expect(await response.text()).toEqual("<HTML>Hello World</HTML>");
 });
