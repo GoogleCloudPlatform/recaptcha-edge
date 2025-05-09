@@ -1305,7 +1305,7 @@ test("applyPreRequestActions - non-terminal", async () => {
 
 test("applyPostResponseActions", async () => {
   const context = new TestContext(testConfig);
-  const inputResp: Promise<EdgeResponse> = Promise.resolve({
+  const inputResp: Promise<any> = Promise.resolve({
     status: 200,
     headers: new Headers(),
     text: () => "<HTML>Hello World</HTML>",

@@ -21,9 +21,8 @@
 
 import {
   CloudflareContext,
-  FetchApiRequest,
   recaptchaConfigFromEnv,
-  callCreateAssessment,
+  createAssessment,
   RecaptchaError,
 } from "@google-cloud/recaptcha-cloudflare";
 
@@ -37,7 +36,7 @@ import {
  */
 async function recaptchaRiskVerdict(rcctx: CloudflareContext, request: Request): Promise<"allow" | "block"> {
   try {
-    const assessment = await callCreateAssessment(rcctx, new FetchApiRequest(request));
+    const assessment = await createAssessment(rcctx, request);
     let score = assessment?.riskAnalysis?.score ?? 0.1;
     if (score <= 0.3) {
       return "block";
