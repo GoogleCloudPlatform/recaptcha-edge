@@ -54,7 +54,7 @@ test("nomatch-ok", async () => {
             wafTokenAssessment: true,
             userIpAddress: "1.2.3.4",
             headers: ["cf-connecting-ip:1.2.3.4", "user-agent:test-user-agent", "x-recaptcha-token:action-token"],
-            requestedUri: "http://example.com/condition/scorelow",
+            requestedUri: "http://example.com/condition/blockifscorelow",
             userAgent: "test-user-agent",
             firewallPolicyEvaluation: true,
           },
@@ -68,9 +68,9 @@ test("nomatch-ok", async () => {
     })
     .reply(200, JSON.stringify({ firewallPolicyAssessment: {} }));
   // Mock the third fetch request to the actual website
-  fetchMock.get("http://example.com").intercept({ path: "/condition/scorelow" }).reply(200, "<HTML>Hello World</HTML>");
+  fetchMock.get("http://example.com").intercept({ path: "/condition/blockifscorelow" }).reply(200, "<HTML>Hello World</HTML>");
   // @ts-expect-error
-  const req = new IncomingRequest("http://example.com/condition/scorelow", {
+  const req = new IncomingRequest("http://example.com/condition/blockifscorelow", {
     headers: {
       "X-Recaptcha-Token": "action-token",
       "CF-Connecting-IP": "1.2.3.4",

@@ -484,7 +484,7 @@ test("localPolicyAssessment-noMatch", async () => {
 
 test("localPolicyAssessment-matchNontrivialCondition", async () => {
   const context = new TestContext(testConfig);
-  const req = new FetchApiRequest("https://www.example.com/condition/scorelow");
+  const req = new FetchApiRequest("https://www.example.com/condition/blockifscorelow");
   vi.stubGlobal(
     "fetch",
     vi.fn((url) => {
@@ -1252,7 +1252,7 @@ test("fetchActions-localAssessment", async () => {
 test("fetchActions-createAssessment", async () => {
   const context = new TestContext(testConfig);
   //context.config.sessionJsInjectPath = "/another/path";
-  const req = new FetchApiRequest("https://www.example.com/condition/scorelow");
+  const req = new FetchApiRequest("https://www.example.com/condition/blockifscorelow");
   vi.stubGlobal("fetch", vi.fn());
     (fetch as Mock).mockImplementationOnce(() =>
       Promise.resolve({
