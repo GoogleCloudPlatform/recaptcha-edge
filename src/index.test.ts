@@ -793,7 +793,7 @@ test("evaluatePolicyAssessment-errJson", async () => {
 
 test("processRequest-ok", async () => {
   const context = new TestContext(testConfig);
-  const req = new FetchApiRequest("https://www.example.com/condition/scorehigh");
+  const req = new FetchApiRequest("https://www.example.com/condition/allowifscorehigh");
   vi.stubGlobal("fetch", vi.fn());
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
