@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+/**
+ * @fileoverview Exposes convenient wrappers to underlying API methods or abstractions with
+ * platform specific types.
+ */
+
 // eslint-disable-next-line  @typescript-eslint/no-unused-vars
 import {
   callCreateAssessment,
