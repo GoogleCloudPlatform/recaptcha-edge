@@ -24,6 +24,7 @@ import {
   callCreateAssessment,
   callListFirewallPolicies,
   processRequest as baseProcessRequest,
+  pathMatch as basePathMatch,
   Event,
   FetchApiRequest,
   FetchApiResponse,
@@ -36,6 +37,10 @@ import { CloudflareContext } from "./context";
 export async function processRequest(ctx: CloudflareContext, r: Request): Promise<Response> {
   const v = await baseProcessRequest(ctx, new FetchApiRequest(r));
   return (v as FetchApiResponse).asResponse();
+}
+
+export function pathMatch(req: Request, patterns: string | [string]): boolean {
+  return basePathMatch(new FetchApiRequest(req), patterns);
 }
 
 export function createAssessment(

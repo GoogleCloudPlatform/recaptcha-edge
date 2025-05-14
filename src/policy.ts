@@ -48,7 +48,7 @@ export const RECAPTCHA_JS = "https://www.google.com/recaptcha/enterprise.js";
 /**
  * Checks whether a particular policy path pattern matches the incoming request.
  */
-export function policyPathMatch(policy: FirewallPolicy, req: EdgeRequest): boolean {
+export function policyPathMatch(req: EdgeRequest, policy: FirewallPolicy): boolean {
   const url = new URL(req.url);
   if (!policy.path) {
     return true;
@@ -57,13 +57,31 @@ export function policyPathMatch(policy: FirewallPolicy, req: EdgeRequest): boole
 }
 
 /**
+ * Checks whether a particular incoming request matching a set of glob path patterns.
+ * An empty string is considered a 'wildcard' and matches all paths.
+ */
+export function pathMatch(req: EdgeRequest, patterns: [string] | string): boolean {
+  const url = new URL(req.url);
+  if (typeof patterns === "string") {
+    patterns = [patterns];
+  }
+  for (const pattern of patterns) {
+    if (!pattern || picomatch.isMatch(url.pathname, pattern)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
+/**
  * Evaluate the condition of a policy locally, to the best of our ability.
  *
  * @return true if the condition matches, false if it doesn't match, or
  * 'unknown' if we can't evaluate the condition locally.
  */
 // eslint-disable-next-line  @typescript-eslint/no-unused-vars
-export function policyConditionMatch(policy: FirewallPolicy, req: EdgeRequest): boolean | "unknown" {
+export function policyConditionMatch(req: EdgeRequest, policy: FirewallPolicy): boolean | "unknown" {
   // An empty condition imples 'true' and always matches.
   if (!policy?.condition?.trim()) {
     return true;
@@ -119,8 +137,8 @@ export async function localPolicyAssessment(context: RecaptchaContext, req: Edge
   }
   const policies = resp.firewallPolicies ?? [];
   for (const policy of policies) {
-    if (policyPathMatch(policy, req)) {
-      const conditionMatch = policyConditionMatch(policy, req);
+    if (policyPathMatch(req, policy)) {
+      const conditionMatch = policyConditionMatch(req, policy);
       if (conditionMatch === "unknown") {
         return "recaptcha-required";
       } else if (conditionMatch) {
