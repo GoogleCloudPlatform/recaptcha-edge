@@ -22,14 +22,14 @@ export const policies: FirewallPolicy[] = [
     {
         name: "projects/12345/firewallpolicies/400",
         description: "condition-allow-score-high",
-        path: "/condition/scorehigh",
+        path: "/condition/allowifscorehigh",
         condition: "recaptcha.score > 0.5",
         actions: [{ block: {} }],
     },
     {
         name: "projects/12345/firewallpolicies/500",
         description: "condition-block-score-low",
-        path: "/condition/scorelow",
+        path: "/condition/blockifscorelow",
         condition: "recaptcha.score < 0.3",
         actions: [{ block: {} }],
     },

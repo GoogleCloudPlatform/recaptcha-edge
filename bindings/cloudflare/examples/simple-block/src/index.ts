@@ -17,13 +17,15 @@
 /**
  * A simple example on how to use the reCAPTCHA Cloudflare library to
  * make decisions based on score.
+ *
+ * This example calls Create assessment based on configuration context from CloudFlare's Env, 
+ * and automatically extracted information from the incoming request.
  */
 
 import {
   CloudflareContext,
-  FetchApiRequest,
   recaptchaConfigFromEnv,
-  callCreateAssessment,
+  createAssessment,
   RecaptchaError,
 } from "@google-cloud/recaptcha-cloudflare";
 
@@ -36,19 +38,24 @@ import {
  * @returns "allow" or "block".
  */
 async function recaptchaRiskVerdict(rcctx: CloudflareContext, request: Request): Promise<"allow" | "block"> {
+  const DEFAULT_SCORE = 0.7;
   try {
-    const assessment = await callCreateAssessment(rcctx, new FetchApiRequest(request));
-    let score = assessment?.riskAnalysis?.score ?? 0.1;
+    const assessment = await createAssessment(rcctx, request);
+    // A score should always be in the assessment, but in the event of an error we will use
+    // a default score.
+    let score = assessment?.riskAnalysis?.score ?? DEFAULT_SCORE;
     if (score <= 0.3) {
       return "block";
     }
   } catch (e) {
     if (e instanceof RecaptchaError) {
-    // a RecaptchaError can occur due to misconfiguration, network issues or parsing errors.
-    // Depending on the cause, each RecaptchaError has a recommended action of {allow | block}.
+      // a RecaptchaError can occur due to misconfiguration, network issues or parsing errors.
+      // Depending on the cause, each RecaptchaError has a recommended action of {allow | block}.
       return e.recommended_action_enum();
     }
-    throw e;
+    // The recaptcha library should always wrap errors in the RecaptchaError type. In the event of
+    // an uncaught error, allow to avoid blocking customers.
+    return "allow";
   }
   return "allow";
 }
@@ -58,9 +65,10 @@ export default {
     const rcctx = new CloudflareContext(env, ctx, recaptchaConfigFromEnv(env));
 
     if ((await recaptchaRiskVerdict(rcctx, request)) == "block") {
-      // Or return a templated HTML page.
-      return new Response("This request has been blocked for security reasons.");
+      // Or: we could return a templated HTML page.
+      return new Response("This request has been blocked for security reasons.", { status: 403 });
     }
+    // forward the request to the origin, and return the response.
     return fetch(request);
   },
 } satisfies ExportedHandler<Env>;

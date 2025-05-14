@@ -484,7 +484,7 @@ test("localPolicyAssessment-noMatch", async () => {
 
 test("localPolicyAssessment-matchNontrivialCondition", async () => {
   const context = new TestContext(testConfig);
-  const req = new FetchApiRequest("https://www.example.com/condition/scorelow");
+  const req = new FetchApiRequest("https://www.example.com/condition/blockifscorelow");
   vi.stubGlobal(
     "fetch",
     vi.fn((url) => {
@@ -793,7 +793,7 @@ test("evaluatePolicyAssessment-errJson", async () => {
 
 test("processRequest-ok", async () => {
   const context = new TestContext(testConfig);
-  const req = new FetchApiRequest("https://www.example.com/condition/scorehigh");
+  const req = new FetchApiRequest("https://www.example.com/condition/allowifscorehigh");
   vi.stubGlobal("fetch", vi.fn());
   (fetch as Mock).mockImplementationOnce(() =>
     Promise.resolve({
@@ -1252,7 +1252,7 @@ test("fetchActions-localAssessment", async () => {
 test("fetchActions-createAssessment", async () => {
   const context = new TestContext(testConfig);
   //context.config.sessionJsInjectPath = "/another/path";
-  const req = new FetchApiRequest("https://www.example.com/condition/scorelow");
+  const req = new FetchApiRequest("https://www.example.com/condition/blockifscorelow");
   vi.stubGlobal("fetch", vi.fn());
     (fetch as Mock).mockImplementationOnce(() =>
       Promise.resolve({
@@ -1305,7 +1305,7 @@ test("applyPreRequestActions - non-terminal", async () => {
 
 test("applyPostResponseActions", async () => {
   const context = new TestContext(testConfig);
-  const inputResp: Promise<EdgeResponse> = Promise.resolve({
+  const inputResp: Promise<any> = Promise.resolve({
     status: 200,
     headers: new Headers(),
     text: () => "<HTML>Hello World</HTML>",

@@ -33,8 +33,30 @@ beforeAll(() => {
 // Ensure we matched every mock we defined
 afterEach(() => fetchMock.assertNoPendingInterceptors());
 
+let mock_assessment_request = {
+  path: "/v1/projects/12345/assessments?key=abc123",
+  method: "POST",
+  body: (body: any) => {
+    let parsedBody = JSON.parse(body);
+    parsedBody.assessmentEnvironment = undefined;
+    let expected = {
+      event: {
+        token: "action-token",
+        siteKey: "action-site-key",
+        wafTokenAssessment: true,
+        userIpAddress: "1.2.3.4",
+        headers: ["cf-connecting-ip:1.2.3.4", "user-agent:test-user-agent", "x-recaptcha-token:action-token"],
+        requestedUri: "http://example.com/myapi",
+        userAgent: "test-user-agent",
+      },
+      assessmentEnvironment: undefined,
+    };
+    return JSON.stringify(parsedBody) == JSON.stringify(expected);
+  },
+};
+
 test("allow", async () => {
-  const request = new IncomingRequest("http://example.com/condition/scorelow", {
+  const request = new IncomingRequest("http://example.com/myapi", {
     headers: {
       "X-Recaptcha-Token": "action-token",
       "CF-Connecting-IP": "1.2.3.4",
@@ -43,38 +65,38 @@ test("allow", async () => {
   });
   fetchMock
     .get("https://recaptchaenterprise.googleapis.com")
-    .intercept({
-      path: "/v1/projects/12345/assessments?key=abc123",
-      method: "POST",
-      body: (body) => {
-        let parsedBody = JSON.parse(body);
-        parsedBody.assessmentEnvironment.version = undefined;
-        let expected = {
-          event: {
-            token: "action-token",
-            siteKey: "action-site-key",
-            wafTokenAssessment: true,
-            userIpAddress: "1.2.3.4",
-            headers: ["cf-connecting-ip:1.2.3.4", "user-agent:test-user-agent", "x-recaptcha-token:action-token"],
-            requestedUri: "http://example.com/condition/scorelow",
-            userAgent: "test-user-agent",
-          },
-          assessmentEnvironment: {
-            client: "@google-cloud/recaptcha-cloudflare",
-            version: undefined,
-          },
-        };
-        return JSON.stringify(parsedBody) == JSON.stringify(expected);
-      },
-    })
+    .intercept(mock_assessment_request)
     .reply(200, JSON.stringify(testing.good_assessment));
 
-  fetchMock.get("http://example.com").intercept({ path: "/condition/scorelow" }).reply(200, "<HTML>Hello World</HTML>");
+  fetchMock.get("http://example.com").intercept({ path: "/myapi" }).reply(200, "<HTML>Hello World</HTML>");
 
   // Create an empty context to pass to `worker.fetch()`.
   const ctx = createExecutionContext();
   const response = await worker.fetch(request, env, ctx);
   // Wait for all `Promise`s passed to `ctx.waitUntil()` to settle before running test assertions
   await waitOnExecutionContext(ctx);
+  expect(response.status).toEqual(200);
   expect(await response.text()).toEqual("<HTML>Hello World</HTML>");
+});
+
+test("block", async () => {
+  const request = new IncomingRequest("http://example.com/myapi", {
+    headers: {
+      "X-Recaptcha-Token": "action-token",
+      "CF-Connecting-IP": "1.2.3.4",
+      "user-agent": "test-user-agent",
+    },
+  });
+  fetchMock
+    .get("https://recaptchaenterprise.googleapis.com")
+    .intercept(mock_assessment_request)
+    .reply(200, JSON.stringify(testing.bad_assessment));
+
+  // Create an empty context to pass to `worker.fetch()`.
+  const ctx = createExecutionContext();
+  const response = await worker.fetch(request, env, ctx);
+  // Wait for all `Promise`s passed to `ctx.waitUntil()` to settle before running test assertions
+  await waitOnExecutionContext(ctx);
+  expect(response.status).toEqual(403);
+  expect(await response.text()).equals("This request has been blocked for security reasons.");
 });
