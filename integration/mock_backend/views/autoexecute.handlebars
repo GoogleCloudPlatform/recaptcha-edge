@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>AutoExecute with V3 - XMLHttpRequest demo</title>
+</head>
+
+<body>
+  <h2>AutoExecute with V3 - XMLHttpRequest demo</h2>
+  <div>
+    <button id="execute-button">Auto Execute (with Token)</button>
+    <input id="action-input" type="text" placeholder="Action" />
+  </div>
+  <div>
+    <button id="no-execute-button">No Auto Execute (No Token)</button>
+      <input id="action-input-2" type="text" placeholder="Action" />
+  </div>
+  <br>
+  <div id="response-from-promise"></div>
+
+  <script>
+
+    function showToken(id, token) {
+      const el = document.getElementById(id);
+      el.textContent = token;
+    }
+
+    async function makeGetRequest(url) {
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', url);
+            xhr.responseType = 'json';
+            xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    resolve(xhr.response);
+                } else {
+                    reject(`Request failed with status: ${xhr.status}`);
+                }
+            };
+            xhr.onerror = () => {
+                reject('Network error occurred.');
+            };
+            xhr.send();
+        });
+    }
+
+    async function onSuccess(response, message) {
+        showToken('response-from-promise', message);
+        showToken('response-from-promise', JSON.stringify(response));
+    }
+
+    function onError(reason) {
+      alert('Response promise rejected: ' + reason);
+      showToken('response-from-promise', `Error: ${reason}`);
+    }
+
+    document.querySelector('#execute-button').addEventListener('click', async function () {
+      var input = document.querySelector('#action-input');
+      var action = input.value;
+      input.value = '';
+      try {
+          const url = 'ae-yes';
+          const response = await makeGetRequest(url);
+          await onSuccess(response, `Request with token completed`);
+      } catch (error) {
+          onError(error);
+      }
+    });
+
+    document.querySelector('#no-execute-button').addEventListener('click', async function () {
+      var input = document.querySelector('#action-input-2');
+      var action = input.value;
+      input.value = '';
+       try {
+          const url = 'ae-no';
+          const response = await makeGetRequest(url);
+          await onSuccess(response, `Request without token completed`);
+      } catch (error) {
+          onError(error);
+      }
+    });
+  </script>
+</body>
+
+</html>
