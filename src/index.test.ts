@@ -46,7 +46,7 @@ import {
   EdgeRequestInit,
   ListFirewallPoliciesResponse,
   CHALLENGE_PAGE_URL,
-  testing
+  testing,
 } from "./index";
 
 import { FetchApiRequest, FetchApiResponse } from "./fetchApi";
@@ -554,102 +554,72 @@ test("localPolicyAssessment-performance", async () => {
 
 test("policyPathMatch", async () => {
   expect(
-    policyPathMatch(
-      {
-        name: "projects/12345/firewallpolicies/100",
-        description: "test-description",
-        path: "/goodpath",
-        condition: "true",
-        // 'type' isn't a part of the interface, but is added for testing.
-        actions: [{ allow: {} }],
-      },
-      new FetchApiRequest("https://www.example.com/goodpath"),
-    ),
+    policyPathMatch(new FetchApiRequest("https://www.example.com/goodpath"), {
+      name: "projects/12345/firewallpolicies/100",
+      description: "test-description",
+      path: "/goodpath",
+      condition: "true",
+      // 'type' isn't a part of the interface, but is added for testing.
+      actions: [{ allow: {} }],
+    }),
   ).toEqual(true);
   expect(
-    policyPathMatch(
-      {
-        path: "/goo?path",
-      },
-      new FetchApiRequest("https://www.example.com/goodpath"),
-    ),
+    policyPathMatch(new FetchApiRequest("https://www.example.com/goodpath"), {
+      path: "/goo?path",
+    }),
   ).toEqual(true);
-  expect(policyPathMatch({}, new FetchApiRequest("https://www.example.com/goodpath"))).toEqual(true);
+  expect(policyPathMatch(new FetchApiRequest("https://www.example.com/goodpath"), {})).toEqual(true);
   expect(
-    policyPathMatch(
-      {
-        path: "/goodppath",
-      },
-      new FetchApiRequest("https://www.example.com/goodpath"),
-    ),
+    policyPathMatch(new FetchApiRequest("https://www.example.com/goodpath"), {
+      path: "/goodppath",
+    }),
   ).toEqual(false);
   expect(
-    policyPathMatch(
-      {
-        path: "/badppath",
-      },
-      new FetchApiRequest("https://www.example.com/badpath"),
-    ),
+    policyPathMatch(new FetchApiRequest("https://www.example.com/badpath"), {
+      path: "/badppath",
+    }),
   ).toEqual(false);
   expect(
-    policyPathMatch(
-      {
-        path: "/wild/*/path",
-      },
-      new FetchApiRequest("https://www.example.com/wild/card/path"),
-    ),
+    policyPathMatch(new FetchApiRequest("https://www.example.com/wild/card/path"), {
+      path: "/wild/*/path",
+    }),
   ).toEqual(true);
   expect(
-    policyPathMatch(
-      {
-        path: "/wild/card/*a*",
-      },
-      new FetchApiRequest("https://www.example.com/wild/card/path"),
-    ),
+    policyPathMatch(new FetchApiRequest("https://www.example.com/wild/card/path"), {
+      path: "/wild/card/*a*",
+    }),
   ).toEqual(true);
   expect(
-    policyPathMatch(
-      {
-        path: "/wild/**/path",
-      },
-      new FetchApiRequest("https://www.example.com/wild/long/card/path"),
-    ),
+    policyPathMatch(new FetchApiRequest("https://www.example.com/wild/long/card/path"), {
+      path: "/wild/**/path",
+    }),
   ).toEqual(true);
 });
 
 test("policyConditionMatch", async () => {
   expect(
-    policyConditionMatch(
-      {
-        name: "projects/12345/firewallpolicies/100",
-        description: "test-description",
-        path: "/goodpath",
-        condition: "true",
-        // 'type' isn't a part of the interface, but is added for testing.
-        actions: [{ allow: {} }],
-      },
-      new FetchApiRequest("https://www.example.com/goodpath"),
-    ),
+    policyConditionMatch(new FetchApiRequest("https://www.example.com/goodpath"), {
+      name: "projects/12345/firewallpolicies/100",
+      description: "test-description",
+      path: "/goodpath",
+      condition: "true",
+      // 'type' isn't a part of the interface, but is added for testing.
+      actions: [{ allow: {} }],
+    }),
   ).toEqual(true);
 
-  expect(policyConditionMatch({}, new FetchApiRequest("https://www.example.com/goodpath"))).toEqual(true);
+  expect(policyConditionMatch(new FetchApiRequest("https://www.example.com/goodpath"), {})).toEqual(true);
 
   expect(
-    policyConditionMatch(
-      {
-        condition: "false",
-      },
-      new FetchApiRequest("https://www.example.com/goodpath"),
-    ),
+    policyConditionMatch(new FetchApiRequest("https://www.example.com/goodpath"), {
+      condition: "false",
+    }),
   ).toEqual(false);
 
   expect(
-    policyConditionMatch(
-      {
-        condition: "recaptcha.score > 0.5",
-      },
-      new FetchApiRequest("https://www.example.com/goodpath"),
-    ),
+    policyConditionMatch(new FetchApiRequest("https://www.example.com/goodpath"), {
+      condition: "recaptcha.score > 0.5",
+    }),
   ).toEqual("unknown");
 });
 
@@ -1254,7 +1224,8 @@ test("fetchActions-createAssessment", async () => {
   //context.config.sessionJsInjectPath = "/another/path";
   const req = new FetchApiRequest("https://www.example.com/condition/blockifscorelow");
   vi.stubGlobal("fetch", vi.fn());
-    (fetch as Mock).mockImplementationOnce(() =>
+  (fetch as Mock)
+    .mockImplementationOnce(() =>
       Promise.resolve({
         status: 200,
         headers: new Headers(),
@@ -1266,8 +1237,7 @@ test("fetchActions-createAssessment", async () => {
       return Promise.resolve({
         status: 200,
         headers: new Headers(),
-        json: () =>
-          Promise.resolve(testing.bad_assessment),
+        json: () => Promise.resolve(testing.bad_assessment),
       });
     });
   const actions = await fetchActions(context, req);

@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-/**
- * @fileoverview reCAPTCHA Enterprise Library for Cloudflare Workers.
- */
+// vite.config.ts
+import { defineWorkersConfig } from "@cloudflare/vitest-pool-workers/config";
 
-export {
-  NetworkError,
-  ParseError,
-  RecaptchaConfig,
-  RecaptchaError,
-  pathMatch,
-  testing,
-} from "@google-cloud/recaptcha-edge";
-
-export { CloudflareContext, recaptchaConfigFromEnv } from "./context";
-export { processRequest, createAssessment, listFirewallPolicies } from "./wrappers";
+export default defineWorkersConfig({
+  test: {
+    include: ["test/**/*.test.{ts,tsx}"],
+    poolOptions: {
+      workers: {
+        wrangler: { configPath: "./wrangler.test.toml" },
+        main: "./src/index.ts",
+        miniflare: {
+          kvNamespaces: ["TEST_NAMESPACE"],
+        },
+      },
+    },
+  },
+});
