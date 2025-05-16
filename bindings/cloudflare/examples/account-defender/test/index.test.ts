@@ -41,11 +41,11 @@ let mock_assessment_request = {
     parsedBody.assessmentEnvironment = undefined;
     let expected = {
       event: {
-        token: "action-token",
+        token: "mytoken",
         siteKey: "action-site-key",
         wafTokenAssessment: true,
         userIpAddress: "1.2.3.4",
-        headers: ["cf-connecting-ip:1.2.3.4", "user-agent:test-user-agent", "x-recaptcha-token:action-token"],
+        headers: ["cf-connecting-ip:1.2.3.4", "user-agent:test-user-agent"],
         requestedUri: "http://example.com/login",
         userAgent: "test-user-agent",
         userInfo: {
@@ -62,11 +62,10 @@ test("allow", async () => {
   const request = new IncomingRequest("http://example.com/login", {
     method: "POST",
     headers: {
-      "X-Recaptcha-Token": "action-token",
       "CF-Connecting-IP": "1.2.3.4",
       "user-agent": "test-user-agent",
     },
-    body: '{"username": "myusername"}',
+    body: 'username=myusername&g-recaptcha-response=mytoken',
   });
   fetchMock
     .get("https://recaptchaenterprise.googleapis.com")
@@ -75,7 +74,7 @@ test("allow", async () => {
 
   fetchMock
     .get("http://example.com")
-    .intercept({ path: "/login", method: "POST", body: '{"username": "myusername"}' })
+    .intercept({ path: "/login", method: "POST", body: 'username=myusername&g-recaptcha-response=mytoken' })
     .reply(200, "<HTML>Hello World</HTML>");
 
   // Create an empty context to pass to `worker.fetch()`.
@@ -95,12 +94,12 @@ test("allow-nomatch", async () => {
       "CF-Connecting-IP": "1.2.3.4",
       "user-agent": "test-user-agent",
     },
-    body: '{"username": "myusername"}',
+    body: 'username=myusername&g-recaptcha-response=mytoken',
   });
 
   fetchMock
     .get("http://example.com")
-    .intercept({ path: "/uninteresting", method: "POST", body: '{"username": "myusername"}' })
+    .intercept({ path: "/uninteresting", method: "POST", body: 'username=myusername&g-recaptcha-response=mytoken' })
     .reply(200, "<HTML>Hello World</HTML>");
 
   // Create an empty context to pass to `worker.fetch()`.
@@ -120,7 +119,7 @@ test("block", async () => {
       "CF-Connecting-IP": "1.2.3.4",
       "user-agent": "test-user-agent",
     },
-    body: '{"username": "myusername"}',
+    body: 'username=myusername&g-recaptcha-response=mytoken',
   });
   fetchMock
     .get("https://recaptchaenterprise.googleapis.com")

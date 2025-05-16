@@ -39,8 +39,8 @@ export async function processRequest(ctx: CloudflareContext, r: Request): Promis
   return (v as FetchApiResponse).asResponse();
 }
 
-export function pathMatch(req: Request, patterns: string | [string]): boolean {
-  return basePathMatch(new FetchApiRequest(req), patterns);
+export function pathMatch(req: Request, patterns: string | [string], method?: string): boolean {
+  return basePathMatch(new FetchApiRequest(req), patterns, method);
 }
 
 export function createAssessment(

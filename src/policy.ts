@@ -59,8 +59,15 @@ export function policyPathMatch(req: EdgeRequest, policy: FirewallPolicy): boole
 /**
  * Checks whether a particular incoming request matching a set of glob path patterns.
  * An empty string is considered a 'wildcard' and matches all paths.
+ * @param req the incoming request to match against
+ * @param patterns the path glob pattern(s) to try matching
+ * @param method (optional) A HTTP method (GET, POST,...) to check against the request
+ * @returns true if any path pattern (and method) matches the request.
  */
-export function pathMatch(req: EdgeRequest, patterns: [string] | string): boolean {
+export function pathMatch(req: EdgeRequest, patterns: [string] | string, method?: string): boolean {
+  if(method && method != req.method) {
+    return false;
+  }
   const url = new URL(req.url);
   if (typeof patterns === "string") {
     patterns = [patterns];

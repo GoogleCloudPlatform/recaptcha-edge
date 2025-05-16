@@ -29,21 +29,32 @@ import {
   RecaptchaError,
   pathMatch,
 } from "@google-cloud/recaptcha-cloudflare";
-import { userInfo } from "os";
 
 /**
- * A basic function that will call recaptcha's CreateAssessment with all appropriate
- * data extracted from the incoming request and registered config context. A simple
- * Allow/Block verdict will be made based on the risk score in the Assessment.
+ * A function that will call recaptcha's CreateAssessment with all appropriate
+ * data extracted from the incoming request and registered config context. An
+ * Allow/Block verdict will be made based on the accountDefenderAssessment.
+ * 
+ * This function is intended to be used on form submission POST requests with reCAPTCHA V3 integration and
+ * Account Defender enabled in the sitekey. 
+ * see: https://cloud.google.com/recaptcha/docs/account-defender#integration-workflow
+ * The client integration should put the token in the 'g-recaptcha-response' form field.
+ * The user's username is expected in the 'username' form field. 
  * @param request The incoming Cloudflare Request.
  * @param rcctx A recaptcha.CloudflareContext object.
  * @returns "allow" or "block".
  */
 async function recaptchaLoginAccountVerdict(rcctx: CloudflareContext, request: Request): Promise<"allow" | "block"> {
   try {
-    // Read the username from the incoming request body.
-    let req_body: any = await request.clone().json();
-    let username = req_body?.username ?? "";
+    // Read the username and token from the incoming request form data.
+    const bodyText = await request.clone().text();
+    const formData = new URLSearchParams(bodyText);
+    const token = formData.get("g-recaptcha-response");
+    const username = formData.get("username");
+    // If the token or username is not found, block.
+    if (!token || !username) {
+      return "block";
+    }
     const assessment = await createAssessment(rcctx, request, undefined, {userInfo: {accountId: username}});
     // Block all requests that Account Defender identifies as 'suspicious login activity'.
     if ((assessment.accountDefenderAssessment?.labels ?? []).includes("SUSPICIOUS_LOGIN_ACTIVITY")) {
@@ -66,7 +77,7 @@ async function recaptchaLoginAccountVerdict(rcctx: CloudflareContext, request: R
 export default {
   async fetch(request, env, ctx): Promise<Response> {
     const rcctx = new CloudflareContext(env, ctx, recaptchaConfigFromEnv(env));
-    if (pathMatch(request, "/login") && (await recaptchaLoginAccountVerdict(rcctx, request)) == "block") {
+    if (pathMatch(request, "/login", "POST") && (await recaptchaLoginAccountVerdict(rcctx, request)) == "block") {
       // Or: we could return a templated HTML page.
       return new Response("This request has been blocked for security reasons.", { status: 403 });
     }

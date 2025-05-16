@@ -25,6 +25,7 @@ import {
   callListFirewallPolicies,
   Event,
   processRequest as baseProcessRequest,
+  pathMatch as basePathMatch,
   FetchApiRequest,
   FetchApiResponse,
   Assessment,
@@ -32,6 +33,10 @@ import {
 } from "@google-cloud/recaptcha-edge";
 
 import { FastlyContext, recaptchaConfigFromConfigStore } from "./context";
+
+export function pathMatch(req: Request, patterns: string | [string], method?: string): boolean {
+  return basePathMatch(new FetchApiRequest(req), patterns, method);
+}
 
 export async function processRequest(ctx: FastlyContext, r: Request): Promise<Response> {
   const v = await baseProcessRequest(ctx, new FetchApiRequest(r));
