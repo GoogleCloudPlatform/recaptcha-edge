@@ -54,7 +54,7 @@ export class FetchApiRequest implements EdgeRequest {
     return this.req.clone().text();
   }
 
-  async getBodyJson(): Promise<unknown> {
+  async getBodyJson(): Promise<any> {
     return this.req.clone().json();
   }
 

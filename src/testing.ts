@@ -43,11 +43,13 @@ export const redirect_policy = policies[2];
 
 export const good_assessment: Assessment = {
     riskAnalysis: { score: 0.9 },
-    firewallPolicyAssessment: {firewallPolicy: allow_policy}
+    firewallPolicyAssessment: {firewallPolicy: allow_policy},
+    accountDefenderAssessment: {labels: ["PROFILE_MATCH"]}
 }
 
 export const bad_assessment: Assessment = {
     name: "projects/12345/assessments/1234567890",
     riskAnalysis: { score: 0.1 },
-    firewallPolicyAssessment: {firewallPolicy: conditional_block_policy}
+    firewallPolicyAssessment: {firewallPolicy: conditional_block_policy},
+    accountDefenderAssessment: {labels: ["SUSPICIOUS_LOGIN_ACTIVITY"]}
 }

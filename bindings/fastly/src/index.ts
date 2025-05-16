@@ -14,7 +14,14 @@
  * limitations under the License.
  */
 
-export { NetworkError, ParseError, RecaptchaConfig, RecaptchaError, testing } from "@google-cloud/recaptcha-edge";
+export {
+  NetworkError,
+  ParseError,
+  RecaptchaConfig,
+  RecaptchaError,
+  pathMatch,
+  testing,
+} from "@google-cloud/recaptcha-edge";
 
 export { FastlyContext, recaptchaConfigFromConfigStore } from "./context";
 export { processRequest, createAssessment, listFirewallPolicies } from "./wrappers";

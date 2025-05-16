@@ -40,6 +40,19 @@ jobs:
       - run: npm run build:worker
       - run: npm run pack
       - run: npm test
+      - name: Install and test examples
+        run: |
+          set -e # Exit immediately if a command exits with a non-zero status
+          for example_dir in examples/*; do
+            if [ -d "$example_dir" ] && [ -f "$example_dir/package.json" ]; then
+              echo "-----------------------------------------"
+              echo "Processing example: $example_dir"
+              cd "$example_dir"
+              npm install
+              npm run test
+              cd ../.. # Go back to the root of the project
+            fi
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: cloudflare-dist
