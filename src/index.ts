@@ -18,7 +18,15 @@
  * @fileoverview reCAPTCHA Enterprise TypeScript Library.
  */
 export { InitError, NetworkError, ParseError, RecaptchaError } from "./error";
-export { AllowAction, BlockAction, InjectJsAction, RedirectAction, SetHeaderAction, SubstituteAction } from "./action";
+export {
+  AllowAction,
+  BlockAction,
+  InjectJsAction,
+  RedirectAction,
+  SetHeaderAction,
+  SubstituteAction,
+  Action,
+} from "./action";
 
 export { Assessment, Event, FirewallPolicy, UserInfo } from "./assessment";
 
@@ -26,6 +34,8 @@ import * as action from "./action";
 import * as error from "./error";
 import { Assessment, isRpcError, Event, FirewallPolicy } from "./assessment";
 import { EdgeRequest, EdgeRequestInit, EdgeResponse, EdgeResponseInit } from "./request";
+import * as testing_ from "./testing";
+export const testing = testing_;
 
 export { callCreateAssessment, createPartialEventWithSiteInfo } from "./createAssessment";
 
@@ -42,8 +52,9 @@ export {
   localPolicyAssessment,
   policyConditionMatch,
   policyPathMatch,
+  pathMatch,
   processRequest,
-  callListFirewallPolicies
+  callListFirewallPolicies,
 } from "./policy";
 
 /** @type {string} */
@@ -73,6 +84,7 @@ export interface RecaptchaConfig {
   credentialPath?: string;
   accountId?: string;
   username?: string;
+  challengePageUrl?: string;
 }
 
 export class DebugTrace {

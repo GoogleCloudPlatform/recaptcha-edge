@@ -1,6 +1,6 @@
 {
     "name": "@google-cloud/recaptcha-xlb",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "description": "A reCAPTCHA Enterprise Typescript library for Google External Application Load Balancer Service Extension Callouts",
     "keywords": [
         "recaptcha",
@@ -10,18 +10,17 @@
         "networking"
     ],
     "license": "Apache-2.0",
-    "author": "reCAPTCHA Team <no-reply@google.com>",
-    "private": true,
+    "author": "reCAPTCHA Team <recaptcha-enterprise-support@google.com>",
     "type": "module",
     "dependencies": {
         "@bufbuild/protobuf": "^2.2.3",
         "@connectrpc/connect-node": "^2.0.1",
-        "@google-cloud/recaptcha": "^1.0.0",
+        "@google-cloud/recaptcha-edge": "^1.0.*",
         "memory-cache": "^0.2.0"
     },
     "scripts": {
         "test": "vitest run",
-        "protogen": "npx buf generate https://github.com/envoyproxy/envoy.git#subdir=api,branch=release/create/v1.30 --path envoy/service/ext_proc/v3/external_processor.proto --include-imports"
+        "protogen": "npx buf generate https://github.com/envoyproxy/envoy.git#subdir=api,branch=release/v1.30 --path envoy/service/ext_proc/v3/external_processor.proto --include-imports"
     },
     "devDependencies": {
         "@bufbuild/buf": "^1.50.0",

@@ -1,0 +1,61 @@
+name: Regenerate package-lock.json files
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+# Permissions needed to commit back to the PR branch
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    # Prevent running on commits made by this workflow itself
+    # Checks if the commit author that triggered the workflow is the Actions bot
+    if: github.actor != 'github-actions[bot]'
+
+    steps:
+      - name: Checkout PR Branch
+        uses: actions/checkout@v4
+        with:
+          # Check out the head of the PR branch, not the merge commit
+          ref: ${{ github.head_ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm' # Enable caching for npm dependencies
+
+      - name: Delete existing lock files
+        run: |
+          rm -f package-lock.json # -f ignores errors if file doesn't exist
+          rm -f bindings/akamai/package-lock.json
+          rm -f bindings/cloudflare/package-lock.json
+          rm -f bindings/fastly/package-lock.json
+          rm -f bindings/xlb/package-lock.json
+
+      - name: Install dependencies to generate new lock file
+        run: |
+          npm install
+          npm run build # required for subpackages
+          cd bindings/akamai && npm install && cd ../..
+          cd bindings/cloudflare && npm install && cd ../..
+          cd bindings/fastly && npm install && cd ../..
+          cd bindings/xlb && npm install && cd ../..
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit and push changes
+        run: |
+          git add package-lock.json
+          git add bindings/akamai/package-lock.json
+          git add bindings/cloudflare/package-lock.json
+          git add bindings/fastly/package-lock.json
+          git add bindings/xlb/package-lock.json
+          git commit -m "Regenerate package-lock.json"
+          git push origin ${{ github.head_ref }}

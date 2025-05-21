@@ -1,6 +1,6 @@
 {
   "name": "@google-cloud/recaptcha-akamai",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "A reCAPTCHA Enterprise Typescript Libarary for Akamai Edge Workers.",
   "keywords": [
     "recaptcha",
@@ -9,18 +9,21 @@
     "bot",
     "security"
   ],
-  "homepage": "https://github.com/GoogleCloudPlatform/recaptcha-waf/tree/main/bindings/akamai#readme",
+  "homepage": "https://github.com/GoogleCloudPlatform/recaptcha-edge/tree/main/bindings/akamai#readme",
   "license": "Apache-2.0",
-  "author": "reCAPTCHA Team <no-reply@google.com>",
-  "private": true,
+  "author": "reCAPTCHA Team <recaptcha-enterprise-support@google.com>",
   "type": "module",
   "main": "dist/edge_worker.js",
+  "files": [
+    "dist/"
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/GoogleCloudPlatform/recaptcha-waf.git",
+    "url": "https://github.com/GoogleCloudPlatform/recaptcha-edge.git",
     "directory": "bindings/akamai"
   },
   "scripts": {
+    "prepare": "npm run build",
     "build": "node esbuild.config.js && mv dist/edge_worker.js dist/main.js && cp src/bundle.json dist/",
     "pack": "mkdir pkg && cd dist && tar -czvf akamai.tgz bundle.json main.js && mv akamai.tgz ../pkg/akamai_client.tar.gz",
     "deploy": "",
@@ -28,18 +31,18 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@google-cloud/recaptcha": "^1.0.0",
+    "@google-cloud/recaptcha-edge": "^1.0.*",
     "url-parse": "^1.5.10"
   },
   "devDependencies": {
     "@types/akamai-edgeworkers": "^1.1.18",
-    "@types/node": "^22.9.0",
-    "@types/node-fetch": "^2.6.11",
+    "@types/node": "^22.15.0",
+    "@types/node-fetch": "^2.6.12",
     "@types/request": "^2.48.12",
-    "esbuild": "^0.24.0",
-    "esbuild-plugin-tsc": "^0.4.0",
-    "typescript": "^5.5.3",
-    "vitest": "^2.1.5",
+    "esbuild": "^0.25.0",
+    "esbuild-plugin-tsc": "^0.5.0",
+    "typescript": "^5.8.3",
+    "vitest": "~3.0.0",
     "whatwg-fetch": "^3.6.20"
   },
   "workspaces": [

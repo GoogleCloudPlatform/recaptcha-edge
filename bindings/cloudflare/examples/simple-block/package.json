@@ -12,16 +12,14 @@
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
-    "@google-cloud/recaptcha-cloudflare": "^1.0.0"
+    "@google-cloud/recaptcha-cloudflare": "file:../../"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.5.2",
-    "@cloudflare/workers-types": "^4.20240909.0",
+    "@cloudflare/vitest-pool-workers": "^0.8.24",
+    "@cloudflare/workers-types": "^4.20250428.0",
+    "miniflare": "^4.20250428.0",
     "typescript": "^5.5.2",
-    "vitest": "2.0.5",
-    "wrangler": "^3.60.3"
-  },
-  "workspaces": [
-    "../../"
-  ]
+    "vitest": "~3.0.0",
+    "wrangler": "^4.13.2"
+  }
 }

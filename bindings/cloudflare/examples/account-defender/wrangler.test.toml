@@ -1,0 +1,14 @@
+name = "account-defender" # name of the worker for cloudflare
+main = "src/cloudflare_worker.ts"
+compatibility_date = "2024-09-09"
+compatibility_flags = [ "nodejs_compat"]
+
+[vars]
+PROJECT_NUMBER = "12345"
+API_KEY = "abc123"
+ACTION_SITE_KEY = "action-site-key"
+EXPRESS_SITE_KEY = "express-site-key"
+SESSION_SITE_KEY = "session-site-key"
+CHALLENGE_PAGE_SITE_KEY = "challenge-page-site-key"
+ENTERPRISE_SITE_KEY = "enterprise-site-key"
+RECAPTCHA_ENDPOINT = "https://recaptchaenterprise.googleapis.com"

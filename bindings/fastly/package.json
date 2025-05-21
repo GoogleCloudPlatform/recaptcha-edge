@@ -1,6 +1,6 @@
 {
   "name": "@google-cloud/recaptcha-fastly",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "A reCAPTCHA Enterprise Typescript Libarary for Fastly Compute@Edge.",
   "keywords": [
     "recaptcha",
@@ -9,17 +9,21 @@
     "bot",
     "security"
   ],
-  "homepage": "https://github.com/GoogleCloudPlatform/recaptcha-waf/tree/main/bindings/fastly#readme",
+  "homepage": "https://github.com/GoogleCloudPlatform/recaptcha-edge/tree/main/bindings/fastly#readme",
   "license": "Apache-2.0",
-  "author": "reCAPTCHA Team <no-reply@google.com>",
-  "private": true,
+  "author": "reCAPTCHA Team <recaptcha-enterprise-support@google.com>",
   "type": "module",
+  "exports": "./dist/index.js",
+  "files": [
+    "dist/"
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/GoogleCloudPlatform/recaptcha-waf.git",
+    "url": "https://github.com/GoogleCloudPlatform/recaptcha-edge.git",
     "directory": "bindings/fastly"
   },
   "scripts": {
+    "prepack": "npm run build",
     "prebuild": "tsc",
     "build": "fastly compute build",
     "test": "vitest --disableConsoleIntercept",
@@ -28,16 +32,17 @@
     "pack": "fastly compute pack --wasm-binary ./bin/main.wasm"
   },
   "dependencies": {
-    "@fastly/js-compute": "^3.7.0",
-    "@google-cloud/recaptcha": "^1.0.0",
+    "@fastly/js-compute": "^3.34.0",
+    "@google-cloud/recaptcha-edge": "^1.0.*",
     "@worker-tools/html-rewriter": "^0.1.0-pre.19"
   },
   "devDependencies": {
-    "@fastly/compute-testing": "^0.1.3",
-    "express": "^4.21.2",
-    "@types/express": "^5.0.0",
-    "typescript": "^5.2.2",
-    "vitest": "^2.1.4"
+    "@fastly/compute-testing": "^0.1.4",
+    "@types/express": "^5.0.1",
+    "express": "^5.1.0",
+    "jsdom": "^26.1.0",
+    "typescript": "^5.8.3",
+    "vitest": "~3.0.0"
   },
   "engines": {
     "node": "^16 || >=18"

@@ -17,30 +17,58 @@
 /**
  * A simple example on how to use the reCAPTCHA Cloudflare library to
  * make decisions based on score.
+ *
+ * This example calls Create assessment based on configuration context from CloudFlare's Env, 
+ * and automatically extracted information from the incoming request.
  */
 
-import { CloudflareContext, recaptchaConfigFromEnv } from "@google-cloud/recaptcha-cloudflare";
+import {
+  CloudflareContext,
+  recaptchaConfigFromEnv,
+  createAssessment,
+  RecaptchaError,
+} from "@google-cloud/recaptcha-cloudflare";
+
+/**
+ * A basic function that will call recaptcha's CreateAssessment with all appropriate
+ * data extracted from the incoming request and registered config context. A simple
+ * Allow/Block verdict will be made based on the risk score in the Assessment.
+ * @param request The incoming Cloudflare Request.
+ * @param rcctx A recaptcha.CloudflareContext object.
+ * @returns "allow" or "block".
+ */
+async function recaptchaRiskVerdict(rcctx: CloudflareContext, request: Request): Promise<"allow" | "block"> {
+  const DEFAULT_SCORE = 0.7;
+  try {
+    const assessment = await createAssessment(rcctx, request);
+    // A score should always be in the assessment, but in the event of an error we will use
+    // a default score.
+    let score = assessment?.riskAnalysis?.score ?? DEFAULT_SCORE;
+    if (score <= 0.3) {
+      return "block";
+    }
+  } catch (e) {
+    if (e instanceof RecaptchaError) {
+      // a RecaptchaError can occur due to misconfiguration, network issues or parsing errors.
+      // Depending on the cause, each RecaptchaError has a recommended action of {allow | block}.
+      return e.recommended_action_enum();
+    }
+    // The recaptcha library should always wrap errors in the RecaptchaError type. In the event of
+    // an uncaught error, allow to avoid blocking customers.
+    return "allow";
+  }
+  return "allow";
+}
 
 export default {
   async fetch(request, env, ctx): Promise<Response> {
-    const cfctx = new CloudflareContext(env, ctx, recaptchaConfigFromEnv(env));
-    let block = false;
-    try {
-      // TODO: check validity of token.
-      const assessment = await callCreateAssessment(cfctx, request);
-      if (assessment.risk_analysis.score <= 0.3) {
-        block = true;
-      }
-    } catch (e: RecaptchaError) {
-      if (e.recommended_action.type === "block") {
-        block = true;
-      }
+    const rcctx = new CloudflareContext(env, ctx, recaptchaConfigFromEnv(env));
+
+    if ((await recaptchaRiskVerdict(rcctx, request)) == "block") {
+      // Or: we could return a templated HTML page.
+      return new Response("This request has been blocked for security reasons.", { status: 403 });
     }
-    if (block) {
-      // Or return a templated HTML page.
-      return new Response("This request has been blocked for security reasons.");
-    } else {
-      return fetch(request);
-    }
+    // forward the request to the origin, and return the response.
+    return fetch(request);
   },
 } satisfies ExportedHandler<Env>;

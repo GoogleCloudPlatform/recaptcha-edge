@@ -1,0 +1,25 @@
+{
+    "compilerOptions": {
+      "esModuleInterop": true,
+      "resolveJsonModule": true,
+      "strictNullChecks": true,
+      "noImplicitThis": true,
+      "noImplicitReturns": true,
+      "noFallthroughCasesInSwitch": true,
+      "forceConsistentCasingInFileNames": true,
+      "strict": true,
+      "module": "ES2022",
+      "target": "ES2022",
+      "moduleResolution": "node",
+      "lib": ["es2022"],
+      "rootDir": ".",
+      "outDir": "./dist",
+      "skipLibCheck": true,
+      "paths": {
+        "@google-cloud/recaptcha-edge": ["../../dist"]
+      }
+    },
+    "include": ["./src/**/*.js", "./src/**/*.ts"],
+    "exclude": ["node_modules", "**/**.test.ts", "**/**.test.ts"]
+  }
+  

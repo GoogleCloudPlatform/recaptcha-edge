@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-//@ts-expect-error
+import { testing } from './index'
 import { createExecutionContext, env, fetchMock, SELF, waitOnExecutionContext } from "cloudflare:test";
 import { afterEach, beforeAll, expect, test } from "vitest";
 
@@ -31,58 +31,46 @@ beforeAll(() => {
 afterEach(() => fetchMock.assertNoPendingInterceptors());
 
 test("nomatch-ok", async () => {
-  const testPolicies = [
-    {
-      name: "test-policy",
-      description: "test-description",
-      path: "/teste2e",
-      condition: "recaptcha.score > 0.5",
-      // 'type' isn't a part of the interface, but is added for testing.
-      actions: [{ allow: {}, type: "allow" }],
-    },
-    {
-      name: "test-policy2",
-      description: "test-description2",
-      path: "test-path2",
-      condition: "test-condition2",
-      actions: [{ block: {}, type: "block" }],
-    },
-  ];
   // Mock the first fetch request to get firewall policies
   fetchMock
     .get("https://recaptchaenterprise.googleapis.com")
     .intercept({
       path: "/v1/projects/12345/firewallpolicies?key=abc123&page_size=1000",
     })
-    .reply(200, JSON.stringify({ firewallPolicies: testPolicies }));
+    .reply(200, JSON.stringify({ firewallPolicies: testing.policies }));
   // Mock the second fetch request to get assessment
   fetchMock
     .get("https://recaptchaenterprise.googleapis.com")
     .intercept({
       path: "/v1/projects/12345/assessments?key=abc123",
       method: "POST",
-      body: JSON.stringify({
-        event: {
-          token: "action-token",
-          siteKey: "action-site-key",
-          wafTokenAssessment: true,
-          userIpAddress: "1.2.3.4",
-          headers: ["cf-connecting-ip:1.2.3.4", "user-agent:test-user-agent", "x-recaptcha-token:action-token"],
-          requestedUri: "http://example.com/teste2e",
-          userAgent: "test-user-agent",
-          firewallPolicyEvaluation: true,
-        },
-        assessmentEnvironment: {
-          client: "@google-cloud/recaptcha-cloudflare",
-          version: "1.0.0",
-        },
-      }),
+      body: (body) => {
+        let parsedBody = JSON.parse(body);
+        parsedBody.assessmentEnvironment.version = undefined;
+        let expected = {
+          event: {
+            token: "action-token",
+            siteKey: "action-site-key",
+            wafTokenAssessment: true,
+            userIpAddress: "1.2.3.4",
+            headers: ["cf-connecting-ip:1.2.3.4", "user-agent:test-user-agent", "x-recaptcha-token:action-token"],
+            requestedUri: "http://example.com/condition/blockifscorelow",
+            userAgent: "test-user-agent",
+            firewallPolicyEvaluation: true,
+          },
+          assessmentEnvironment: {
+            client: "@google-cloud/recaptcha-cloudflare",
+            version: undefined,
+          },
+        };
+        return JSON.stringify(parsedBody) == JSON.stringify(expected);
+      },
     })
     .reply(200, JSON.stringify({ firewallPolicyAssessment: {} }));
   // Mock the third fetch request to the actual website
-  fetchMock.get("http://example.com").intercept({ path: "/teste2e" }).reply(200, "<HTML>Hello World</HTML>");
+  fetchMock.get("http://example.com").intercept({ path: "/condition/blockifscorelow" }).reply(200, "<HTML>Hello World</HTML>");
   // @ts-expect-error
-  const req = new IncomingRequest("http://example.com/teste2e", {
+  const req = new IncomingRequest("http://example.com/condition/blockifscorelow", {
     headers: {
       "X-Recaptcha-Token": "action-token",
       "CF-Connecting-IP": "1.2.3.4",
