@@ -39,15 +39,15 @@ jobs:
           # TODO: find and parse latest version of Fastly CLI
           # This may be possible using the github REST API to list assets in a release
           # and fetching the one matching the fastly_<VERSION>_linux_amd64.deb pattern.
-          wget https://github.com/fastly/cli/releases/download/v10.15.0/fastly_10.15.0_linux_amd64.deb
-          sudo dpkg -i fastly_10.15.0_linux_amd64.deb
+          wget https://github.com/fastly/cli/releases/download/v11.2.0/fastly_11.2.0_linux_amd64.deb
+          sudo dpkg -i fastly_11.2.0_linux_amd64.deb
           sudo apt-get update
           sudo apt-get install -y --fix-missing
       - run: npm ci
       - run: npm run build
       - run: npm test
       - run: npm run pack
-      - run: mv pkg/package.tar.gz pkg/fastly_client.tar.gz
+      - run: mv pkg/recaptcha-fastly.tar.gz pkg/fastly_client.tar.gz
       - uses: actions/upload-artifact@v4
         with:
           name: fastly-dist
