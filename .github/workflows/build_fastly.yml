@@ -47,7 +47,7 @@ jobs:
       - run: npm run build
       - run: npm test
       - run: npm run pack
-      - run: mv pkg/package.tar.gz pkg/fastly_client.tar.gz
+      - run: mv pkg/recaptcha-fastly.tar.gz pkg/fastly_client.tar.gz
       - uses: actions/upload-artifact@v4
         with:
           name: fastly-dist
