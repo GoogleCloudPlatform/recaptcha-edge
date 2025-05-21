@@ -1,0 +1,25 @@
+{
+  "name": "account-defender",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "wrangler deploy --dry-run --outdir=dist",
+    "devclean": "rm -rf dist && rm -rf node_modules && rm package-lock.json",
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "start": "wrangler dev",
+    "test": "vitest",
+    "cf-typegen": "wrangler types"
+  },
+  "dependencies": {
+    "@google-cloud/recaptcha-cloudflare": "file:../../"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.8.24",
+    "@cloudflare/workers-types": "^4.20250428.0",
+    "miniflare": "^4.20250428.0",
+    "typescript": "^5.5.2",
+    "vitest": "~3.0.0",
+    "wrangler": "^4.13.2"
+  }
+}

@@ -20,7 +20,7 @@ export type EdgeResponseInit = {
 
 export interface EdgeResponse {
   text(): Promise<string>;
-  json(): Promise<unknown>;
+  json(): Promise<any>;
   addHeader(key: string, value: string): void;
   getHeader(key: string): string | null;
   getHeaders(): Map<string, string>;
