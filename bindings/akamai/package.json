@@ -1,6 +1,6 @@
 {
   "name": "@google-cloud/recaptcha-akamai",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A reCAPTCHA Enterprise Typescript Libarary for Akamai Edge Workers.",
   "keywords": [
     "recaptcha",
