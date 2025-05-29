@@ -1,4 +1,4 @@
-# reCAPTCHA WAF (Edge Compute) Library
+# reCAPTCHA Edge Compute Library
 
 [![Build and Test Core Library](https://github.com/GoogleCloudPlatform/recaptcha-edge/actions/workflows/build_core.yml/badge.svg)](https://github.com/GoogleCloudPlatform/recaptcha-edge/actions/workflows/build_core.yml)
 [![Build and Test Akamai Binding](https://github.com/GoogleCloudPlatform/recaptcha-edge/actions/workflows/build_akamai.yml/badge.svg)](https://github.com/GoogleCloudPlatform/recaptcha-edge/actions/workflows/build_akamai.yml)
@@ -29,9 +29,14 @@ Typically, this involves:
 Please see the [reCAPTCHA Google Cloud Documentation](https://cloud.google.com/recaptcha/docs) for more details on each step.
 
 ### As a Library
-This package has not yet been added to the NPM package repository, and must be manually imported.
+Each platform has their own NPM package, and this should be perfered if applicable. Bindings that are hosted on NPM include:
+* [@google-cloud/recaptcha-cloudflare](https://www.npmjs.com/package/@google-cloud/recaptcha-cloudflare?activeTab=readme)
 
-Please see the examples for each binding in the [bindings](https://github.com/GoogleCloudPlatform/recaptcha-edge/tree/main/bindings) directory of choice.
+Bindings that are not yet hosted on NPM should be [downloaded and installed locally](https://docs.npmjs.com/downloading-and-installing-packages-locally).
+
+The base package is available on NPM as [@google-cloud/recaptcha-edge](https://www.npmjs.com/package/@google-cloud/recaptcha-edge) and is intended as an abstraction layer for implementing additional platforms.
+
+Please see the examples and documentation for each binding in the [bindings](https://github.com/GoogleCloudPlatform/recaptcha-edge/tree/main/bindings) directory of choice.
 
 ## Contribution
 
