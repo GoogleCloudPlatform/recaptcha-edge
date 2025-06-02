@@ -112,18 +112,41 @@ The user's reCAPTCHA token may be automatically extracted from the incoming requ
 
 If all of these cases are true, simply call createAssessment:
 ```js
-    ...
-    const assessment = await createAssessment(rcctx, request);
-    ...
+  ...
+  const assessment = await createAssessment(rcctx, request);
+  ...
 ```
 
 If one or more of the token format cases are false, the token must be manually extracted and passed as an additional parameter:
 ```js
-    ...
-    const token = manuallyExtractToken(request); // You must define this function.
-    const assessment = await createAssessment(rcctx, request, undefined, {token});
+  ...
+  const token = manuallyExtractToken(request); // You must define this function.
+  const assessment = await createAssessment(rcctx, request, undefined, {token});
+  ...
+```
+
+The `expectedAction` parameter is not automatically populated, and should be populated if applicable.
+```js
+    const assessment = await createAssessment(rcctx, request, undefined, {expectedAction: "login"});
+```
+See the official documentation on [action names](https://cloud.google.com/recaptcha/docs/actions-website).
+
+It is important that createAssessment is only called on paths where you expect a user to pass a token. 
+```js
+  import {
+    CloudflareContext,
+    createAssessment,
+    pathMatch,
+  } from "@google-cloud/recaptcha-cloudflare";
+
+  ...
+  if (pathMatch(request, "/login", "POST")) {
+    const assessment = await createAssessment(rcctx, request, undefined, {expectedAction: "login"});
+    ... // check assessment results, such as score.
+  }
     ...
 ```
+This will avoid the added latency from the CreateAssessment RPC, and reduce billing events.
 
 For complete end-to-end examples, see the [examples](https://github.com/GoogleCloudPlatform/recaptcha-edge/tree/main/bindings/cloudflare/examples) directory.
 
