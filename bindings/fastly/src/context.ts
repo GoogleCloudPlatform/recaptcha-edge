@@ -20,7 +20,7 @@ import { Dictionary } from "fastly:dictionary";
 
 const RECAPTCHA_JS = "https://www.google.com/recaptcha/enterprise.js";
 // Firewall Policies API is currently only available in the public preview.
-const DEFAULT_RECAPTCHA_ENDPOINT = "https://public-preview-recaptchaenterprise.googleapis.com";
+const POLICY_RECAPTCHA_ENDPOINT = "https://public-preview-recaptchaenterprise.googleapis.com";
 
 import {
   RecaptchaConfig,
@@ -222,6 +222,8 @@ export function recaptchaConfigFromConfigStore(name: string): RecaptchaConfig {
       throw new InitError('Failed to open Fastly config store: "' + name + '". ' + JSON.stringify(e));
     }
   }
+  const has_policy_keys =
+    cfg.get("action_site_key") || cfg.get("session_site_key") || cfg.get("challengepage_site_key");
   return {
     projectNumber: Number(cfg.get("project_number")),
     apiKey: cfg.get("api_key") ?? "",
@@ -230,7 +232,7 @@ export function recaptchaConfigFromConfigStore(name: string): RecaptchaConfig {
     sessionSiteKey: cfg.get("session_site_key") ?? undefined,
     challengePageSiteKey: cfg.get("challengepage_site_key") ?? undefined,
     enterpriseSiteKey: cfg.get("enterprise_site_key") ?? undefined,
-    recaptchaEndpoint: cfg.get("recaptcha_endpoint") ?? DEFAULT_RECAPTCHA_ENDPOINT,
+    recaptchaEndpoint: cfg.get("recaptcha_endpoint") ?? (has_policy_keys ? POLICY_RECAPTCHA_ENDPOINT : undefined),
     sessionJsInjectPath: cfg.get("session_js_install_path") ?? undefined,
     debug: (cfg.get("debug") ?? "false") == "true",
     unsafe_debug_dump_logs: (cfg.get("unsafe_debug_dump_logs") ?? "false") == "true",
