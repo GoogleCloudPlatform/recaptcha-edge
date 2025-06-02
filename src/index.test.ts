@@ -24,7 +24,7 @@ import {
   fetchActions,
   callCreateAssessment,
   callListFirewallPolicies,
-  createPartialEventWithSiteInfo,
+  addTokenAndSiteKeyToEvent,
   evaluatePolicyAssessment,
   localPolicyAssessment,
   policyConditionMatch,
@@ -127,7 +127,7 @@ class TestContext extends RecaptchaContext {
   // eslint-disable-next-line  @typescript-eslint/no-unused-vars
 
   buildEvent = async (req: EdgeRequest) => {
-    const partialEvent = await createPartialEventWithSiteInfo(this, req);
+    const partialEvent = await addTokenAndSiteKeyToEvent(this, req);
     const baseEvent = {
       userIpAddress: "1.2.3.4",
       userAgent: "test-user-agent",
@@ -945,11 +945,11 @@ test("processRequest-raise", async () => {
   expect(fetch).toHaveBeenCalledTimes(3);
 });
 
-test("createPartialEventWithSiteInfo-actionToken", async () => {
+test("addTokenAndSiteKeyToEvent-actionToken", async () => {
   const context = new TestContext(testConfig);
   const req = new FetchApiRequest("https://www.example.com/teste2e");
   req.addHeader("X-Recaptcha-Token", "action-token");
-  const site_info = await createPartialEventWithSiteInfo(context, req);
+  const site_info = await addTokenAndSiteKeyToEvent(context, req);
   const site_features = await context.buildEvent(req);
   const event = {
     ...site_info,
@@ -965,7 +965,7 @@ test("createPartialEventWithSiteInfo-actionToken", async () => {
   expect(context.debug_trace.site_key_used).toEqual("action");
 });
 
-test("createPartialEventWithSiteInfo-regularActionToken-json", async () => {
+test("addTokenAndSiteKeyToEvent-regularActionToken-json", async () => {
   const context = new TestContext(testConfig);
   const req = new FetchApiRequest(
     new Request("https://www.example.com/teste2e", {
@@ -978,7 +978,7 @@ test("createPartialEventWithSiteInfo-regularActionToken-json", async () => {
       method: "POST",
     }),
   );
-  const site_info = await createPartialEventWithSiteInfo(context, req);
+  const site_info = await addTokenAndSiteKeyToEvent(context, req);
   const site_features = await context.buildEvent(req);
   const event = {
     ...site_info,
@@ -994,7 +994,7 @@ test("createPartialEventWithSiteInfo-regularActionToken-json", async () => {
   expect(context.debug_trace.site_key_used).toEqual("enterprise");
 });
 
-test("createPartialEventWithSiteInfo-regularActionToken-form-urlencoded", async () => {
+test("addTokenAndSiteKeyToEvent-regularActionToken-form-urlencoded", async () => {
   const context = new TestContext(testConfig);
   const formData = new URLSearchParams();
   formData.append("g-recaptcha-response", "regular-action-token-urlencoded");
@@ -1008,7 +1008,7 @@ test("createPartialEventWithSiteInfo-regularActionToken-form-urlencoded", async 
     }),
   );
 
-  const site_info = await createPartialEventWithSiteInfo(context, req);
+  const site_info = await addTokenAndSiteKeyToEvent(context, req);
   const site_features = await context.buildEvent(req);
   const event = {
     ...site_info,
@@ -1024,7 +1024,7 @@ test("createPartialEventWithSiteInfo-regularActionToken-form-urlencoded", async 
   expect(context.debug_trace.site_key_used).toEqual("enterprise");
 });
 
-test("createPartialEventWithSiteInfo-regularActionToken-multipart-form-data", async () => {
+test("addTokenAndSiteKeyToEvent-regularActionToken-multipart-form-data", async () => {
   const context = new TestContext(testConfig);
   // Create a mock multipart/form-data body.
   const crlf = "\r\n";
@@ -1046,7 +1046,7 @@ test("createPartialEventWithSiteInfo-regularActionToken-multipart-form-data", as
     }),
   );
 
-  const site_info = await createPartialEventWithSiteInfo(context, req);
+  const site_info = await addTokenAndSiteKeyToEvent(context, req);
   const site_features = await context.buildEvent(req);
   const event = {
     ...site_info,
@@ -1062,11 +1062,11 @@ test("createPartialEventWithSiteInfo-regularActionToken-multipart-form-data", as
   expect(context.debug_trace.site_key_used).toEqual("enterprise");
 });
 
-test("createPartialEventWithSiteInfo-sessionToken", async () => {
+test("addTokenAndSiteKeyToEvent-sessionToken", async () => {
   const context = new TestContext(testConfig);
   const req = new FetchApiRequest("https://www.example.com/test");
   req.addHeader("cookie", "blah=example; recaptcha-test-t=session=token; test=hithere");
-  const site_info = await createPartialEventWithSiteInfo(context, req);
+  const site_info = await addTokenAndSiteKeyToEvent(context, req);
   const site_features = await context.buildEvent(req);
   const event = {
     ...site_info,
@@ -1082,12 +1082,12 @@ test("createPartialEventWithSiteInfo-sessionToken", async () => {
   expect(context.debug_trace.site_key_used).toEqual("session");
 });
 
-test("createPartialEventWithSiteInfo-strictSessionToken", async () => {
+test("addTokenAndSiteKeyToEvent-strictSessionToken", async () => {
   const context = new TestContext(testConfig);
   context.config.strict_cookie = true;
   const req = new FetchApiRequest("https://www.example.com/test");
   req.addHeader("cookie", "recaptcha-example-t=session=token");
-  const site_info = await createPartialEventWithSiteInfo(context, req);
+  const site_info = await addTokenAndSiteKeyToEvent(context, req);
   const site_features = await context.buildEvent(req);
   const event = {
     ...site_info,
@@ -1102,12 +1102,12 @@ test("createPartialEventWithSiteInfo-strictSessionToken", async () => {
   expect(context.debug_trace.site_key_used).toEqual("express");
 });
 
-test("createPartialEventWithSiteInfo-nonStrictSessionToken", async () => {
+test("addTokenAndSiteKeyToEvent-nonStrictSessionToken", async () => {
   const context = new TestContext(testConfig);
   context.config.strict_cookie = false;
   const req = new FetchApiRequest("https://www.example.com/test");
   req.addHeader("cookie", "recaptcha-example-t=session=token");
-  const site_info = await createPartialEventWithSiteInfo(context, req);
+  const site_info = await addTokenAndSiteKeyToEvent(context, req);
   const site_features = await context.buildEvent(req);
   const event = {
     ...site_info,
@@ -1123,11 +1123,11 @@ test("createPartialEventWithSiteInfo-nonStrictSessionToken", async () => {
   expect(context.debug_trace.site_key_used).toEqual("session");
 });
 
-test("createPartialEventWithSiteInfo-challengeToken", async () => {
+test("addTokenAndSiteKeyToEvent-challengeToken", async () => {
   const context = new TestContext(testConfig);
   const req = new FetchApiRequest("https://www.example.com/test");
   req.addHeader("cookie", "recaptcha-test-e=challenge=token");
-  const site_info = await createPartialEventWithSiteInfo(context, req);
+  const site_info = await addTokenAndSiteKeyToEvent(context, req);
   const site_features = await context.buildEvent(req);
   const event = {
     ...site_info,
@@ -1143,12 +1143,12 @@ test("createPartialEventWithSiteInfo-challengeToken", async () => {
   expect(context.debug_trace.site_key_used).toEqual("challenge");
 });
 
-test("createPartialEventWithSiteInfo-nonStrictChallengeToken", async () => {
+test("addTokenAndSiteKeyToEvent-nonStrictChallengeToken", async () => {
   const context = new TestContext(testConfig);
   context.config.strict_cookie = false;
   const req = new FetchApiRequest("https://www.example.com/test");
   req.addHeader("cookie", "recaptcha-example-e=challenge=token");
-  const site_info = await createPartialEventWithSiteInfo(context, req);
+  const site_info = await addTokenAndSiteKeyToEvent(context, req);
   const site_features = await context.buildEvent(req);
   const event = {
     ...site_info,
@@ -1164,10 +1164,10 @@ test("createPartialEventWithSiteInfo-nonStrictChallengeToken", async () => {
   expect(context.debug_trace.site_key_used).toEqual("challenge");
 });
 
-test("createPartialEventWithSiteInfo-express", async () => {
+test("addTokenAndSiteKeyToEvent-express", async () => {
   const context = new TestContext(testConfig);
   const req = new FetchApiRequest("https://www.example.com/test");
-  const site_info = await createPartialEventWithSiteInfo(context, req);
+  const site_info = await addTokenAndSiteKeyToEvent(context, req);
   const site_features = await context.buildEvent(req);
   const event = {
     ...site_info,
