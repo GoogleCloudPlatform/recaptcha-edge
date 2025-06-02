@@ -29,12 +29,12 @@ Typically, this involves:
 Please see the [reCAPTCHA Google Cloud Documentation](https://cloud.google.com/recaptcha/docs) for more details on each step.
 
 ### As a Library
-Each platform has their own NPM package, and this should be perfered if applicable. Bindings that are hosted on NPM include:
+Each platform has their own NPM package. Bindings that are hosted on NPM include:
 * [@google-cloud/recaptcha-cloudflare](https://www.npmjs.com/package/@google-cloud/recaptcha-cloudflare?activeTab=readme)
 
 Bindings that are not yet hosted on NPM should be [downloaded and installed locally](https://docs.npmjs.com/downloading-and-installing-packages-locally).
 
-The base package is available on NPM as [@google-cloud/recaptcha-edge](https://www.npmjs.com/package/@google-cloud/recaptcha-edge) and is intended as an abstraction layer for implementing additional platforms.
+The base package is available on NPM as [@google-cloud/recaptcha-edge](https://www.npmjs.com/package/@google-cloud/recaptcha-edge) and is intended as an abstraction layer for implementing additional platforms. Platform-specific packages should be used if possible.
 
 Please see the examples and documentation for each binding in the [bindings](https://github.com/GoogleCloudPlatform/recaptcha-edge/tree/main/bindings) directory of choice.
 

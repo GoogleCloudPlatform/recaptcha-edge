@@ -124,8 +124,8 @@ async function getUserInfo(req: EdgeRequest, accountIdField?: string, usernameFi
  * Adds reCAPTCHA specific values to an Event strucutre.
  * This includes, the siteKey, the token, cookies, and flags like express.
  */
-export async function createPartialEventWithSiteInfo(context: RecaptchaContext, req: EdgeRequest): Promise<Event> {
-  const event: Event = {};
+export async function addTokenAndSiteKeyToEvent(context: RecaptchaContext, req: EdgeRequest, base?: Event): Promise<Event> {
+  const event: Event = base ?? {};
   const actionToken = req.getHeader("X-Recaptcha-Token");
   if (context.config.actionSiteKey && actionToken) {
     // WAF action token in the header.
@@ -178,7 +178,7 @@ export async function createPartialEventWithSiteInfo(context: RecaptchaContext, 
   }
 
   if (context.config.enterpriseSiteKey && req.method === "POST") {
-    const recaptchaToken = await getTokenFromBody(context, req);
+    const recaptchaToken = event.token ?? await getTokenFromBody(context, req);
     if (recaptchaToken) {
       event.token = recaptchaToken;
       event.siteKey = context.config.enterpriseSiteKey;
@@ -226,7 +226,7 @@ export async function callCreateAssessment(
   additionalParams?: Event,
 ): Promise<Assessment> {
   // TODO: this should use a builder pattern. with a CreateAssessmentRequest type.
-  const site_info = await createPartialEventWithSiteInfo(context, req);
+  const site_info = await addTokenAndSiteKeyToEvent(context, req, additionalParams);
   const site_features = await context.buildEvent(req);
   if (req.method === "POST" && new URL(req.url).pathname === context.config.credentialPath) {
     site_features.userInfo = await getUserInfo(req, context.config.accountId, context.config.username);
@@ -234,8 +234,7 @@ export async function callCreateAssessment(
 
   const event = {
     ...site_info,
-    ...site_features,
-    ...additionalParams,
+    ...site_features
   };
   const assessment: Assessment = { event };
   assessment.assessmentEnvironment = {
