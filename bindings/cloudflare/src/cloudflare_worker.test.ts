@@ -49,6 +49,7 @@ test("nomatch-ok", async () => {
         parsedBody.assessmentEnvironment.version = undefined;
         let expected = {
           event: {
+            firewallPolicyEvaluation: true,
             token: "action-token",
             siteKey: "action-site-key",
             wafTokenAssessment: true,
@@ -56,7 +57,6 @@ test("nomatch-ok", async () => {
             headers: ["cf-connecting-ip:1.2.3.4", "user-agent:test-user-agent", "x-recaptcha-token:action-token"],
             requestedUri: "http://example.com/condition/blockifscorelow",
             userAgent: "test-user-agent",
-            firewallPolicyEvaluation: true,
           },
           assessmentEnvironment: {
             client: "@google-cloud/recaptcha-cloudflare",
