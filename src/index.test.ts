@@ -168,7 +168,7 @@ test("callCreateAssessment-ok", async () => {
 
   const req = new FetchApiRequest("https://www.google.com");
   req.addHeader("X-Recaptcha-Token", "test-token");
-  const resp = await callCreateAssessment(testContext as RecaptchaContext, req, ["test-env", "test-version"]);
+  const resp = await callCreateAssessment(testContext as RecaptchaContext, req, undefined, ["test-env", "test-version"]);
   expect(
     await fetchHasRequest(
       new Request("https://recaptchaenterprise.googleapis.com/v1/projects/12345/assessments?key=abc123", {
@@ -237,6 +237,7 @@ test("callCreateAssessmentWithUserInfo-ok", async () => {
         method: "POST",
       }),
     ),
+    undefined,
     ["test-env", "test-version"],
   );
   expect(

@@ -222,8 +222,8 @@ export async function addTokenAndSiteKeyToEvent(context: RecaptchaContext, req: 
 export async function callCreateAssessment(
   context: RecaptchaContext,
   req: EdgeRequest,
-  environment?: [string, string],
   additionalParams?: Event,
+  environment?: [string, string],
 ): Promise<Assessment> {
   // TODO: this should use a builder pattern. with a CreateAssessmentRequest type.
   const site_info = await addTokenAndSiteKeyToEvent(context, req, additionalParams);

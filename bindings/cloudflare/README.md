@@ -121,13 +121,13 @@ If one or more of the token format cases are false, the token must be manually e
 ```js
   ...
   const token = manuallyExtractToken(request); // You must define this function.
-  const assessment = await createAssessment(rcctx, request, undefined, {token});
+  const assessment = await createAssessment(rcctx, request, {token});
   ...
 ```
 
 The `expectedAction` parameter is not automatically populated, and should be populated if applicable.
 ```js
-    const assessment = await createAssessment(rcctx, request, undefined, {expectedAction: "login"});
+    const assessment = await createAssessment(rcctx, request, {expectedAction: "login"});
 ```
 See the official documentation on [action names](https://cloud.google.com/recaptcha/docs/actions-website).
 
@@ -141,7 +141,7 @@ It is important that createAssessment is only called on paths where you expect a
 
   ...
   if (pathMatch(request, "/login", "POST")) {
-    const assessment = await createAssessment(rcctx, request, undefined, {expectedAction: "login"});
+    const assessment = await createAssessment(rcctx, request, {expectedAction: "login"});
     ... // check assessment results, such as score.
   }
     ...
