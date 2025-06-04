@@ -102,7 +102,7 @@ Most common request data expected in [`CreateAssessment`](https://cloud.google.c
 * ja3 or ja4
 * headers
 
-The Project number and API Key set when creating the `CloudflareContext` will be used to form the correct `CreateAssessment` endpoint URL.
+The Project number and API Key set when creating the `CloudflareContext` will be used to form the correct `CreateAssessment` endpoint URL. The following URL format will be used: `https://recaptchaenterprise.googleapis.com/v1/projects/{projectNumber}/assessments??key={apikey}`.
 The `enterpriseSiteKey` set when creating the `CloudflareContext` will be used to populate the Assessment event. 
 
 The user's reCAPTCHA token may be automatically extracted from the incoming request body under the following conditions:
