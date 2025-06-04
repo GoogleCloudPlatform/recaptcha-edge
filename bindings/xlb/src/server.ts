@@ -26,7 +26,7 @@ function getConfig(): RecaptchaConfig {
         sessionSiteKey: process.env.SESSION_SITE_KEY || undefined,
         challengePageSiteKey: process.env.CHALLENGE_PAGE_SITE_KEY || undefined,
         enterpriseSiteKey: process.env.ENTERPRISE_SITE_KEY || undefined,
-        recaptchaEndpoint: process.env.RECAPTCHA_ENDPOINT || "",
+        recaptchaEndpoint: process.env.RECAPTCHA_ENDPOINT || undefined,
         sessionJsInjectPath: process.env.SESSION_JS_INSTALL_PATH || undefined,
         debug: (process.env.DEBUG ?? "false") == "true",
         unsafe_debug_dump_logs: false,

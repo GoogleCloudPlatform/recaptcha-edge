@@ -37,7 +37,7 @@ import { EdgeRequest, EdgeRequestInit, EdgeResponse, EdgeResponseInit } from "./
 import * as testing_ from "./testing";
 export const testing = testing_;
 
-export { callCreateAssessment, createPartialEventWithSiteInfo } from "./createAssessment";
+export { callCreateAssessment, addTokenAndSiteKeyToEvent } from "./createAssessment";
 
 export { FetchApiRequest, FetchApiResponse } from "./fetchApi";
 
@@ -59,6 +59,7 @@ export {
 
 /** @type {string} */
 export const CHALLENGE_PAGE_URL = "https://www.google.com/recaptcha/challengepage";
+const DEFAULT_RECAPTCHA_ENDPOINT = "https://recaptchaenterprise.googleapis.com"
 
 /** Type definition for ListFirewallPoliciesResponse */
 export interface ListFirewallPoliciesResponse {
@@ -77,7 +78,7 @@ export interface RecaptchaConfig {
   challengePageSiteKey?: string;
   enterpriseSiteKey?: string;
   sessionJsInjectPath?: string;
-  recaptchaEndpoint: string;
+  recaptchaEndpoint?: string;
   debug?: boolean;
   unsafe_debug_dump_logs?: boolean;
   strict_cookie?: boolean;
@@ -276,14 +277,14 @@ export abstract class RecaptchaContext {
   }
 
   get assessmentUrl() {
-    const endpoint = this.config.recaptchaEndpoint;
+    const endpoint = this.config.recaptchaEndpoint ?? DEFAULT_RECAPTCHA_ENDPOINT;
     const projectNumber = this.config.projectNumber;
     const apiKey = this.config.apiKey;
     return `${endpoint}/v1/projects/${projectNumber}/assessments?key=${apiKey}`;
   }
 
   get listFirewallPoliciesUrl() {
-    const endpoint = this.config.recaptchaEndpoint;
+    const endpoint = this.config.recaptchaEndpoint ?? DEFAULT_RECAPTCHA_ENDPOINT;
     const projectNumber = this.config.projectNumber;
     const apiKey = this.config.apiKey;
     return `${endpoint}/v1/projects/${projectNumber}/firewallpolicies?key=${apiKey}&page_size=1000`;

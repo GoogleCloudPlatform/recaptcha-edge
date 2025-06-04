@@ -25,7 +25,7 @@ import {
   EdgeRequestInit,
   Assessment,
   ListFirewallPoliciesResponse,
-  CHALLENGE_PAGE_URL
+  CHALLENGE_PAGE_URL,
 } from "@google-cloud/recaptcha-edge";
 import { httpRequest, HttpResponse } from "http-request";
 import { TextDecoder, TextEncoder } from "encoding";
@@ -102,7 +102,7 @@ async function readStream(stream: ReadableStream<Uint8Array>): Promise<string> {
 
 const RECAPTCHA_JS = "https://www.google.com/recaptcha/enterprise.js";
 // Firewall Policies API is currently only available in the public preview.
-const DEFAULT_RECAPTCHA_ENDPOINT = "https://public-preview-recaptchaenterprise.googleapis.com";
+const POLICY_RECAPTCHA_ENDPOINT = "https://public-preview-recaptchaenterprise.googleapis.com";
 
 // Some headers aren't safe to forward from the origin response through an
 // EdgeWorker on to the client For more information see the tech doc on
@@ -433,6 +433,10 @@ export class AkamaiContext extends RecaptchaContext {
 }
 
 export function recaptchaConfigFromRequest(request: EW.ResponseProviderRequest): RecaptchaConfig {
+  const has_policy_keys =
+    request.getVariable("PMUSER_RECAPTCHAACTIONSITEKEY") ||
+    request.getVariable("PMUSER_RECAPTCHASESSIONSITEKEY") ||
+    request.getVariable("PMUSER_RECAPTCHACHALLENGESITEKEY");
   return {
     projectNumber: parseInt(request.getVariable("PMUSER_GCPPROJECTNUMBER") || "0", 10),
     apiKey: request.getVariable("PMUSER_GCPAPIKEY") || "",
@@ -440,7 +444,8 @@ export function recaptchaConfigFromRequest(request: EW.ResponseProviderRequest):
     expressSiteKey: request.getVariable("PMUSER_RECAPTCHAEXPRESSSITEKEY") || "",
     sessionSiteKey: request.getVariable("PMUSER_RECAPTCHASESSIONSITEKEY") || "",
     challengePageSiteKey: request.getVariable("PMUSER_RECAPTCHACHALLENGESITEKEY") || "",
-    recaptchaEndpoint: request.getVariable("PMUSER_RECAPTCHAENDPOINT") || DEFAULT_RECAPTCHA_ENDPOINT,
+    recaptchaEndpoint:
+      request.getVariable("PMUSER_RECAPTCHAENDPOINT") || (has_policy_keys ? POLICY_RECAPTCHA_ENDPOINT : undefined),
     debug: request.getVariable("PMUSER_DEBUG") === "true",
     unsafe_debug_dump_logs: request.getVariable("PMUSER_UNSAFE_DEBUG_DUMP_LOGS") === "true",
     sessionJsInjectPath: request.getVariable("PMUSER_SESSION_JS_INSTALL_PATH"),

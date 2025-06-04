@@ -64,9 +64,91 @@ To integrate this package with an existing Cloudflare account:
 Please see the [reCAPTCHA Google Cloud Documentation](https://cloud.google.com/recaptcha/docs) for more details on each step.
 
 ### As a Library
-This package has not yet been added to the NPM package repository, and must be manually imported.
+This package has been added to the NPM package repo as [@google-cloud/recaptcha-cloudflare](https://www.npmjs.com/package/@google-cloud/recaptcha-cloudflare?activeTab=readme).
 
-Please see the examples in the [examples](https://github.com/GoogleCloudPlatform/recaptcha-edge/tree/main/bindings/cloudflare/examples) directory.
+This library supports a standard reCAPTCHA v2 or v3 workflow, and is intended to be used on the [Cloudflare Worker](https://developers.cloudflare.com/workers/) edge compute platform. To use this library, first create a `CloudflareContext` object. This object
+can be initialized with [Cloudflare Environment Variables](https://developers.cloudflare.com/workers/configuration/environment-variables/) or
+inline constants:
+```js
+import {
+  CloudflareContext,
+  recaptchaConfigFromEnv,
+  createAssessment
+} from "@google-cloud/recaptcha-cloudflare";
+
+export default {
+  async fetch(request, env, ctx): Promise<Response> {
+    // initialized from Cloudflare Environment
+    const rcctx = new CloudflareContext(env, ctx, recaptchaConfigFromEnv(env));
+    // OR: initialized inline
+    const rcctx = new CloudflareContext(env, ctx, {projectNumber: 12345, apiKey: "abcd", enterpriseSiteKey: "6Labcdefg"});
+
+    ... // do further processing
+  },
+} satisfies ExportedHandler<Env>;
+```
+
+This context can then be used to call reCAPTCHA's `CreateAssessment` on the incoming Request:
+```js
+    ...
+    const assessment = await createAssessment(rcctx, request);
+    ...
+```
+
+Most common request data expected in [`CreateAssessment`](https://cloud.google.com/recaptcha/docs/reference/rest/v1/projects.assessments/create) will be automatically populated when calling the `createAssessment` function, including:
+* userAgent
+* userIpAddress
+* requestedUri
+* ja3 or ja4
+* headers
+
+The Project number and API Key set when creating the `CloudflareContext` will be used to form the correct `CreateAssessment` endpoint URL. The following URL format will be used: `https://recaptchaenterprise.googleapis.com/v1/projects/{projectNumber}/assessments??key={apikey}`.
+The `enterpriseSiteKey` set when creating the `CloudflareContext` will be used to populate the Assessment event. 
+
+The user's reCAPTCHA token may be automatically extracted from the incoming request body under the following conditions:
+* The incoming requests uses a POST HTTP method
+* The content type is `application/json` or `application/x-www-form-urlencoded` or `multipart/form-data`
+* The token is expected to reside in the `g-recaptcha-response` field.
+
+If all of these cases are true, simply call createAssessment:
+```js
+  ...
+  const assessment = await createAssessment(rcctx, request);
+  ...
+```
+
+If one or more of the token format cases are false, the token must be manually extracted and passed as an additional parameter:
+```js
+  ...
+  const token = manuallyExtractToken(request); // You must define this function.
+  const assessment = await createAssessment(rcctx, request, {token});
+  ...
+```
+
+The `expectedAction` parameter is not automatically populated, and should be populated if applicable.
+```js
+    const assessment = await createAssessment(rcctx, request, {expectedAction: "login"});
+```
+See the official documentation on [action names](https://cloud.google.com/recaptcha/docs/actions-website).
+
+It is important that createAssessment is only called on paths where you expect a user to pass a token. 
+```js
+  import {
+    CloudflareContext,
+    createAssessment,
+    pathMatch,
+  } from "@google-cloud/recaptcha-cloudflare";
+
+  ...
+  if (pathMatch(request, "/login", "POST")) {
+    const assessment = await createAssessment(rcctx, request, {expectedAction: "login"});
+    ... // check assessment results, such as score.
+  }
+    ...
+```
+This will avoid the added latency from the CreateAssessment RPC, and reduce billing events.
+
+For complete end-to-end examples, see the [examples](https://github.com/GoogleCloudPlatform/recaptcha-edge/tree/main/bindings/cloudflare/examples) directory.
 
 ## Contribution
 

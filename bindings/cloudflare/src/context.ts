@@ -18,7 +18,7 @@ type Env = any;
 
 const RECAPTCHA_JS = "https://www.google.com/recaptcha/enterprise.js";
 // Firewall Policies API is currently only available in the public preview.
-const DEFAULT_RECAPTCHA_ENDPOINT = "https://public-preview-recaptchaenterprise.googleapis.com";
+const POLICY_RECAPTCHA_ENDPOINT = "https://public-preview-recaptchaenterprise.googleapis.com";
 
 // eslint-disable-next-line  @typescript-eslint/no-unused-vars
 import {
@@ -127,6 +127,7 @@ export class CloudflareContext extends RecaptchaContext {
   }
   
   export function recaptchaConfigFromEnv(env: Env): RecaptchaConfig {
+    const has_policy_keys = env.ACTION_SITE_KEY || env.SESSION_SITE_KEY || env.CHALLENGE_PAGE_SITE_KEY;
     return {
       projectNumber: env.PROJECT_NUMBER,
       apiKey: env.API_KEY,
@@ -135,7 +136,7 @@ export class CloudflareContext extends RecaptchaContext {
       sessionSiteKey: env.SESSION_SITE_KEY,
       challengePageSiteKey: env.CHALLENGE_PAGE_SITE_KEY,
       enterpriseSiteKey: env.ENTERPRISE_SITE_KEY,
-      recaptchaEndpoint: env.RECAPTCHA_ENDPOINT ?? DEFAULT_RECAPTCHA_ENDPOINT,
+      recaptchaEndpoint: env.RECAPTCHA_ENDPOINT ?? (has_policy_keys ? POLICY_RECAPTCHA_ENDPOINT : undefined),
       sessionJsInjectPath: env.SESSION_JS_INSTALL_PATH,
       credentialPath: env.CREDENTIAL_PATH,
       accountId: env.USER_ACCOUNT_ID,

@@ -46,10 +46,10 @@ export function pathMatch(req: Request, patterns: string | [string], method?: st
 export function createAssessment(
   ctx: CloudflareContext,
   r: Request,
-  environment?: [string, string],
   additionalParams?: Event,
+  environment?: [string, string],
 ): Promise<Assessment> {
-  return callCreateAssessment(ctx, new FetchApiRequest(r), environment, additionalParams);
+  return callCreateAssessment(ctx, new FetchApiRequest(r), additionalParams, environment);
 }
 
 export function listFirewallPolicies(ctx: CloudflareContext): Promise<ListFirewallPoliciesResponse> {

@@ -46,10 +46,10 @@ export async function processRequest(ctx: FastlyContext, r: Request): Promise<Re
 export function createAssessment(
   ctx: FastlyContext,
   r: Request,
-  environment?: [string, string],
   additionalParams?: Event,
+  environment?: [string, string],
 ): Promise<Assessment> {
-  return callCreateAssessment(ctx, new FetchApiRequest(r), environment, additionalParams);
+  return callCreateAssessment(ctx, new FetchApiRequest(r), additionalParams, environment);
 }
 
 export function listFirewallPolicies(ctx: FastlyContext): Promise<ListFirewallPoliciesResponse> {

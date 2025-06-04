@@ -55,7 +55,7 @@ async function recaptchaLoginAccountVerdict(rcctx: CloudflareContext, request: R
     if (!token || !username) {
       return "block";
     }
-    const assessment = await createAssessment(rcctx, request, undefined, {userInfo: {accountId: username}});
+    const assessment = await createAssessment(rcctx, request, {userInfo: {accountId: username}});
     // Block all requests that Account Defender identifies as 'suspicious login activity'.
     if ((assessment.accountDefenderAssessment?.labels ?? []).includes("SUSPICIOUS_LOGIN_ACTIVITY")) {
       return "block";

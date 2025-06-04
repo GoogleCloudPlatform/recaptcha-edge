@@ -168,9 +168,9 @@ export async function evaluatePolicyAssessment(context: RecaptchaContext, req: E
   let assessment;
   try {
     context.log_performance_debug("[rpc] callCreateAssessment - start");
-    assessment = await callCreateAssessment(context, req, context.environment, {
+    assessment = await callCreateAssessment(context, req, {
       firewallPolicyEvaluation: true,
-    });
+    },  context.environment);
     context.log_performance_debug("[rpc] callCreateAssessment - end");
   } catch (reason) {
     if (reason instanceof error.RecaptchaError) {
