@@ -18,7 +18,7 @@
  * A simple example on how to use the reCAPTCHA Cloudflare library to
  * make decisions based on score.
  *
- * This example calls Create assessment based on configuration context from CloudFlare's Env, 
+ * This example calls Create assessment based on configuration context from CloudFlare's Env,
  * and automatically extracted information from the incoming request.
  */
 
