@@ -1,6 +1,6 @@
 {
   "name": "@google-cloud/recaptcha-edge",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A reCAPTCHA Enterprise Typescript library for Edge Compute Platforms.",
   "keywords": [
     "recaptcha",
