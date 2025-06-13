@@ -1,0 +1,37 @@
+# This file describes a Fastly Compute package. To learn more visit:
+# https://developer.fastly.com/reference/fastly-toml/
+authors = ["Google LLC"]
+description = "Example reCAPTCHA Enterprise block application from Fastly Compute."
+language = "javascript"
+manifest_version = 3
+name = "simple-block"
+
+[scripts]
+build = "npx js-compute-runtime dist/index.js bin/main.wasm --enable-http-cache --enable-aot"
+post_init = "npm install"
+
+[setup]
+  [setup.backends]
+    [setup.backends.origin]
+     description = "Content or application origin"
+
+    [setup.backends.recaptcha]
+      description = "reCAPTCHA API origin"
+      address = "recaptchaenterprise.googleapis.com"
+      port = 443
+
+[local_server]
+
+  [local_server.backends]
+
+    [local_server.backends.origin]
+      url = "http://127.0.0.1:18080"
+
+    [local_server.backends.recaptcha]
+      url = "http://127.0.0.1:18082"
+
+  [local_server.dictionaries]
+
+    [local_server.dictionaries.recaptcha]
+      file = "dict.test.json"
+      format = "json"

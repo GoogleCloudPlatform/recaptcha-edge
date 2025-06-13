@@ -32,7 +32,7 @@ import {
   ListFirewallPoliciesResponse,
 } from "@google-cloud/recaptcha-edge";
 
-import { FastlyContext, recaptchaConfigFromConfigStore } from "./context";
+import { FastlyContext } from "./context";
 
 export function pathMatch(req: Request, patterns: string | [string], method?: string): boolean {
   return basePathMatch(new FetchApiRequest(req), patterns, method);
