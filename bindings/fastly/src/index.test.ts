@@ -20,6 +20,7 @@ import path from "node:path";
 import url from "node:url";
 import express from "express";
 import { JSDOM } from "jsdom";
+import { ConfigStore } from "fastly:config-store";
 
 import { ComputeApplication } from "@fastly/compute-testing";
 

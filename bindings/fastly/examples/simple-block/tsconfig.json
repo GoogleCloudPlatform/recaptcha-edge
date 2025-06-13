@@ -1,9 +1,5 @@
 {
   "compilerOptions": {
-    "module": "esnext",
-    "target": "esnext",
-    "moduleResolution": "bundler",
-    "declaration": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "strictNullChecks": true,
@@ -12,13 +8,16 @@
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "rootDir": "src",
+    "module": "ES2022",
+    "target": "ES2022",
+    "moduleResolution": "bundler",
+    "lib": ["es2022"],
     "outDir": "./dist",
-    "skipLibCheck": true,
+    "skipLibCheck": true,  
     "paths": {
-        "@google-cloud/recaptcha-edge": ["../../dist"]
+        "@google-cloud/recaptcha-fastly": ["../../dist"]
     },
   },
   "include": ["./src/**/*.js", "./src/**/*.ts"],
-  "exclude": ["node_modules", "dist", "test", "examples", "vite.config.ts", "**/**.test.ts"]
+  "exclude": ["node_modules", "**/**.test.ts", "**/**.test.ts"]
 }
