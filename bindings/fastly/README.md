@@ -103,17 +103,12 @@ Most common request data expected in [`CreateAssessment`](https://cloud.google.c
 The Project number and API Key set when creating the `FastlyContext` will be used to form the correct `CreateAssessment` endpoint URL. The following URL format will be used: `https://recaptchaenterprise.googleapis.com/v1/projects/{projectNumber}/assessments??key={apikey}`.
 The `enterpriseSiteKey` set when creating the `FastlyContext` will be used to populate the Assessment event. 
 
-The user's reCAPTCHA token may be automatically extracted from the incoming request body under the following conditions:
+The user's reCAPTCHA token will be automatically extracted from the incoming request body if all of these conditions are true:
 * The incoming requests uses a POST HTTP method
 * The content type is `application/json` or `application/x-www-form-urlencoded` or `multipart/form-data`
 * The token is expected to reside in the `g-recaptcha-response` field.
 
-If all of these cases are true, simply call createAssessment:
-```js
-  ...
-  const assessment = await createAssessment(rcctx, request);
-  ...
-```
+If all of these cases are true, simply call the createAssessment method as above.
 
 If one or more of the token format cases are false, the token must be manually extracted and passed as an additional parameter:
 ```js
