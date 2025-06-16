@@ -1,6 +1,6 @@
 {
   "name": "@google-cloud/recaptcha-fastly",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A reCAPTCHA Enterprise Typescript Libarary for Fastly Compute@Edge.",
   "keywords": [
     "recaptcha",
