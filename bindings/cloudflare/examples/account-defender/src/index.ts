@@ -43,15 +43,16 @@ import {
  */
 async function recaptchaLoginAccountVerdict(rcctx: CloudflareContext, request: Request): Promise<"allow" | "block"> {
   try {
-    // Read the username and token from the incoming request form data.
+    // Read the username from the incoming request form data.
+    // We clone the request so the body can be read again elsewhere.
     const bodyText = await request.clone().text();
     const formData = new URLSearchParams(bodyText);
-    const token = formData.get("g-recaptcha-response");
     const username = formData.get("username");
     // If the token or username is not found, block.
-    if (!token || !username) {
+    if (!username) {
       return "block";
     }
+    // The token will be automatically extracted from the g-recaptcha-response form data.
     const assessment = await createAssessment(rcctx, request, {userInfo: {accountId: username}});
     // Block all requests that Account Defender identifies as 'suspicious login activity'.
     if ((assessment.accountDefenderAssessment?.labels ?? []).includes("SUSPICIOUS_LOGIN_ACTIVITY")) {
