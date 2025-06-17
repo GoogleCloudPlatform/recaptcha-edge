@@ -31,6 +31,7 @@ Please see the [reCAPTCHA Google Cloud Documentation](https://cloud.google.com/r
 ### As a Library
 Each platform has their own NPM package. Bindings that are hosted on NPM include:
 * [@google-cloud/recaptcha-cloudflare](https://www.npmjs.com/package/@google-cloud/recaptcha-cloudflare?activeTab=readme)
+* [@google-cloud/recaptcha-fastly](https://www.npmjs.com/package/@google-cloud/recaptcha-fastly?activeTab=readme)
 
 Bindings that are not yet hosted on NPM should be [downloaded and installed locally](https://docs.npmjs.com/downloading-and-installing-packages-locally).
 
