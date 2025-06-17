@@ -15,17 +15,17 @@
  */
 
 /**
- * An example on how to use the reCAPTCHA Cloudflare library to
- * make decisions based on AccountDefender assessment.
+ * A simple example on how to use the reCAPTCHA Fastly library to
+ * make decisions based on an AccountDefender assessment.
  */
 
 import {
-  CloudflareContext,
-  recaptchaConfigFromEnv,
+  FastlyContext,
+  recaptchaConfigFromConfigStore,
   createAssessment,
   RecaptchaError,
   pathMatch,
-} from "@google-cloud/recaptcha-cloudflare";
+} from "@google-cloud/recaptcha-fastly";
 
 /**
  * A function that will call recaptcha's CreateAssessment with all appropriate
@@ -37,11 +37,11 @@ import {
  * see: https://cloud.google.com/recaptcha/docs/account-defender#integration-workflow
  * The client integration should put the token in the 'g-recaptcha-response' form field.
  * The user's username is expected in the 'username' form field. 
- * @param rcctx A recaptcha.CloudflareContext object.
- * @param request The incoming Cloudflare Request.
+ * @param rcctx A recaptcha.FastlyContext object.
+ * @param request The incoming Fastly Request.
  * @returns "allow" or "block".
  */
-async function recaptchaLoginAccountVerdict(rcctx: CloudflareContext, request: Request): Promise<"allow" | "block"> {
+async function recaptchaLoginAccountVerdict(rcctx: FastlyContext, request: Request): Promise<"allow" | "block"> {
   try {
     // Read the username from the incoming request form data.
     // We clone the request so the body can be read again elsewhere.
@@ -72,14 +72,21 @@ async function recaptchaLoginAccountVerdict(rcctx: CloudflareContext, request: R
   return "allow";
 }
 
-export default {
-  async fetch(request, env, ctx): Promise<Response> {
-    const rcctx = new CloudflareContext(env, ctx, recaptchaConfigFromEnv(env));
-    if (pathMatch(request, "/login", "POST") && (await recaptchaLoginAccountVerdict(rcctx, request)) == "block") {
+// The entry point for your application.
+//
+// Use this fetch event listener to define your main request handling logic. It
+// could be used to route based on the request properties (such as method or
+// path), send the request to a backend, make completely new requests, and/or
+// generate synthetic responses.
+addEventListener("fetch", (event) => event.respondWith(handleRequest(event)));
+
+async function handleRequest(event: FetchEvent): Promise<Response> {
+    const rcctx = new FastlyContext(event, recaptchaConfigFromConfigStore("recaptcha"));
+
+    if (pathMatch(event.request, "/login", "POST") && (await recaptchaLoginAccountVerdict(rcctx, event.request)) == "block") {
       // Or: we could return a templated HTML page.
       return new Response("This request has been blocked for security reasons.", { status: 403 });
     }
     // forward the request to the origin, and return the response.
-    return fetch(request);
-  },
-} satisfies ExportedHandler<Env>;
+    return fetch(event.request, { backend: "origin" });
+}
