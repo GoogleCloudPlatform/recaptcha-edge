@@ -18,7 +18,7 @@
  * @fileoverview Integration tes for tokens with Playwright browser session.
  */
 
-import { test, expect, Cookie } from "@playwright/test";
+import { test, expect, type Cookie } from "@playwright/test";
 
 test.beforeEach(async ({ context }) => {
   await context.newPage();
