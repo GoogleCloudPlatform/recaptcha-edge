@@ -29,7 +29,12 @@ jobs:
         with:
           name: akamai-dist
           path: bindings/akamai/dist
-      - run: wget https://github.com/akamai/cli/releases/download/v1.6.0/akamai-v1.6.0-linuxamd64
+      - run: wget -O akamai-v1.6.0-linuxamd64 https://github.com/akamai/cli/releases/download/v1.6.0/akamai-v1.6.0-linuxamd64
+      - run: |
+      if [ "$(sha256sum akamai-v1.6.0-linuxamd64 | awk '{print $1}')" != "be87993252ecb48e94f5a492b7a79520a9401779c237595fc963764eab75fb5f" ]; then
+            echo "Checksum verification failed!"
+            exit 1
+      fi
       - run: chmod +x akamai-v1.6.0-linuxamd64
       - run: mv akamai-v1.6.0-linuxamd64 /usr/local/bin/akamai
       - run: printf "${{ secrets.AKAMAI_EDGERC }}" >> ~/.edgerc
