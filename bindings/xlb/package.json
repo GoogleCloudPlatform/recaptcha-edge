@@ -25,7 +25,7 @@
     "devDependencies": {
         "@bufbuild/buf": "^1.50.0",
         "@bufbuild/protoc-gen-es": "^2.2.3",
-        "express": "^4.21.2",
+        "express": "^4.22.1",
         "vitest": "~3.0.0"
     },
     "engines": {
