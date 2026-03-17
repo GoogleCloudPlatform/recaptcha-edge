@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@playwright/test": "^1.49.0",
+    "@playwright/test": "^1.56.1",
     "@types/node": "^22.10.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.2"
