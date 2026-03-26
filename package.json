@@ -40,7 +40,7 @@
   "dependencies": {
     "ipaddr.js": "^2.2.0",
     "parse-multipart-form-data": "^1.0.0",
-    "picomatch": "^4.0.2",
+    "picomatch": "^4.0.4",
     "url-parse": "^1.5.10"
   },
   "devDependencies": {
