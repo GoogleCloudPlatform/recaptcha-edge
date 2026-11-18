@@ -18,7 +18,7 @@
  * @fileoverview Integration tes for tokens with Playwright browser session.
  */
 
-import { test, expect, type Cookie, Page } from "@playwright/test";
+import { test, expect, type Cookie, type Page } from "@playwright/test";
 
 async function measurePageLoadAndElementVisibility(
   page: Page,

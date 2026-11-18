@@ -58,4 +58,4 @@ jobs:
           git add bindings/fastly/package-lock.json
           git add bindings/xlb/package-lock.json
           git commit -m "Regenerate package-lock.json"
-          git push origin ${{ github.head_ref }}
+          git push origin ${GITHUB_HEAD_REF}
