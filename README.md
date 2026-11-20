@@ -1,3 +1,12 @@
+> [!WARNING]
+> ### Deprecated Repository
+> 
+> [![status: inactive](https://img.shields.io/badge/status-inactive-red.svg)](https://github.com/GoogleCloudPlatform/recaptcha-edge)
+>
+> This repository is **deprecated and archived**. It is no longer actively developed, supported, or maintained by Google. Customers should not use this project for new deployments.
+>
+> For current reCAPTCHA documentation and recommended integrations, visit [Google Cloud reCAPTCHA Enterprise](https://cloud.google.com/recaptcha-enterprise/docs).
+
 # reCAPTCHA Edge Compute Library
 
 [![Build and Test Core Library](https://github.com/GoogleCloudPlatform/recaptcha-edge/actions/workflows/build_core.yml/badge.svg)](https://github.com/GoogleCloudPlatform/recaptcha-edge/actions/workflows/build_core.yml)
