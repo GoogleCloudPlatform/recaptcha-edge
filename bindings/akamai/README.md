@@ -1,3 +1,17 @@
+> [!WARNING]
+> ### Deprecated and Archived Repository
+>
+> [![status: inactive](https://img.shields.io/badge/status-inactive-red.svg)](https://github.com/GoogleCloudPlatform/recaptcha-edge)
+>
+> This repository is **deprecated and archived**. They are no longer actively developed, supported, or maintained by Google.
+>
+> **Workflow Impact:**
+> * **"Prebuilt Package" Workflow (Invalid):** The prebuilt bundles rely on the reCAPTCHA Enterprise firewall policies feature and the `processRequest` handler. Because the firewall policies feature has been retired, **this workflow is non-functional and invalid**.
+> * **"As a Library" Workflow (Unsupported):** Using the package directly in your edge workers to invoke API wrapper methods (such as `createAssessment`) should continue to function for standard assessment calls. However, this workflow is **unsupported**, will not receive new reCAPTCHA features, bug fixes, or security patches.
+>
+> For recommended integrations and long-term support, please migrate to official [reCAPTCHA Enterprise SDKs and APIs](https://cloud.google.com/recaptcha-enterprise/docs).
+
+
 ❗ Please contact [reCAPTCHA sales](https://cloud.google.com/contact/form?e=0) if you wish to use our Akamai integration.
 
 # reCAPTCHA Akamai Edge Worker Library
