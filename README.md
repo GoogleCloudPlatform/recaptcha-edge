@@ -31,7 +31,8 @@ This project is intended to be used in one of two ways:
 
 ### As a Library
 > [!WARNING]
-> **this workflow is unsupported and will not receive new reCAPTCHA features, bug fixes, or security patches.**
+> This workflow remains minimally functional for direct `createAssessment` calls, but the package is unmaintained. No updates or security patches will be issued.
+
 Each platform has their own NPM package. Bindings that are hosted on NPM include:
 * [@google-cloud/recaptcha-cloudflare](https://www.npmjs.com/package/@google-cloud/recaptcha-cloudflare?activeTab=readme)
 * [@google-cloud/recaptcha-fastly](https://www.npmjs.com/package/@google-cloud/recaptcha-fastly?activeTab=readme)
